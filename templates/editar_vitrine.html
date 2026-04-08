@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Editar página do consumidor</title>
+
+<style>
+body{
+    font-family:Arial,sans-serif;
+    background:#f4f6fb;
+    margin:0;
+    color:#1f2937;
+}
+
+.wrap{
+    max-width:1100px;
+    margin:40px auto;
+    padding:0 16px;
+}
+
+.box{
+    background:white;
+    padding:30px;
+    border-radius:18px;
+    box-shadow:0 8px 24px rgba(0,0,0,0.06);
+    border:1px solid #e5e7eb;
+}
+
+.topo{
+    margin-bottom:24px;
+}
+
+h2{
+    margin:0 0 8px 0;
+    color:#0f172a;
+    font-size:34px;
+}
+
+.subtitulo{
+    color:#64748b;
+    line-height:1.5;
+}
+
+.alerta{
+    background:#fef3c7;
+    color:#92400e;
+    padding:14px 16px;
+    border-radius:12px;
+    margin-top:18px;
+    margin-bottom:20px;
+    font-size:14px;
+    line-height:1.6;
+    border:1px solid #fde68a;
+}
+
+.grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:20px;
+}
+
+.campo{
+    display:flex;
+    flex-direction:column;
+}
+
+.campo-full{
+    grid-column:1 / -1;
+}
+
+label{
+    display:block;
+    font-weight:bold;
+    margin-bottom:6px;
+    color:#334155;
+}
+
+input, select, textarea{
+    width:100%;
+    padding:12px;
+    border-radius:10px;
+    border:1px solid #d1d5db;
+    box-sizing:border-box;
+    font-size:15px;
+    background:white;
+}
+
+textarea{
+    min-height:100px;
+    resize:vertical;
+}
+
+.preview{
+    min-height:240px;
+    border-radius:18px;
+    margin-top:8px;
+    border:1px solid #ddd;
+    display:flex;
+    align-items:center;
+    justify-content:flex-start;
+    font-weight:bold;
+    color:white;
+    text-align:left;
+    background-size:cover;
+    background-position:center;
+    overflow:hidden;
+    position:relative;
+}
+
+.preview-overlay{
+    position:absolute;
+    inset:0;
+    background:rgba(0,0,0,0.18);
+}
+
+.preview-conteudo{
+    position:relative;
+    z-index:2;
+    padding:28px;
+    width:100%;
+}
+
+.preview-titulo{
+    font-size:32px;
+    font-weight:900;
+    margin-bottom:10px;
+    line-height:1.05;
+    text-transform:uppercase;
+    white-space:pre-line;
+}
+
+.preview-subtitulo{
+    font-size:18px;
+    margin-bottom:16px;
+    max-width:520px;
+    line-height:1.4;
+}
+
+.preview-botao{
+    display:inline-block;
+    background:white;
+    color:#0f172a;
+    padding:12px 16px;
+    border-radius:12px;
+    font-size:14px;
+    font-weight:800;
+}
+
+.imagem-atual{
+    width:100%;
+    max-width:420px;
+    border-radius:12px;
+    margin-top:10px;
+    border:1px solid #e5e7eb;
+}
+
+.checkbox-linha{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    padding:12px 14px;
+    border:1px solid #e5e7eb;
+    border-radius:12px;
+    background:#f8fafc;
+    min-height:48px;
+    margin-top:10px;
+}
+
+.checkbox-linha input{
+    width:auto;
+    margin:0;
+    transform:scale(1.15);
+}
+
+.checkbox-linha label{
+    margin:0;
+    font-weight:700;
+    color:#0f172a;
+    cursor:pointer;
+}
+
+.erro{
+    color:#b91c1c;
+    font-size:13px;
+    margin-top:6px;
+}
+
+.ajuda{
+    color:#64748b;
+    font-size:13px;
+    margin-top:6px;
+    line-height:1.5;
+}
+
+.botoes{
+    display:flex;
+    gap:12px;
+    flex-wrap:wrap;
+    margin-top:28px;
+}
+
+button{
+    background:#0f172a;
+    color:white;
+    padding:13px 18px;
+    border:none;
+    border-radius:10px;
+    cursor:pointer;
+    font-weight:bold;
+    font-size:15px;
+}
+
+.botao-link{
+    display:inline-block;
+    padding:13px 18px;
+    border-radius:10px;
+    text-decoration:none;
+    font-weight:bold;
+    font-size:15px;
+    background:white;
+    color:#0f172a;
+    border:1px solid #d1d5db;
+}
+
+@media (max-width:900px){
+    .grid{
+        grid-template-columns:1fr;
+    }
+
+    h2{
+        font-size:28px;
+    }
+
+    .preview{
+        min-height:210px;
+    }
+
+    .preview-titulo{
+        font-size:26px;
+    }
+
+    .preview-subtitulo{
+        font-size:16px;
+    }
+}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+    <div class="box">
+        <div class="topo">
+            <h2>Editar página do consumidor</h2>
+            <div class="subtitulo">
+                Personalize o banner e os textos principais exibidos para seus clientes na vitrine da loja.
+            </div>
+        </div>
+
+        <div class="alerta">
+            Se você enviar uma imagem, ela será usada no banner. Se não houver imagem, o sistema exibirá o fundo em degradê usando as cores escolhidas.
+        </div>
+
+        <form method="POST" enctype="multipart/form-data">
+            {% csrf_token %}
+
+            <div class="grid">
+                <div class="campo">
+                    <label for="{{ form.banner_titulo.id_for_label }}">Título do banner</label>
+                    {{ form.banner_titulo }}
+                    {% if form.banner_titulo.errors %}
+                        <div class="erro">{{ form.banner_titulo.errors|striptags }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="campo">
+                    <label for="{{ form.banner_subtitulo.id_for_label }}">Subtítulo do banner</label>
+                    {{ form.banner_subtitulo }}
+                    {% if form.banner_subtitulo.errors %}
+                        <div class="erro">{{ form.banner_subtitulo.errors|striptags }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="campo">
+                    <label for="{{ form.banner_botao_texto.id_for_label }}">Texto do botão</label>
+                    {{ form.banner_botao_texto }}
+                    {% if form.banner_botao_texto.errors %}
+                        <div class="erro">{{ form.banner_botao_texto.errors|striptags }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="campo">
+                    <label for="{{ form.banner_botao_link.id_for_label }}">Link do botão</label>
+                    {{ form.banner_botao_link }}
+                    {% if form.banner_botao_link.errors %}
+                        <div class="erro">{{ form.banner_botao_link.errors|striptags }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="campo campo-full">
+                    <label for="{{ form.banner_imagem.id_for_label }}">Imagem do banner</label>
+                    {{ form.banner_imagem }}
+                    {% if form.banner_imagem.errors %}
+                        <div class="erro">{{ form.banner_imagem.errors|striptags }}</div>
+                    {% endif %}
+
+                    {% if loja.banner_imagem %}
+                        <div class="ajuda">Imagem atual:</div>
+                        <img src="{{ loja.banner_imagem.url }}" alt="Imagem atual do banner" class="imagem-atual">
+
+                        {% if form.remover_banner_imagem %}
+                            <div class="checkbox-linha">
+                                {{ form.remover_banner_imagem }}
+                                <label for="{{ form.remover_banner_imagem.id_for_label }}">
+                                    Remover imagem atual do banner
+                                </label>
+                            </div>
+                        {% endif %}
+                    {% endif %}
+                </div>
+
+                <div class="campo">
+                    <label for="cor_inicio">Cor inicial do banner</label>
+                    <select name="banner_cor_inicio" id="cor_inicio">
+                        {% for valor, nome in form.fields.banner_cor_inicio.choices %}
+                            <option value="{{ valor }}"
+                                {% if form.banner_cor_inicio.value == valor %}selected{% endif %}>
+                                {{ nome }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="campo">
+                    <label for="cor_fim">Cor final do banner</label>
+                    <select name="banner_cor_fim" id="cor_fim">
+                        {% for valor, nome in form.fields.banner_cor_fim.choices %}
+                            <option value="{{ valor }}"
+                                {% if form.banner_cor_fim.value == valor %}selected{% endif %}>
+                                {{ nome }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="campo campo-full">
+                    <label for="{{ form.texto_busca.id_for_label }}">Texto da busca</label>
+                    {{ form.texto_busca }}
+                    {% if form.texto_busca.errors %}
+                        <div class="erro">{{ form.texto_busca.errors|striptags }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="campo campo-full">
+                    <label>Preview do banner</label>
+                    <div id="preview" class="preview">
+                        <div class="preview-overlay"></div>
+                        <div class="preview-conteudo">
+                            <div class="preview-titulo" id="preview_titulo">+ PRODUTOS NA SUA LOJA</div>
+                            <div class="preview-subtitulo" id="preview_subtitulo">
+                                Compre com praticidade e encontre tudo em um só lugar.
+                            </div>
+                            <span class="preview-botao" id="preview_botao">Comprar agora</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="botoes">
+                <button type="submit">Salvar alterações</button>
+                <a href="{% url 'loja' loja.slug %}" target="_blank" class="botao-link">Ver página do consumidor</a>
+                <a href="{% url 'minha_loja' %}" class="botao-link">Voltar</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function atualizarPreview() {
+    const corInicio = document.getElementById("cor_inicio").value;
+    const corFim = document.getElementById("cor_fim").value;
+    const preview = document.getElementById("preview");
+
+    const tituloInput = document.getElementById("{{ form.banner_titulo.id_for_label }}");
+    const subtituloInput = document.getElementById("{{ form.banner_subtitulo.id_for_label }}");
+    const botaoInput = document.getElementById("{{ form.banner_botao_texto.id_for_label }}");
+    const imagemInput = document.getElementById("{{ form.banner_imagem.id_for_label }}");
+
+    const previewTitulo = document.getElementById("preview_titulo");
+    const previewSubtitulo = document.getElementById("preview_subtitulo");
+    const previewBotao = document.getElementById("preview_botao");
+
+    const titulo = tituloInput && tituloInput.value.trim()
+        ? tituloInput.value
+        : "+ PRODUTOS NA SUA LOJA";
+
+    const subtitulo = subtituloInput && subtituloInput.value.trim()
+        ? subtituloInput.value
+        : "Compre com praticidade e encontre tudo em um só lugar.";
+
+    const textoBotao = botaoInput && botaoInput.value.trim()
+        ? botaoInput.value
+        : "Comprar agora";
+
+    previewTitulo.textContent = titulo;
+    previewSubtitulo.textContent = subtitulo;
+    previewBotao.textContent = textoBotao;
+
+    if (imagemInput && imagemInput.files && imagemInput.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            preview.style.backgroundImage = `url('${e.target.result}')`;
+            preview.style.backgroundSize = "cover";
+            preview.style.backgroundPosition = "center";
+            preview.style.backgroundRepeat = "no-repeat";
+        };
+        reader.readAsDataURL(imagemInput.files[0]);
+    } else {
+        {% if loja.banner_imagem %}
+            preview.style.backgroundImage = "url('{{ loja.banner_imagem.url }}')";
+            preview.style.backgroundSize = "cover";
+            preview.style.backgroundPosition = "center";
+            preview.style.backgroundRepeat = "no-repeat";
+        {% else %}
+            preview.style.backgroundImage = "none";
+            preview.style.background = `linear-gradient(90deg, ${corInicio}, ${corFim})`;
+        {% endif %}
+    }
+}
+
+document.getElementById("cor_inicio").addEventListener("change", atualizarPreview);
+document.getElementById("cor_fim").addEventListener("change", atualizarPreview);
+
+const campoTitulo = document.getElementById("{{ form.banner_titulo.id_for_label }}");
+const campoSubtitulo = document.getElementById("{{ form.banner_subtitulo.id_for_label }}");
+const campoBotao = document.getElementById("{{ form.banner_botao_texto.id_for_label }}");
+const campoImagem = document.getElementById("{{ form.banner_imagem.id_for_label }}");
+
+if (campoTitulo) campoTitulo.addEventListener("input", atualizarPreview);
+if (campoSubtitulo) campoSubtitulo.addEventListener("input", atualizarPreview);
+if (campoBotao) campoBotao.addEventListener("input", atualizarPreview);
+if (campoImagem) campoImagem.addEventListener("change", atualizarPreview);
+
+window.addEventListener("load", atualizarPreview);
+</script>
+
+</body>
+</html>

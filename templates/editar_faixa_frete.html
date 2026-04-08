@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Editar faixa de frete</title>
+
+<style>
+body{
+    font-family:Arial,sans-serif;
+    background:#f4f6fb;
+    margin:0;
+    padding:24px;
+    color:#1f2937;
+}
+
+.box{
+    background:white;
+    padding:24px;
+    border-radius:18px;
+    box-shadow:0 8px 24px rgba(15,23,42,0.06);
+    max-width:600px;
+    margin:auto;
+}
+
+h1{
+    margin-bottom:20px;
+}
+
+input[type="text"],
+input[type="number"],
+select{
+    width:100%;
+    padding:10px;
+    border:1px solid #d1d5db;
+    border-radius:10px;
+    margin-top:6px;
+    margin-bottom:14px;
+}
+
+.checkbox-linha{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-top:6px;
+    margin-bottom:18px;
+}
+
+.checkbox-linha input{
+    width:auto;
+    margin:0;
+}
+
+button{
+    background:#0b1220;
+    color:white;
+    border:none;
+    padding:12px 16px;
+    border-radius:10px;
+    cursor:pointer;
+}
+
+.botao-excluir{
+    background:#dc2626;
+}
+
+.acoes{
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+    margin-top:10px;
+}
+
+.link-voltar{
+    display:inline-block;
+    margin-bottom:16px;
+    text-decoration:none;
+    color:#0b1220;
+    font-weight:bold;
+}
+</style>
+</head>
+
+<body>
+
+<div class="box">
+
+    <!-- VOLTAR -->
+    <a href="{% url 'frete_entrega' %}" class="link-voltar">← Voltar</a>
+
+    <h1>Editar faixa de frete</h1>
+
+    <!-- FORM PRINCIPAL -->
+    <form method="post">
+        {% csrf_token %}
+
+        <label>KM inicial</label>
+        {{ form.km_inicial }}
+
+        <label>KM final</label>
+        {{ form.km_final }}
+
+        <label>Valor</label>
+        {{ form.valor }}
+
+        <!-- CHECKBOX CORRIGIDO -->
+        <div class="checkbox-linha">
+            {{ form.ativo }}
+            <label for="{{ form.ativo.id_for_label }}">Faixa ativa</label>
+        </div>
+
+        <div class="acoes">
+            <button type="submit">Salvar</button>
+        </div>
+    </form>
+
+    <!-- EXCLUIR -->
+    <form method="post" action="{% url 'excluir_faixa_frete' faixa.id %}">
+        {% csrf_token %}
+        <button type="submit" class="botao-excluir"
+            onclick="return confirm('Tem certeza que deseja excluir esta faixa?')">
+            Excluir faixa
+        </button>
+    </form>
+
+</div>
+
+</body>
+</html>

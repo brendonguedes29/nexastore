@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Categorias da loja</title>
+    <style>
+        body{
+            font-family:Arial,sans-serif;
+            background:#f4f6fb;
+            margin:0;
+            color:#1f2937;
+        }
+
+        .topo{
+            background:#0f172a;
+            color:white;
+            padding:20px 0;
+        }
+
+        .wrap{
+            width:92%;
+            max-width:1200px;
+            margin:0 auto;
+        }
+
+        .box{
+            background:white;
+            margin-top:30px;
+            padding:24px;
+            border-radius:18px;
+            box-shadow:0 8px 24px rgba(15,23,42,0.06);
+        }
+
+        .topo-box{
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+            gap:12px;
+            flex-wrap:wrap;
+            margin-bottom:20px;
+        }
+
+        .botao{
+            background:#0f172a;
+            color:white;
+            text-decoration:none;
+            padding:12px 16px;
+            border-radius:10px;
+            display:inline-block;
+            border:none;
+            cursor:pointer;
+            font-weight:bold;
+        }
+
+        .botao-claro{
+            background:white;
+            color:#0f172a;
+            text-decoration:none;
+            padding:12px 16px;
+            border-radius:10px;
+            border:1px solid #ddd;
+            display:inline-block;
+            font-weight:bold;
+        }
+
+        .filtros{
+            display:grid;
+            grid-template-columns:1.5fr 1fr auto auto;
+            gap:12px;
+            margin-bottom:24px;
+            align-items:end;
+        }
+
+        .filtros .grupo{
+            display:flex;
+            flex-direction:column;
+        }
+
+        .filtros label{
+            font-size:14px;
+            font-weight:bold;
+            margin-bottom:6px;
+            color:#334155;
+        }
+
+        .filtros input,
+        .filtros select{
+            padding:12px 14px;
+            border:1px solid #cbd5e1;
+            border-radius:12px;
+            font-size:15px;
+            outline:none;
+        }
+
+        .lista-categorias{
+            display:grid;
+            gap:12px;
+        }
+
+        .item-categoria{
+            border:1px solid #e5e7eb;
+            border-radius:14px;
+            padding:16px 18px;
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+            gap:12px;
+            flex-wrap:wrap;
+        }
+
+        .nome-categoria{
+            font-size:18px;
+            font-weight:800;
+            color:#111827;
+        }
+
+        .vazio{
+            color:#64748b;
+            font-size:16px;
+            padding:10px 0;
+        }
+
+        @media (max-width: 900px){
+            .filtros{
+                grid-template-columns:1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="topo">
+        <div class="wrap">
+            <h1>{{ loja.nome }}</h1>
+            <p>Categorias da loja</p>
+        </div>
+    </div>
+
+    <div class="wrap">
+        <div class="box">
+            <div class="topo-box">
+                <div style="display:flex;gap:10px;flex-wrap:wrap;">
+                    <a class="botao-claro" href="/painel/">Voltar ao painel</a>
+                    <a class="botao" href="{% url 'nova_categoria' %}">Nova categoria</a>
+                </div>
+            </div>
+
+            <form method="get" class="filtros">
+                <div class="grupo">
+                    <label for="busca">Pesquisar categoria</label>
+                    <input
+                        type="text"
+                        name="busca"
+                        id="busca"
+                        placeholder="Digite o nome da categoria"
+                        value="{{ busca }}"
+                    >
+                </div>
+
+                <div class="grupo">
+                    <label for="categoria_id">Lista suspensa</label>
+                    <select name="categoria_id" id="categoria_id">
+                        <option value="">Todas as categorias</option>
+                        {% for categoria in todas_categorias %}
+                            <option value="{{ categoria.id }}" {% if categoria_id == categoria.id|stringformat:"s" %}selected{% endif %}>
+                                {{ categoria.nome }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <button type="submit" class="botao">Filtrar</button>
+
+                <a href="{% url 'categorias' %}" class="botao-claro">Limpar</a>
+            </form>
+
+            <div class="lista-categorias">
+                {% for categoria in categorias %}
+                    <div class="item-categoria">
+                        <div class="nome-categoria">{{ categoria.nome }}</div>
+                    </div>
+                {% empty %}
+                    <div class="vazio">Nenhuma categoria encontrada.</div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</body>
+</html>

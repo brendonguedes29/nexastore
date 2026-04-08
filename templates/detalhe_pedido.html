@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detalhe do pedido</title>
+    <style>
+        body{
+            font-family: Arial, sans-serif;
+            background:#f5f7fb;
+            margin:0;
+            padding:0;
+            color:#1f2937;
+        }
+        .topo{
+            background:#111827;
+            color:white;
+            padding:24px;
+        }
+        .container{
+            max-width:1000px;
+            margin:30px auto;
+            background:white;
+            border-radius:16px;
+            padding:24px;
+            box-shadow:0 6px 20px rgba(0,0,0,0.08);
+        }
+        .bloco{
+            margin-bottom:24px;
+        }
+        h1,h2{
+            margin-top:0;
+        }
+        .linha{
+            margin-bottom:10px;
+        }
+        .botao{
+            display:inline-block;
+            padding:10px 16px;
+            background:#1f2937;
+            color:white;
+            text-decoration:none;
+            border-radius:10px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="topo">
+        <h1>{{ loja.nome }}</h1>
+        <p>Detalhes do pedido #{{ pedido.id }}</p>
+    </div>
+
+    <div class="container">
+        <div class="bloco">
+            <a href="{% url 'pedidos' %}" class="botao">Voltar</a>
+        </div>
+
+        <div class="bloco">
+            <h2>Dados do cliente</h2>
+            <div class="linha"><strong>Nome:</strong> {{ pedido.nome_cliente }}</div>
+            <div class="linha"><strong>Telefone:</strong> {{ pedido.telefone }}</div>
+        </div>
+
+        <div class="bloco">
+            <h2>Endereço de entrega</h2>
+            <div class="linha"><strong>CEP:</strong> {{ pedido.cep_entrega }}</div>
+            <div class="linha"><strong>Rua:</strong> {{ pedido.rua_entrega }}</div>
+            <div class="linha"><strong>Número:</strong> {{ pedido.numero_entrega }}</div>
+            <div class="linha"><strong>Complemento:</strong> {{ pedido.complemento_entrega }}</div>
+            <div class="linha"><strong>Bairro:</strong> {{ pedido.bairro_entrega }}</div>
+            <div class="linha"><strong>Cidade:</strong> {{ pedido.cidade_entrega }}</div>
+            <div class="linha"><strong>Estado:</strong> {{ pedido.estado_entrega }}</div>
+            <div class="linha"><strong>Endereço completo:</strong> {{ pedido.endereco }}</div>
+        </div>
+
+        <div class="bloco">
+            <h2>Dados do pedido</h2>
+            <div class="linha"><strong>Produto:</strong> {{ pedido.produto.nome }}</div>
+            <div class="linha"><strong>Quantidade:</strong> {{ pedido.quantidade }}</div>
+            <div class="linha"><strong>Frete:</strong> R$ {{ pedido.valor_frete }}</div>
+            <div class="linha"><strong>Total:</strong> R$ {{ pedido.valor_total }}</div>
+            <div class="linha"><strong>Pagamento:</strong> {{ pedido.get_forma_pagamento_display }}</div>
+            <div class="linha"><strong>Status do pagamento:</strong> {{ pedido.get_status_pagamento_display }}</div>
+            <div class="linha"><strong>Status do pedido:</strong> {{ pedido.get_status_display }}</div>
+            <div class="linha"><strong>Observação:</strong> {{ pedido.observacao }}</div>
+        </div>
+    </div>
+
+</body>
+</html>

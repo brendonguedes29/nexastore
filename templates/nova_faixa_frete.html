@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nova faixa de frete</title>
+<style>
+body{
+    font-family:Arial,sans-serif;
+    background:#f4f6fb;
+    margin:0;
+    padding:24px;
+    color:#1f2937;
+}
+.box{
+    background:white;
+    padding:24px;
+    border-radius:18px;
+    box-shadow:0 8px 24px rgba(15,23,42,0.06);
+}
+input[type="text"],
+input[type="number"],
+select{
+    width:100%;
+    padding:10px;
+    border:1px solid #d1d5db;
+    border-radius:10px;
+    margin-top:6px;
+    margin-bottom:14px;
+}
+input[type="checkbox"]{
+    width:auto;
+    margin-top:6px;
+    margin-bottom:14px;
+    transform:scale(1.1);
+}
+button{
+    background:#0b1220;
+    color:white;
+    border:none;
+    padding:12px 16px;
+    border-radius:10px;
+    cursor:pointer;
+}
+label{
+    font-weight:bold;
+    display:block;
+}
+.erro-box{
+    background:#fee2e2;
+    color:#991b1b;
+    border:1px solid #fecaca;
+    padding:12px 14px;
+    border-radius:12px;
+    margin-bottom:16px;
+}
+.link-voltar{
+    display:inline-block;
+    margin-bottom:16px;
+    text-decoration:none;
+    color:#0b1220;
+    font-weight:bold;
+}
+</style>
+</head>
+<body>
+
+<div class="box">
+    <a href="{% url 'frete_entrega' %}" class="link-voltar">← Voltar</a>
+
+    <h1>Nova faixa de frete</h1>
+
+    {% if form.errors %}
+        <div class="erro-box">
+            {{ form.errors }}
+        </div>
+    {% endif %}
+
+    <form method="post">
+        {% csrf_token %}
+
+        <label for="{{ form.km_inicial.id_for_label }}">KM inicial</label>
+        {{ form.km_inicial }}
+
+        <label for="{{ form.km_final.id_for_label }}">KM final</label>
+        {{ form.km_final }}
+
+        <label for="{{ form.valor.id_for_label }}">Valor</label>
+        {{ form.valor }}
+
+        <label for="{{ form.ativo.id_for_label }}">Ativo</label>
+        {{ form.ativo }}
+
+        <button type="submit">Salvar</button>
+    </form>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Confirmar renovação</title>
+    <style>
+        body{
+            font-family:Arial,sans-serif;
+            background:#f4f6fb;
+            color:#1f2937;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            min-height:100vh;
+            margin:0;
+        }
+        .box{
+            width:92%;
+            max-width:560px;
+            background:#fff;
+            border-radius:18px;
+            padding:28px;
+            box-shadow:0 8px 24px rgba(0,0,0,.08);
+        }
+        h1{
+            margin:0 0 14px;
+            font-size:28px;
+        }
+        p{
+            line-height:1.6;
+            margin-bottom:18px;
+        }
+        .acoes{
+            display:flex;
+            gap:12px;
+            flex-wrap:wrap;
+        }
+        .btn{
+            text-decoration:none;
+            border:none;
+            cursor:pointer;
+            padding:12px 18px;
+            border-radius:12px;
+            font-weight:700;
+        }
+        .btn-confirmar{
+            background:#16a34a;
+            color:white;
+        }
+        .btn-cancelar{
+            background:#e5e7eb;
+            color:#111827;
+        }
+    </style>
+</head>
+<body>
+    <div class="box">
+        <h1>Licença já ativa</h1>
+
+        <p>
+            Sua licença da loja <strong>{{ loja.nome }}</strong> já está ativa até
+            <strong>{{ data_vencimento|date:"d/m/Y H:i" }}</strong>.
+        </p>
+
+        <p>
+            Deseja adicionar mais tempo à sua licença antes do vencimento?
+        </p>
+
+        <div class="acoes">
+            <a href="?confirmar_renovacao=1" class="btn btn-confirmar">
+                Sim, adicionar mais tempo
+            </a>
+
+            <a href="/painel/financeiro/" class="btn btn-cancelar">
+                Cancelar
+            </a>
+        </div>
+    </div>
+</body>
+</html>

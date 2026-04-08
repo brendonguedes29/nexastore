@@ -1,0 +1,1584 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NexaStore</title>
+    <style>
+        *{
+            margin:0;
+            padding:0;
+            box-sizing:border-box;
+        }
+
+        html{
+            scroll-behavior:smooth;
+        }
+
+        body{
+            font-family:Arial,sans-serif;
+            color:white;
+            min-height:100vh;
+            background:
+                radial-gradient(circle at 15% 15%, rgba(34,211,238,0.10), transparent 22%),
+                radial-gradient(circle at 85% 30%, rgba(59,130,246,0.10), transparent 24%),
+                linear-gradient(180deg,#0b1220 0%,#111827 100%);
+        }
+
+        .wrap{
+            width:94%;
+            max-width:1280px;
+            margin:0 auto;
+        }
+
+        header{
+            padding:26px 0 10px;
+            position:sticky;
+            top:0;
+            z-index:50;
+            backdrop-filter:blur(10px);
+            background:rgba(11,18,32,0.82);
+            border-bottom:1px solid rgba(255,255,255,0.05);
+        }
+
+        .topo{
+            display:flex;
+            align-items:center;
+            justify-content:space-between;
+            gap:24px;
+        }
+
+        .marca{
+            display:flex;
+            align-items:center;
+            gap:14px;
+        }
+
+        .marca-badge{
+            width:52px;
+            height:52px;
+            border-radius:16px;
+            background:linear-gradient(135deg,#22d3ee,#38bdf8);
+            color:#0f172a;
+            font-size:28px;
+            font-weight:900;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            box-shadow:0 12px 30px rgba(34,211,238,.18);
+        }
+
+        .marca-texto strong{
+            display:block;
+            font-size:30px;
+            font-weight:900;
+            letter-spacing:.3px;
+        }
+
+        .marca-texto span{
+            display:block;
+            margin-top:4px;
+            color:#94a3b8;
+            font-size:14px;
+        }
+
+        .menu{
+            display:flex;
+            align-items:center;
+            gap:30px;
+            flex-wrap:wrap;
+        }
+
+        .menu a{
+            color:#e5e7eb;
+            text-decoration:none;
+            font-weight:700;
+            font-size:15px;
+        }
+
+        .menu a:hover{
+            color:white;
+        }
+
+        .acoes-topo{
+            display:flex;
+            align-items:center;
+            gap:14px;
+            flex-shrink:0;
+        }
+
+        .btn{
+            display:inline-flex;
+            align-items:center;
+            justify-content:center;
+            text-decoration:none;
+            border:none;
+            cursor:pointer;
+            font-weight:800;
+            border-radius:16px;
+            padding:14px 22px;
+            transition:.18s ease;
+            font-size:15px;
+            white-space:nowrap;
+        }
+
+        .btn-topo-link{
+            background:transparent;
+            color:white;
+            padding:0;
+            border-radius:0;
+        }
+
+        .btn-topo-link:hover{
+            opacity:.85;
+        }
+
+        .btn-branco{
+            background:#ffffff;
+            color:#111827;
+            box-shadow:0 10px 28px rgba(255,255,255,.08);
+        }
+
+        .btn-branco:hover{
+            transform:translateY(-1px);
+        }
+
+        .btn-azul{
+            background:linear-gradient(90deg,#22d3ee,#38bdf8);
+            color:#0f172a;
+            box-shadow:0 12px 30px rgba(34,211,238,.18);
+        }
+
+        .btn-azul:hover{
+            transform:translateY(-1px);
+        }
+
+        .btn-cinza{
+            background:rgba(255,255,255,.07);
+            color:white;
+            border:1px solid rgba(255,255,255,.12);
+        }
+
+        .btn-cinza:hover{
+            background:rgba(255,255,255,.11);
+        }
+
+        .hero{
+            padding:16px 0 80px;
+            display:grid;
+            grid-template-columns:1.08fr .92fr;
+            gap:42px;
+            align-items:start;
+        }
+
+        .hero > section:first-child{
+            padding-top:10px;
+        }
+
+        .hero h1{
+            margin-top:20px;
+        }
+
+        .hero small{
+            display:block;
+            color:#cbd5e1;
+            font-size:15px;
+            font-weight:700;
+            margin-bottom:16px;
+        }
+
+        .hero h1{
+            font-size:74px;
+            line-height:.96;
+            font-weight:900;
+            margin-bottom:24px;
+            max-width:760px;
+        }
+
+        .hero p{
+            color:#d1d5db;
+            font-size:20px;
+            line-height:1.55;
+            max-width:760px;
+            margin-bottom:28px;
+        }
+
+        .hero-acoes{
+            display:flex;
+            align-items:center;
+            gap:16px;
+            flex-wrap:wrap;
+            margin-bottom:20px;
+        }
+
+        .hero-mini{
+            display:flex;
+            gap:12px;
+            flex-wrap:wrap;
+            margin-top:8px;
+        }
+
+        .hero-mini span{
+            display:inline-flex;
+            align-items:center;
+            padding:10px 14px;
+            border-radius:999px;
+            background:rgba(255,255,255,.06);
+            border:1px solid rgba(255,255,255,.08);
+            color:#dbeafe;
+            font-size:14px;
+            font-weight:700;
+        }
+
+        .painel-demo{
+            background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,.03));
+            border:1px solid rgba(255,255,255,.08);
+            border-radius:30px;
+            padding:26px;
+            box-shadow:0 24px 60px rgba(0,0,0,.25);
+        }
+
+        .painel-demo h2{
+            font-size:28px;
+            font-weight:900;
+            margin-bottom:8px;
+        }
+
+        .painel-demo p{
+            color:#cbd5e1;
+            font-size:14px;
+            margin-bottom:18px;
+            line-height:1.5;
+        }
+
+        .cards-topo{
+            display:grid;
+            grid-template-columns:repeat(4,1fr);
+            gap:12px;
+            margin-bottom:16px;
+        }
+
+        .card-estat{
+            background:rgba(255,255,255,.05);
+            border-radius:18px;
+            padding:16px;
+            border:1px solid rgba(255,255,255,.06);
+        }
+
+        .card-estat span{
+            display:block;
+            color:#cbd5e1;
+            font-size:13px;
+            margin-bottom:8px;
+            font-weight:700;
+        }
+
+        .card-estat strong{
+            display:block;
+            font-size:24px;
+            font-weight:900;
+            color:white;
+        }
+
+        .exemplo-grid{
+            display:grid;
+            grid-template-columns:1.2fr .8fr;
+            gap:16px;
+        }
+
+        .exemplo-esquerda{
+            display:grid;
+            gap:16px;
+        }
+
+        .grafico-box{
+            background:rgba(255,255,255,.05);
+            border:1px solid rgba(255,255,255,.06);
+            border-radius:22px;
+            padding:18px;
+        }
+
+        .grafico-header{
+            display:flex;
+            align-items:center;
+            justify-content:space-between;
+            gap:12px;
+            margin-bottom:14px;
+        }
+
+        .grafico-header h3{
+            font-size:20px;
+            font-weight:900;
+        }
+
+        .grafico-header span{
+            color:#cbd5e1;
+            font-size:13px;
+            font-weight:700;
+        }
+
+        .barras{
+            display:flex;
+            align-items:flex-end;
+            gap:10px;
+            height:180px;
+            margin-bottom:10px;
+        }
+
+        .barra{
+            flex:1;
+            border-radius:14px 14px 8px 8px;
+            background:linear-gradient(180deg,#22d3ee,#2563eb);
+            box-shadow:0 10px 25px rgba(34,211,238,.12);
+        }
+
+        .barra-labels{
+            display:grid;
+            grid-template-columns:repeat(6,1fr);
+            gap:10px;
+        }
+
+        .barra-labels span{
+            text-align:center;
+            color:#94a3b8;
+            font-size:12px;
+            font-weight:700;
+        }
+
+        .pedidos-box{
+            background:rgba(255,255,255,.05);
+            border:1px solid rgba(255,255,255,.06);
+            border-radius:22px;
+            padding:18px;
+        }
+
+        .pedidos-box h3{
+            font-size:20px;
+            font-weight:900;
+            margin-bottom:14px;
+        }
+
+        .pedido-item{
+            display:flex;
+            align-items:center;
+            justify-content:space-between;
+            gap:12px;
+            padding:12px 0;
+            border-bottom:1px solid rgba(255,255,255,.06);
+        }
+
+        .pedido-item:last-child{
+            border-bottom:none;
+            padding-bottom:0;
+        }
+
+        .pedido-info strong{
+            display:block;
+            color:white;
+            font-size:14px;
+            margin-bottom:4px;
+        }
+
+        .pedido-info span{
+            color:#94a3b8;
+            font-size:13px;
+        }
+
+        .pedido-status{
+            padding:8px 12px;
+            border-radius:999px;
+            font-size:12px;
+            font-weight:900;
+        }
+
+        .status-pago{
+            background:rgba(34,197,94,.16);
+            color:#86efac;
+        }
+
+        .status-envio{
+            background:rgba(56,189,248,.16);
+            color:#7dd3fc;
+        }
+
+        .status-pendente{
+            background:rgba(250,204,21,.16);
+            color:#fde68a;
+        }.resumo-box{
+            display:grid;
+            gap:16px;
+        }
+
+        .cards-baixo{
+            display:grid;
+            grid-template-columns:1fr;
+            gap:16px;
+        }
+
+        .card-destaque{
+            border-radius:22px;
+            padding:22px;
+        }
+
+        .card-verde{
+            background:linear-gradient(180deg,#22d3ee,#14b8a6);
+            color:white;
+            min-height:190px;
+        }
+
+        .card-escuro{
+            background:rgba(255,255,255,.05);
+            border:1px solid rgba(255,255,255,.06);
+            min-height:190px;
+        }
+
+        .card-destaque h3{
+            font-size:26px;
+            line-height:1.05;
+            margin-bottom:12px;
+            font-weight:900;
+        }
+
+        .card-destaque p{
+            color:inherit;
+            line-height:1.55;
+            font-size:15px;
+            margin-bottom:16px;
+        }
+
+        .lista-mini{
+            display:grid;
+            gap:10px;
+            margin-top:6px;
+        }
+
+        .lista-mini div{
+            display:flex;
+            justify-content:space-between;
+            gap:12px;
+            background:rgba(255,255,255,.05);
+            border:1px solid rgba(255,255,255,.08);
+            border-radius:14px;
+            padding:11px 12px;
+            color:#e5e7eb;
+            font-size:14px;
+            font-weight:700;
+        }
+
+        .tag{
+            display:inline-flex;
+            align-items:center;
+            justify-content:center;
+            padding:10px 16px;
+            border-radius:999px;
+            font-weight:800;
+            font-size:14px;
+        }
+
+        .tag-branca{
+            background:white;
+            color:#111827;
+        }
+
+        .tag-cinza{
+            background:rgba(255,255,255,.08);
+            color:white;
+            border:1px solid rgba(255,255,255,.10);
+        }
+
+        .secao{
+            padding:20px 0 70px;
+        }
+
+        .secao-header{
+            text-align:center;
+            max-width:820px;
+            margin:0 auto 28px;
+        }
+
+        .secao-header h2{
+            font-size:48px;
+            line-height:1.05;
+            font-weight:900;
+            margin-bottom:14px;
+        }
+
+        .secao-header p{
+            color:#cbd5e1;
+            font-size:18px;
+            line-height:1.6;
+        }
+
+        .como-funciona{
+            display:grid;
+            grid-template-columns:repeat(3,1fr);
+            gap:18px;
+        }
+
+        .passo{
+            background:rgba(255,255,255,.05);
+            border:1px solid rgba(255,255,255,.08);
+            border-radius:24px;
+            overflow:hidden;
+            box-shadow:0 20px 50px rgba(0,0,0,.15);
+        }
+
+        .passo-topo{
+            min-height:170px;
+            padding:24px;
+            display:flex;
+            align-items:flex-end;
+            background:
+                radial-gradient(circle at 20% 20%, rgba(255,255,255,.16), transparent 25%),
+                linear-gradient(135deg,#1d4ed8,#22d3ee);
+        }
+
+        .passo-numero{
+            width:50px;
+            height:50px;
+            border-radius:16px;
+            background:white;
+            color:#0f172a;
+            font-size:24px;
+            font-weight:900;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            box-shadow:0 10px 25px rgba(255,255,255,.12);
+        }
+
+        .passo-conteudo{
+            padding:22px;
+        }
+
+        .passo-conteudo h3{
+            font-size:26px;
+            margin-bottom:12px;
+            font-weight:900;
+        }
+
+        .passo-conteudo p{
+            color:#cbd5e1;
+            line-height:1.65;
+            font-size:15px;
+            margin-bottom:14px;
+        }
+
+        .passo-conteudo ul{
+            list-style:none;
+            display:grid;
+            gap:10px;
+        }
+
+        .passo-conteudo li{
+            background:rgba(255,255,255,.04);
+            border:1px solid rgba(255,255,255,.06);
+            border-radius:14px;
+            padding:10px 12px;
+            color:#e5e7eb;
+            font-size:14px;
+            font-weight:700;
+        }
+
+        .rodape{
+            border-top:1px solid rgba(255,255,255,.07);
+            padding:34px 0 46px;
+            background:rgba(5,10,18,.5);
+        }
+
+        .rodape-grid{
+            display:grid;
+            grid-template-columns:1.3fr .7fr;
+            gap:28px;
+            align-items:start;
+        }
+
+        .rodape-marca strong{
+            display:block;
+            font-size:28px;
+            font-weight:900;
+            margin-bottom:8px;
+        }
+
+        .rodape-marca p{
+            color:#94a3b8;
+            line-height:1.6;
+            max-width:620px;
+        }
+
+        .rodape-faq h3{
+            font-size:22px;
+            margin-bottom:16px;
+        }
+
+        .faq-item{
+            background:rgba(255,255,255,.05);
+            border:1px solid rgba(255,255,255,.08);
+            border-radius:16px;
+            padding:14px 16px;
+            margin-bottom:12px;
+        }
+
+        .faq-item strong{
+            display:block;
+            margin-bottom:6px;
+            color:white;
+        }
+
+        .faq-item span{
+            color:#cbd5e1;
+            line-height:1.5;
+            font-size:14px;
+        }
+
+        .demo-consumidor-wrap{
+            margin-top:26px;
+            max-width:720px;
+        }
+
+        .demo-consumidor{
+            position:relative;
+            width:100%;
+            min-height:320px;
+            border-radius:28px;
+            border:1px solid rgba(255,255,255,.08);
+            background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(255,255,255,.03));
+            box-shadow:0 24px 60px rgba(0,0,0,.25);
+            overflow:hidden;
+            padding:18px;
+        }
+
+        .demo-topbar{
+            display:flex;
+            align-items:center;
+            justify-content:space-between;
+            gap:12px;
+            margin-bottom:14px;
+        }
+
+        .demo-brand{
+            display:flex;
+            align-items:center;
+            gap:10px;
+        }
+
+        .demo-badge{
+            width:38px;
+            height:38px;
+            border-radius:12px;
+            background:linear-gradient(135deg,#22d3ee,#38bdf8);
+            color:#0f172a;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            font-weight:900;
+            font-size:18px;
+        }
+
+        .demo-brand-text strong{
+            display:block;
+            font-size:15px;
+            color:#fff;
+        }
+
+        .demo-brand-text span{
+            font-size:12px;
+            color:#94a3b8;
+        }
+
+        .demo-search{
+            flex:1;
+            max-width:240px;
+            background:rgba(255,255,255,.06);
+            border:1px solid rgba(255,255,255,.08);
+            border-radius:14px;
+            padding:10px 14px;
+            color:#cbd5e1;
+            font-size:13px;
+            text-align:left;
+        }
+
+        .demo-main{
+            display:grid;
+            grid-template-columns:1.05fr .95fr;
+            gap:16px;
+            align-items:stretch;
+        }
+
+        .demo-vitrine{
+            display:flex;
+            flex-direction:column;
+            gap:12px;
+        }
+
+        .demo-banner{
+            min-height:116px;
+            border-radius:22px;
+            padding:18px;
+            background:linear-gradient(135deg,#1d4ed8,#22d3ee);
+            display:flex;
+            flex-direction:column;
+            justify-content:flex-end;
+            transition:.35s ease;
+        }.demo-banner h3{
+            font-size:22px;
+            line-height:1.02;
+            margin-bottom:8px;
+            color:white;
+            font-weight:900;
+        }
+
+        .demo-banner p{
+            font-size:13px;
+            color:#dbeafe;
+            line-height:1.5;
+        }
+
+        .demo-tags{
+            display:flex;
+            gap:8px;
+            flex-wrap:wrap;
+        }
+
+        .demo-tag{
+            padding:8px 12px;
+            border-radius:999px;
+            background:rgba(255,255,255,.06);
+            border:1px solid rgba(255,255,255,.08);
+            color:#dbeafe;
+            font-size:12px;
+            font-weight:800;
+        }
+
+        .demo-produtos{
+            display:grid;
+            grid-template-columns:repeat(2,1fr);
+            gap:10px;
+        }
+
+        .demo-produto{
+            background:rgba(255,255,255,.05);
+            border:1px solid rgba(255,255,255,.08);
+            border-radius:18px;
+            padding:12px;
+            transition:.25s ease;
+        }
+
+        .demo-produto.ativo{
+            transform:translateY(-3px);
+            border-color:rgba(34,211,238,.55);
+            box-shadow:0 14px 28px rgba(34,211,238,.12);
+        }
+
+        .demo-thumb{
+            height:78px;
+            border-radius:14px;
+            background:linear-gradient(135deg,rgba(34,211,238,.25),rgba(37,99,235,.35));
+            margin-bottom:10px;
+        }
+
+        .demo-produto strong{
+            display:block;
+            color:#fff;
+            font-size:14px;
+            margin-bottom:4px;
+        }
+
+        .demo-produto span{
+            display:block;
+            color:#cbd5e1;
+            font-size:12px;
+            margin-bottom:8px;
+        }
+
+        .demo-preco{
+            display:flex;
+            align-items:center;
+            justify-content:space-between;
+            gap:10px;
+        }
+
+        .demo-preco b{
+            color:#fff;
+            font-size:14px;
+        }
+
+        .demo-add{
+            padding:8px 10px;
+            border-radius:10px;
+            background:linear-gradient(90deg,#22d3ee,#38bdf8);
+            color:#0f172a;
+            font-size:11px;
+            font-weight:900;
+        }
+
+        .demo-side{
+            background:rgba(255,255,255,.05);
+            border:1px solid rgba(255,255,255,.08);
+            border-radius:22px;
+            padding:16px;
+            display:flex;
+            flex-direction:column;
+            justify-content:space-between;
+            min-height:100%;
+        }
+
+        .demo-side h4{
+            font-size:20px;
+            font-weight:900;
+            color:#fff;
+            margin-bottom:10px;
+        }
+
+        .demo-lista{
+            display:grid;
+            gap:10px;
+        }
+
+        .demo-item{
+            display:flex;
+            justify-content:space-between;
+            gap:10px;
+            padding:11px 12px;
+            border-radius:14px;
+            background:rgba(255,255,255,.05);
+            border:1px solid rgba(255,255,255,.06);
+        }
+
+        .demo-item span{
+            color:#cbd5e1;
+            font-size:13px;
+            font-weight:700;
+        }
+
+        .demo-item strong{
+            color:#fff;
+            font-size:13px;
+        }
+
+        .demo-status{
+            margin-top:12px;
+            padding:12px 14px;
+            border-radius:14px;
+            background:rgba(34,197,94,.14);
+            color:#86efac;
+            font-size:13px;
+            font-weight:800;
+            border:1px solid rgba(34,197,94,.18);
+            min-height:44px;
+            display:flex;
+            align-items:center;
+        }
+
+        .demo-mini-bar{
+            height:10px;
+            border-radius:999px;
+            background:rgba(255,255,255,.08);
+            overflow:hidden;
+            margin-top:12px;
+        }
+
+        .demo-mini-fill{
+            height:100%;
+            width:30%;
+            border-radius:999px;
+            background:linear-gradient(90deg,#22d3ee,#38bdf8);
+            transition:.35s ease;
+        }
+
+        .balon-demo{
+            position:relative;
+            max-width:430px;
+            padding:28px 24px 24px;
+            border-radius:28px;
+            background:linear-gradient(180deg,rgba(255,255,255,.08),rgba(255,255,255,.04));
+            border:1px solid rgba(255,255,255,.10);
+            box-shadow:0 24px 60px rgba(0,0,0,.28);
+            backdrop-filter:blur(14px);
+            overflow:hidden;
+        }
+
+        .balon-demo::before{
+            content:"";
+            position:absolute;
+            inset:auto auto -18px 42px;
+            width:34px;
+            height:34px;
+            background:linear-gradient(180deg,rgba(255,255,255,.08),rgba(255,255,255,.04));
+            border-left:1px solid rgba(255,255,255,.10);
+            border-bottom:1px solid rgba(255,255,255,.10);
+            transform:rotate(-45deg);
+            border-bottom-left-radius:10px;
+        }
+
+        .balon-demo::after{
+            content:"";
+            position:absolute;
+            width:180px;
+            height:180px;
+            right:-40px;
+            top:-40px;
+            border-radius:999px;
+            background:radial-gradient(circle, rgba(34,211,238,.22), transparent 68%);
+            pointer-events:none;
+        }
+
+        .balon-tag{
+            display:inline-flex;
+            align-items:center;
+            justify-content:center;
+            padding:9px 14px;
+            border-radius:999px;
+            background:rgba(34,211,238,.14);
+            border:1px solid rgba(34,211,238,.24);
+            color:#a5f3fc;
+            font-size:12px;
+            font-weight:900;
+            margin-bottom:16px;
+        }
+
+        .balon-demo h3{
+            font-size:28px;
+            line-height:1.05;
+            font-weight:900;
+            color:#fff;
+            margin-bottom:14px;
+            max-width:360px;
+        }
+
+        .balon-demo p{
+            color:#dbeafe;
+            font-size:15px;
+            line-height:1.65;
+            margin-bottom:20px;
+            max-width:360px;
+        }
+
+        .balon-aviso{
+            background:rgba(239,68,68,.15);
+            border:1px solid rgba(239,68,68,.25);
+            color:#fecaca;
+            padding:10px 12px;
+            border-radius:10px;
+            font-size:12px;
+            font-weight:700;
+            margin-bottom:16px;
+        }
+
+        .balon-acoes{
+            margin-bottom:16px;
+        }
+
+        .balon-botao{
+            display:inline-flex;
+            align-items:center;
+            justify-content:center;
+            text-decoration:none;
+            padding:13px 18px;
+            border-radius:14px;
+            background:linear-gradient(90deg,#22d3ee,#38bdf8);
+            color:#0f172a;
+            font-size:14px;
+            font-weight:900;
+            box-shadow:0 16px 30px rgba(34,211,238,.18);
+            transition:.18s ease;
+        }
+
+        .balon-botao:hover{
+            transform:translateY(-1px);
+        }
+
+        .balon-mini{
+            display:flex;
+            flex-wrap:wrap;
+            gap:10px;
+        }
+
+        .balon-mini span{
+            display:inline-flex;
+            align-items:center;
+            padding:9px 12px;
+            border-radius:999px;
+            background:rgba(255,255,255,.06);
+            border:1px solid rgba(255,255,255,.08);
+            color:#e5e7eb;
+            font-size:12px;
+            font-weight:800;
+        }
+
+        .whatsapp-float{
+            position:fixed;
+            right:20px;
+            bottom:20px;
+            z-index:9999;
+            display:flex;
+            align-items:center;
+            gap:10px;
+            background:linear-gradient(135deg,#25d366,#128c7e);
+            color:#fff;
+            text-decoration:none;
+            padding:14px 18px;
+            border-radius:999px;
+            box-shadow:0 12px 30px rgba(0,0,0,.25);
+            font-weight:700;
+            font-size:15px;
+            transition:.2s ease;
+        }
+
+        .whatsapp-float:hover{
+            transform:translateY(-2px);
+            box-shadow:0 16px 36px rgba(0,0,0,.30);
+        }
+
+        .whatsapp-icon{
+            width:34px;
+            height:34px;
+            border-radius:50%;
+            background:rgba(255,255,255,.18);
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            font-size:18px;
+            font-weight:700;
+        }
+
+        .whatsapp-text{
+            white-space:nowrap;
+        }@media (max-width:1100px){
+            .demo-main{
+                grid-template-columns:1fr;
+            }
+
+            .demo-search{
+                max-width:none;
+            }
+        }
+
+        @media (max-width:1100px){
+            .hero{
+                grid-template-columns:1fr;
+            }
+
+            .hero h1{
+                font-size:58px;
+            }
+
+            .como-funciona{
+                grid-template-columns:1fr;
+            }
+
+            .rodape-grid{
+                grid-template-columns:1fr;
+            }
+        }
+
+        @media (max-width:780px){
+            .topo{
+                flex-direction:column;
+                align-items:flex-start;
+            }
+
+            .menu{
+                gap:18px;
+            }
+
+            .hero{
+                padding-top:18px;
+            }
+
+            .hero h1{
+                font-size:42px;
+            }
+
+            .hero p{
+                font-size:18px;
+            }
+
+            .cards-topo{
+                grid-template-columns:1fr 1fr;
+            }
+
+            .exemplo-grid{
+                grid-template-columns:1fr;
+            }
+
+            .secao-header h2{
+                font-size:34px;
+            }
+
+            .whatsapp-float{
+                right:14px;
+                bottom:14px;
+                padding:12px 14px;
+                font-size:14px;
+            }
+
+            .whatsapp-text{
+                display:none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="wrap topo">
+            <div class="marca">
+                <div class="marca-badge">N</div>
+                <div class="marca-texto">
+                    <strong>NexaStore</strong>
+                    <span>Plataforma para vender, organizar e operar sua loja em um só lugar</span>
+                </div>
+            </div>
+
+            <nav class="menu">
+                <a href="#recursos">Recursos</a>
+                <a href="#como-funciona">Como funciona</a>
+            </nav>
+
+            <div class="acoes-topo">
+                <a href="{% url 'escolher_acesso' %}" class="btn btn-topo-link">Entrar</a>
+                <a href="{% url 'criar_loja_publica' %}" class="btn btn-branco">Criar minha loja</a>
+            </div>
+        </div>
+    </header>
+
+    <main class="wrap hero" id="recursos">
+        <section>
+            <small>NexaStore • Plataforma moderna para lojas e operação comercial</small>
+
+            <h1>
+                Venda com mais organização, mais presença e mais controle da sua operação
+            </h1>
+
+            <p>
+                Com a NexaStore, você monta sua loja, organiza produtos, pedidos, clientes,
+                recebimentos e operação em uma estrutura prática, bonita e pronta para uso real.
+            </p>
+
+            <div class="hero-acoes">
+                <a href="{% url 'criar_loja_publica' %}" class="btn btn-azul">Começar agora</a>
+                <a href="{% url 'escolher_acesso' %}" class="btn btn-branco">Já tenho acesso</a>
+            </div>
+
+            <div class="hero-mini">
+                <span>Checkout com Pix e cartão</span>
+                <span>Painel do lojista</span>
+                <span>Página do consumidor</span>
+                <span>Gestão de pedidos</span>
+            </div>
+        </section>
+
+        <div class="demo-consumidor-wrap">
+            <div class="demo-consumidor">
+                <div class="demo-topbar">
+                    <div class="demo-brand">
+                        <div class="demo-badge">L</div>
+                        <div class="demo-brand-text">
+                            <strong>Loja do consumidor</strong>
+                            <span>Veja como sua vitrine pode aparecer</span>
+                        </div>
+                    </div>
+
+                    <div class="demo-search">Buscar produtos, categorias e ofertas</div>
+                </div>
+
+                <div class="demo-main">
+                    <div class="demo-vitrine">
+                        <div class="demo-banner" id="demoBanner">
+                            <h3 id="demoBannerTitulo">Ofertas da semana</h3>
+                            <p id="demoBannerTexto">Uma vitrine bonita, organizada e pronta para vender.</p>
+                        </div>
+
+                        <div class="demo-tags">
+                            <span class="demo-tag">Entrega</span>
+                            <span class="demo-tag">Pix</span>
+                            <span class="demo-tag">Cartão</span>
+                            <span class="demo-tag">Frete</span>
+                        </div>
+
+                        <div class="demo-produtos">
+                            <div class="demo-produto ativo" id="produto1">
+                                <div class="demo-thumb"></div>
+                                <strong>Camisa básica</strong>
+                                <span>Estilo e praticidade</span>
+                                <div class="demo-preco">
+                                    <b>R$ 49,90</b>
+                                    <span class="demo-add">Adicionar</span>
+                                </div>
+                            </div>
+
+                            <div class="demo-produto" id="produto2">
+                                <div class="demo-thumb"></div>
+                                <strong>Tênis casual</strong>
+                                <span>Conforto para o dia a dia</span>
+                                <div class="demo-preco">
+                                    <b>R$ 129,90</b>
+                                    <span class="demo-add">Adicionar</span>
+                                </div>
+                            </div>
+
+                            <div class="demo-produto" id="produto3">
+                                <div class="demo-thumb"></div>
+                                <strong>Perfume urbano</strong>
+                                <span>Fragrância marcante</span>
+                                <div class="demo-preco">
+                                    <b>R$ 79,90</b>
+                                    <span class="demo-add">Adicionar</span>
+                                </div>
+                            </div>
+
+                            <div class="demo-produto" id="produto4">
+                                <div class="demo-thumb"></div>
+                                <strong>Mochila premium</strong>
+                                <span>Visual moderno</span>
+                                <div class="demo-preco">
+                                    <b>R$ 159,90</b>
+                                    <span class="demo-add">Adicionar</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="demo-side">
+                        <div>
+                            <h4 id="demoTituloLateral">Pedido em andamento</h4>
+
+                            <div class="demo-lista">
+                                <div class="demo-item">
+                                    <span>Produto</span>
+                                    <strong id="demoProdutoNome">Camisa básica</strong>
+                                </div>
+
+                                <div class="demo-item">
+                                    <span>Pagamento</span>
+                                    <strong id="demoPagamento">Pix</strong>
+                                </div>
+
+                                <div class="demo-item">
+                                    <span>Entrega</span>
+                                    <strong id="demoEntrega">Frete calculado</strong>
+                                </div>
+                            </div>
+
+                            <div class="demo-status" id="demoStatus">
+                                Cliente navegando na vitrine
+                            </div>
+
+                            <div class="demo-mini-bar">
+                                <div class="demo-mini-fill" id="demoProgresso"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <section class="painel-demo">
+            <h2>Veja como sua operação fica organizada</h2>
+            <p>Crie promoções, aplique descontos (%) e destaque seus produtos para vender mais.</p>
+
+            <div class="cards-topo">
+                <div class="card-estat">
+                    <span>Pedidos hoje</span>
+                    <strong>23</strong>
+                </div>
+
+                <div class="card-estat">
+                    <span>Pedidos no mês</span>
+                    <strong>128</strong>
+                </div>
+
+                <div class="card-estat">
+                    <span>Faturamento</span>
+                    <strong>R$ 18,4k</strong>
+                </div>
+
+                <div class="card-estat">
+                    <span>Clientes ativos</span>
+                    <strong>96</strong>
+                </div>
+            </div>
+
+            <div class="exemplo-grid">
+                <div class="exemplo-esquerda">
+                    <div class="grafico-box">
+                        <div class="grafico-header">
+                            <h3>Movimento da loja</h3>
+                            <span>Últimos 6 períodos</span>
+                        </div>
+
+                        <div class="barras">
+                            <div class="barra" style="height:42%;"></div>
+                            <div class="barra" style="height:58%;"></div>
+                            <div class="barra" style="height:65%;"></div>
+                            <div class="barra" style="height:54%;"></div>
+                            <div class="barra" style="height:82%;"></div>
+                            <div class="barra" style="height:72%;"></div>
+                        </div>
+
+                        <div class="barra-labels">
+                            <span>Jan</span>
+                            <span>Fev</span>
+                            <span>Mar</span>
+                            <span>Abr</span>
+                            <span>Mai</span>
+                            <span>Jun</span>
+                        </div>
+                    </div>
+
+                    <div class="pedidos-box">
+                        <h3>Pedidos recentes</h3>
+
+                        <div class="pedido-item">
+                            <div class="pedido-info">
+                                <strong>Pedido #1048</strong>
+                                <span>Cliente confirmado • pagamento aprovado</span>
+                            </div>
+                            <div class="pedido-status status-pago">Pago</div>
+                        </div>
+
+                        <div class="pedido-item">
+                            <div class="pedido-info">
+                                <strong>Pedido #1047</strong>
+                                <span>Separação concluída • aguardando saída</span>
+                            </div>
+                            <div class="pedido-status status-envio">Envio</div>
+                        </div>
+
+                        <div class="pedido-item">
+                            <div class="pedido-info">
+                                <strong>Pedido #1046</strong>
+                                <span>Pedido criado • aguardando confirmação</span>
+                            </div>
+                            <div class="pedido-status status-pendente">Pendente</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="resumo-box">
+                    <div class="card-destaque card-verde">
+                        <h3>Sua loja com identidade própria</h3>
+                        <p>Personalize banner, produtos, busca, vitrine e apresentação da sua marca para o consumidor.</p>
+                        <span class="tag tag-branca">Página personalizada</span>
+                    </div>
+
+                    <div class="card-destaque card-escuro">
+                        <h3>Recebimentos e operação conectados</h3>
+                        <p>Tenha uma visão clara do que está acontecendo na sua loja e acompanhe a rotina comercial com mais controle.</p>
+
+                        <div class="lista-mini">
+                            <div><span>Pedidos ativos</span><strong>34</strong></div>
+                            <div><span>Recebimentos do dia</span><strong>R$ 2,3k</strong></div>
+                            <div><span>Clientes recorrentes</span><strong>27</strong></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <section class="secao" id="como-funciona">
+        <div class="wrap">
+            <div class="secao-header">
+                <h2>Como funciona na prática para o dono da loja</h2>
+                <p>
+                    A NexaStore une duas frentes em uma única estrutura: o painel administrativo do lojista
+                    para gerir a operação e a página do consumidor para vender com mais presença,
+                    organização e controle.
+                </p>
+            </div>
+
+            <div class="como-funciona">
+                <div class="passo">
+                    <div class="passo-topo">
+                        <div class="passo-numero">1</div>
+                    </div>
+                    <div class="passo-conteudo">
+                        <h3>Crie e configure sua loja</h3>
+                        <p>
+                            Cadastre sua conta, crie sua loja e configure a base da sua operação.
+                            Defina nome, dados comerciais, contato, WhatsApp, identidade visual
+                            e a estrutura inicial do seu negócio dentro da plataforma.
+                        </p>
+                        <ul>
+                            <li>Cadastro da loja e acesso do lojista</li>
+                            <li>Dados comerciais e contato</li>
+                            <li>WhatsApp, identidade e configuração inicial</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="passo">
+                    <div class="passo-topo">
+                        <div class="passo-numero">2</div>
+                    </div>
+                    <div class="passo-conteudo">
+                        <h3>Gerencie sua operação no painel</h3>
+                        <p>
+                            O dono da loja terá um painel administrativo completo para controlar
+                            produtos, categorias, estoque, pedidos, clientes, frete, recebimentos,
+                            dashboard, relatórios e a rotina da operação em um só lugar.
+                        </p>
+                        <ul>
+                            <li>Produtos, categorias e controle de estoque</li>
+                            <li>Pedidos, compradores, financeiro e recebimentos</li>
+                            <li>Dashboard, relatórios e acompanhamento da operação</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="passo">
+                    <div class="passo-topo">
+                        <div class="passo-numero">3</div>
+                    </div>
+                    <div class="passo-conteudo">
+                        <h3>Edite sua vitrine e venda online</h3>
+                        <p>
+                            Além de controlar a operação, o lojista também gerencia a página do consumidor.
+                            É possível editar logo, banner, cores, vitrine, dados da loja e a experiência
+                            visual para deixar a loja com mais identidade e pronta para vender.
+                        </p>
+                        <ul>
+                            <li>Logo, banner com imagem ou cores personalizadas</li>
+                            <li>Vitrine, apresentação da loja e experiência do consumidor</li>
+                            <li>Página pronta para compra com Pix, cartão e entrega</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer class="rodape">
+        <div class="wrap rodape-grid">
+            <div class="rodape-marca">
+                <strong>NexaStore</strong>
+                <p>
+                    Plataforma criada para dar mais organização, presença digital e controle operacional
+                    para lojas que querem vender com mais estrutura.
+                </p>
+            </div>
+
+            <div class="rodape-faq">
+                <h3>FAQ</h3>
+
+                <div class="faq-item">
+                    <strong>Preciso instalar alguma coisa?</strong>
+                    <span>Não. A plataforma funciona online, direto no navegador.</span>
+                </div>
+
+                <div class="faq-item">
+                    <strong>Consigo cadastrar meus produtos e pedidos?</strong>
+                    <span>Sim. Você consegue organizar produtos, pedidos, clientes, recebimentos e vitrine.</span>
+                </div>
+
+                <div class="faq-item">
+                    <strong>A loja do consumidor fica separada do painel?</strong>
+                    <span>Sim. O painel do lojista e a página do consumidor têm funções diferentes e complementares.</span>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <a href="https://wa.me/5571988204491?text=Olá,%20preciso%20de%20ajuda%20na%20plataforma."
+       class="whatsapp-float"
+       target="_blank">
+        <span class="whatsapp-icon">✆</span>
+        <span class="whatsapp-text">Fale conosco</span>
+    </a>
+
+    <script>
+    (function(){
+        const estados = [
+            {
+                tituloBanner: "Ofertas da semana",
+                textoBanner: "Uma vitrine bonita, organizada e pronta para vender.",
+                tituloLateral: "Cliente navegando",
+                produto: "Camisa básica",
+                pagamento: "Pix",
+                entrega: "Frete calculado",
+                status: "Cliente navegando na vitrine",
+                progresso: "22%",
+                ativo: "produto1"
+            },
+            {
+                tituloBanner: "Produtos em destaque",
+                textoBanner: "Edite seu banner com imagem ou combine duas cores para destacar sua vitrine.",
+                tituloLateral: "Produto no carrinho",
+                produto: "Tênis casual",
+                pagamento: "Cartão",
+                entrega: "Entrega local",
+                status: "Produto adicionado ao carrinho",
+                progresso: "48%",
+                ativo: "produto2"
+            },
+            {
+                tituloBanner: "Compra simples e rápida",
+                textoBanner: "Gere relatórios além de contar com um Dashobard moderno",
+                tituloLateral: "Checkout iniciado",
+                produto: "Perfume urbano",
+                pagamento: "Pix",
+                entrega: "Retirada na loja",
+                status: "Checkout em andamento",
+                progresso: "72%",
+                ativo: "produto3"
+            },
+            {
+                tituloBanner: "Experiência pronta para vender",
+                textoBanner: "Mostre sua marca com vitrine, busca e compra em poucos passos.",
+                tituloLateral: "Pedido confirmado",
+                produto: "Mochila premium",
+                pagamento: "Cartão",
+                entrega: "Pedido confirmado",
+                status: "Compra finalizada com sucesso",
+                progresso: "100%",
+                ativo: "produto4"
+            }
+        ];
+
+        let indice = 0;
+
+        const bannerTitulo = document.getElementById("demoBannerTitulo");
+        const bannerTexto = document.getElementById("demoBannerTexto");
+const tituloLateral = document.getElementById("demoTituloLateral");
+        const produtoNome = document.getElementById("demoProdutoNome");
+        const pagamento = document.getElementById("demoPagamento");
+        const entrega = document.getElementById("demoEntrega");
+        const status = document.getElementById("demoStatus");
+        const progresso = document.getElementById("demoProgresso");
+
+        const produtos = ["produto1","produto2","produto3","produto4"];
+
+        function renderizarEstado(){
+            const estado = estados[indice];
+
+            bannerTitulo.textContent = estado.tituloBanner;
+            bannerTexto.textContent = estado.textoBanner;
+            tituloLateral.textContent = estado.tituloLateral;
+            produtoNome.textContent = estado.produto;
+            pagamento.textContent = estado.pagamento;
+            entrega.textContent = estado.entrega;
+            status.textContent = estado.status;
+            progresso.style.width = estado.progresso;
+
+            produtos.forEach(id => {
+                const el = document.getElementById(id);
+                if(el){
+                    el.classList.remove("ativo");
+                }
+            });
+
+            const ativo = document.getElementById(estado.ativo);
+            if(ativo){
+                ativo.classList.add("ativo");
+            }
+
+            indice = (indice + 1) % estados.length;
+        }
+
+        renderizarEstado();
+        setInterval(renderizarEstado, 2400);
+    })();
+    </script>
+</body>
+</html>

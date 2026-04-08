@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Novo produto</title>
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box;}
+        body{font-family:Arial, sans-serif;background:#f5f6fa;color:#222;}
+        .topo{background:#111827;color:white;padding:20px 0;}
+        .conteudo-topo,.container{width:92%;max-width:980px;margin:0 auto;}
+        .topo h1{font-size:28px;}
+        .sub{color:#cbd5e1;margin-top:6px;}
+        .container{padding:30px 0;}
+        .box{background:white;padding:26px;border-radius:18px;box-shadow:0 8px 24px rgba(0,0,0,0.06);}
+        .secao{border:1px solid #e5e7eb;border-radius:16px;padding:20px;margin-bottom:20px;background:#fff;}
+        .secao h3{font-size:18px;margin-bottom:6px;color:#111827;}
+        .secao-sub{font-size:14px;color:#64748b;margin-bottom:18px;line-height:1.5;}
+        .linha{margin-bottom:18px;}
+        label{display:block;margin-bottom:8px;font-weight:bold;color:#111827;}
+        input, textarea, select{width:100%;padding:14px;border:1px solid #d1d5db;border-radius:12px;font-size:15px;background:white;}
+        textarea{min-height:120px;resize:vertical;}
+        .categoria-linha{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:end;}
+        .botao-categoria{background:#0f172a;color:white;text-decoration:none;padding:14px 18px;border-radius:12px;display:inline-block;white-space:nowrap;}
+        .drop-area{border:2px dashed #cbd5e1;background:#f8fafc;border-radius:16px;padding:18px;transition:.2s ease;}
+        .drop-titulo{font-weight:700;color:#111827;margin-bottom:6px;}
+        .drop-sub{font-size:13px;color:#64748b;line-height:1.5;margin-bottom:12px;}
+        .arquivo-linha{display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
+        .arquivo-linha input[type="file"]{padding:10px;background:white;max-width:360px;}
+        .arquivo-info{font-size:13px;color:#475569;}
+        .preview-grid{display:flex;flex-wrap:wrap;gap:12px;margin-top:14px;}
+        .preview-card{width:120px;}
+        .preview-card img{width:120px;height:120px;object-fit:cover;border-radius:12px;border:1px solid #ddd;display:block;background:#fff;}
+        .preview-legenda{margin-top:6px;font-size:12px;color:#64748b;text-align:center;line-height:1.4;}
+        .checkbox-grid{display:grid;grid-template-columns:1fr;gap:12px;}
+        .checkbox{display:flex;align-items:center;gap:10px;padding:12px 14px;border:1px solid #e5e7eb;border-radius:12px;background:#f8fafc;}
+        .checkbox input{width:auto;transform:scale(1.1);}
+        .checkbox label{margin:0;font-weight:600;}
+        .acoes{display:flex;gap:12px;margin-top:24px;flex-wrap:wrap;}
+        .botao{background:#111827;color:white;border:none;padding:14px 18px;border-radius:12px;cursor:pointer;font-size:15px;text-decoration:none;display:inline-block;}
+        .botao-secundario{background:white;color:#111827;border:1px solid #ccc;padding:14px 18px;border-radius:12px;cursor:pointer;font-size:15px;text-decoration:none;display:inline-block;}
+        @media (max-width:760px){
+            .categoria-linha{grid-template-columns:1fr;}
+            .preview-card,.preview-card img{width:90px;height:90px;}
+        }
+    </style>
+</head>
+<body>
+
+<div class="topo">
+    <div class="conteudo-topo">
+        <h1>{{ loja.nome }}</h1>
+        <div class="sub">Cadastro de novo produto</div>
+    </div>
+</div>
+
+<div class="container">
+    <div class="box">
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+
+            <div class="secao">
+                <h3>Dados principais</h3>
+                <div class="secao-sub">Cadastre as informações básicas do produto.</div>
+
+                <div class="linha">
+                    <label>Nome</label>
+                    {{ form.nome }}
+                </div>
+
+                <div class="linha">
+                    <label>Categoria</label>
+                    <div class="categoria-linha">
+                        <div>{{ form.categoria }}</div>
+                        <a href="/painel/categorias/nova/" class="botao-categoria">+ Nova categoria</a>
+                    </div>
+                </div>
+
+                <div class="linha">
+                    <label>Preço</label>
+                    {{ form.preco }}
+                </div>
+
+                <div class="linha">
+                    <label>Descrição</label>
+                    {{ form.descricao }}
+                </div>
+
+                <div class="linha">
+                    <label>Estoque</label>
+                    {{ form.estoque }}
+                </div>
+            </div>
+
+            <div class="secao">
+                <h3>Imagens do produto</h3>
+                <div class="secao-sub">Defina a imagem principal e adicione outras imagens para a galeria do consumidor.</div>
+
+                <div class="linha">
+                    <label>Imagem principal</label>
+                    <div class="drop-area">
+                        <div class="drop-titulo">Arraste a imagem principal aqui</div>
+                        <div class="drop-sub">ou clique abaixo para escolher um arquivo</div>
+                        <div class="arquivo-linha">
+                            <input type="file" name="imagem" id="id_imagem" accept="image/*">
+                            <span class="arquivo-info" id="principalInfo">Nenhuma nova imagem selecionada</span>
+                        </div>
+                        <div class="preview-grid" id="principalPreview"></div>
+                    </div>
+                </div>
+
+                <div class="linha" style="margin-bottom:0;">
+                    <label>Imagens extras do produto</label>
+                    <div class="drop-area">
+                        <div class="drop-titulo">Arraste várias imagens aqui</div>
+                        <div class="drop-sub">ou clique abaixo para selecionar várias imagens</div>
+                        <div class="arquivo-linha">
+                            <input type="file" name="imagens_extras" id="id_imagens_extras" accept="image/*" multiple>
+                            <span class="arquivo-info" id="extrasInfo">Nenhuma nova imagem selecionada</span>
+                        </div>
+                        <div class="preview-grid" id="extrasPreview"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="secao">
+                <h3>Configurações do produto</h3>
+                <div class="secao-sub">Escolha como o produto será exibido na loja.</div>
+
+                <div class="checkbox-grid">
+                    <div class="checkbox">
+                        {{ form.ativo }}
+                        <label for="{{ form.ativo.id_for_label }}">Produto ativo</label>
+                    </div>
+
+                    <div class="checkbox">
+                        {{ form.em_destaque }}
+                        <label for="{{ form.em_destaque.id_for_label }}">Produto em destaque</label>
+                    </div>
+
+                    <div class="checkbox">
+                        {{ form.produto_novo }}
+                        <label for="{{ form.produto_novo.id_for_label }}">Produto novo</label>
+                    </div>
+                </div>
+
+                <div class="linha" style="margin-top:16px;margin-bottom:0;">
+                    <label>Percentual de promoção (%)</label>
+                    {{ form.percentual_promocao }}
+                </div>
+            </div>
+
+            <div class="acoes">
+                <button type="submit" class="botao">Salvar produto</button>
+                <a href="/painel/" class="botao-secundario">Voltar</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function criarPreviewUnico(input, previewId, infoId){
+    const preview = document.getElementById(previewId);
+    const info = document.getElementById(infoId);
+    preview.innerHTML = "";
+
+    if (!input.files || !input.files[0]){
+        info.textContent = "Nenhuma nova imagem selecionada";
+        return;
+    }
+
+    info.textContent = input.files[0].name;
+
+    const reader = new FileReader();
+    reader.onload = function(e){
+        preview.innerHTML = `
+            <div class="preview-card">
+                <img src="${e.target.result}" alt="Preview principal">
+                <div class="preview-legenda">Nova imagem principal</div>
+            </div>
+        `;
+    };
+    reader.readAsDataURL(input.files[0]);
+}
+
+function criarPreviewMultiplo(input, previewId, infoId){
+    const preview = document.getElementById(previewId);
+    const info = document.getElementById(infoId);
+    preview.innerHTML = "";
+
+    if (!input.files || input.files.length === 0){
+        info.textContent = "Nenhuma nova imagem selecionada";
+        return;
+    }
+
+    info.textContent = input.files.length + " imagem(ns) selecionada(s)";
+
+    Array.from(input.files).forEach((file, index) => {
+        const reader = new FileReader();
+        reader.onload = function(e){
+            const card = document.createElement("div");
+            card.className = "preview-card";
+            card.innerHTML = `
+                <img src="${e.target.result}" alt="Preview extra">
+                <div class="preview-legenda">Nova imagem ${index + 1}</div>
+            `;
+            preview.appendChild(card);
+        };
+        reader.readAsDataURL(file);
+    });
+}
+
+const inputPrincipal = document.getElementById("id_imagem");
+const inputExtras = document.getElementById("id_imagens_extras");
+
+if (inputPrincipal){
+    inputPrincipal.addEventListener("change", function(){
+        criarPreviewUnico(this, "principalPreview", "principalInfo");
+    });
+}
+
+if (inputExtras){
+    inputExtras.addEventListener("change", function(){
+        criarPreviewMultiplo(this, "extrasPreview", "extrasInfo");
+    });
+}
+</script>
+
+</body>
+</html>

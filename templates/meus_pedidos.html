@@ -1,0 +1,97 @@
+{% extends 'base_publico.html' %}
+{% block title %}Meus pedidos{% endblock %}
+
+{% block content %}
+<div style="max-width:1100px;margin:0 auto;padding:10px 0 30px 0;">
+    <div style="background:white;padding:28px;border-radius:22px;box-shadow:0 10px 30px rgba(15,23,42,.06);">
+        <h1 style="font-size:40px;font-weight:900;margin-bottom:24px;color:#0f172a;">
+            Meus pedidos
+        </h1>
+
+        {% if pedidos %}
+            <div style="display:grid;gap:18px;">
+                {% for pedido in pedidos %}
+                    <div style="border:1px solid #e5e7eb;border-radius:18px;padding:20px;">
+                        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:20px;flex-wrap:wrap;">
+                            <div>
+                                <div style="font-size:26px;font-weight:900;color:#111827;margin-bottom:10px;">
+                                    Pedido #{{ pedido.id }}
+                                </div>
+
+                                <div style="font-size:16px;color:#334155;line-height:1.8;">
+                                    <strong>Produto:</strong> {{ pedido.produto.nome }}<br>
+                                    <strong>Quantidade:</strong> {{ pedido.quantidade }}<br>
+                                    <strong>Status do pedido:</strong>
+                                    {% if pedido.status == "aguardando_envio" %}
+                                        Aguardando envio
+                                    {% elif pedido.status == "pendente" %}
+                                        Pendente
+                                    {% elif pedido.status == "enviado" %}
+                                        Enviado
+                                    {% elif pedido.status == "entregue" %}
+                                        Entregue
+                                    {% elif pedido.status == "cancelado" %}
+                                        Cancelado
+                                    {% else %}
+                                        {{ pedido.get_status_display }}
+                                    {% endif %}
+                                    <br>
+
+                                    <strong>Status do pagamento:</strong>
+                                    {% if pedido.status_pagamento == "pago" %}
+                                        Pago
+                                    {% elif pedido.status_pagamento == "aguardando" %}
+                                        Aguardando pagamento
+                                    {% elif pedido.status_pagamento == "em_analise" %}
+                                        Em análise
+                                    {% elif pedido.status_pagamento == "recusado" %}
+                                        Recusado
+                                    {% else %}
+                                        {{ pedido.get_status_pagamento_display }}
+                                    {% endif %}
+                                    <br>
+
+                                    {% if pedido.mp_payment_id %}
+                                        <strong>Código do pagamento:</strong> {{ pedido.mp_payment_id }}<br>
+                                    {% endif %}
+
+                                    <strong>Data:</strong> {{ pedido.data|date:"d/m/Y H:i" }}
+                                </div>
+                            </div>
+
+                            <div style="display:flex;flex-direction:column;gap:10px;min-width:220px;">
+                                {% if pedido.status_pagamento != "pago" and pedido.referencia_pagamento %}
+                                    <a href="{% url 'pagina_pagamento' pedido.referencia_pagamento %}"
+                                       style="display:inline-block;text-align:center;background:#2563eb;color:white;text-decoration:none;padding:13px 18px;border-radius:14px;font-weight:800;">
+                                        Ir para pagamento
+                                    </a>
+                                {% endif %}
+
+                                {% if pedido.status_pagamento == "pago" %}
+                                    <div style="padding:12px 16px;border-radius:14px;background:#ecfdf5;color:#065f46;font-weight:800;text-align:center;">
+                                        Pagamento confirmado
+                                    </div>
+                                {% elif pedido.status_pagamento == "em_analise" %}
+                                    <div style="padding:12px 16px;border-radius:14px;background:#fffbeb;color:#92400e;font-weight:800;text-align:center;">
+                                        Pagamento em análise
+                                    </div>
+                                {% elif pedido.status_pagamento == "recusado" %}
+                                    <div style="padding:12px 16px;border-radius:14px;background:#fef2f2;color:#991b1b;font-weight:800;text-align:center;">
+                                        Pagamento recusado
+                                    </div>
+                                {% else %}
+                                    <div style="padding:12px 16px;border-radius:14px;background:#eff6ff;color:#1d4ed8;font-weight:800;text-align:center;">
+                                        Aguardando pagamento
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p style="font-size:18px;color:#64748b;">Você ainda não possui pedidos.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

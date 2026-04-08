@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Relatorios</title>
+    <style>
+        body{font-family:Arial,sans-serif;background:#f4f6fb;margin:0;color:#1f2937;}
+        .topo{background:#0f172a;color:white;padding:20px 0;}
+        .wrap{width:92%;max-width:1000px;margin:0 auto;}
+        .box{background:white;margin-top:30px;padding:24px;border-radius:18px;box-shadow:0 8px 24px rgba(15,23,42,0.06);}
+        .botao{background:#0f172a;color:white;text-decoration:none;padding:12px 16px;border-radius:10px;display:inline-block;margin-bottom:20px;border:none;cursor:pointer;}
+        .linha{margin-bottom:14px;font-size:20px;}
+        .filtro{margin-bottom:20px;display:flex;gap:12px;align-items:end;flex-wrap:wrap;}
+        .filtro input{padding:10px;border:1px solid #ccc;border-radius:10px;}
+        .grupo label{display:block;margin-bottom:6px;font-weight:bold;}
+    </style>
+</head>
+<body>
+    <div class="topo">
+        <div class="wrap">
+            <h1>{{ loja.nome }}</h1>
+            <p>Relatorios da loja</p>
+        </div>
+    </div>
+
+    <div class="wrap">
+        <div class="box">
+            <a class="botao" href="/painel/">Voltar ao painel</a>
+
+            {% if plano_permite_exportar_excel %}
+                <a href="/painel/exportar-excel/" class="botao">Exportar Excel</a>
+            {% endif %}
+
+            <form method="get" class="filtro">
+                <div class="grupo">
+                    <label>Data início</label>
+                    <input type="date" name="data_inicio" value="{{ data_inicio|default:'' }}">
+                </div>
+
+                <div class="grupo">
+                    <label>Data fim</label>
+                    <input type="date" name="data_fim" value="{{ data_fim|default:'' }}">
+                </div>
+
+                <button type="submit" class="botao">Filtrar</button>
+            </form>
+
+            <div class="linha">Total de produtos: <strong>{{ total_produtos }}</strong></div>
+            <div class="linha">Total de pedidos: <strong>{{ total_pedidos }}</strong></div>
+            <div class="linha">Faturamento total: <strong>R$ {{ faturamento_total }}</strong></div>
+        </div>
+    </div>
+</body>
+</html>

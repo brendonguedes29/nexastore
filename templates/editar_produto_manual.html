@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Editar produto</title>
+
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box;}
+        body{font-family:Arial, sans-serif;background:#f5f6fa;color:#222;}
+        .topo{background:#111827;color:white;padding:20px 0;}
+        .conteudo-topo,.container{width:92%;max-width:980px;margin:0 auto;}
+        .topo h1{font-size:28px;}
+        .sub{color:#cbd5e1;margin-top:6px;}
+        .container{padding:30px 0;}
+
+        .box{
+            background:white;
+            padding:26px;
+            border-radius:18px;
+            box-shadow:0 8px 24px rgba(0,0,0,0.06);
+        }
+
+        .secao{
+            border:1px solid #e5e7eb;
+            border-radius:16px;
+            padding:20px;
+            margin-bottom:20px;
+            background:#fff;
+        }
+
+        .secao h3{
+            font-size:18px;
+            margin-bottom:6px;
+            color:#111827;
+        }
+
+        .secao-sub{
+            font-size:14px;
+            color:#64748b;
+            margin-bottom:18px;
+            line-height:1.5;
+        }
+
+        .linha{margin-bottom:18px;}
+
+        label{
+            display:block;
+            margin-bottom:8px;
+            font-weight:bold;
+            color:#111827;
+        }
+
+        input, textarea, select{
+            width:100%;
+            padding:14px;
+            border:1px solid #d1d5db;
+            border-radius:12px;
+            font-size:15px;
+            background:white;
+        }
+
+        textarea{
+            min-height:120px;
+            resize:vertical;
+        }
+
+        .upload-box{
+            border:2px dashed #cbd5e1;
+            padding:16px;
+            border-radius:14px;
+            background:#f8fafc;
+        }
+
+        .arquivo-linha{
+            display:flex;
+            gap:10px;
+            align-items:center;
+            flex-wrap:wrap;
+        }
+
+        .arquivo-linha input[type="file"]{
+            max-width:360px;
+            padding:10px;
+        }
+
+        .arquivo-info{
+            font-size:13px;
+            color:#64748b;
+        }
+
+        .preview-grid{
+            display:flex;
+            flex-wrap:wrap;
+            gap:12px;
+            margin-top:14px;
+        }
+
+        .preview-card{
+            width:120px;
+        }
+
+        .preview-card img{
+            width:120px;
+            height:120px;
+            object-fit:cover;
+            border-radius:12px;
+            border:1px solid #ddd;
+            display:block;
+            background:#fff;
+        }
+
+        .preview-legenda{
+            margin-top:6px;
+            font-size:12px;
+            color:#64748b;
+            text-align:center;
+            line-height:1.4;
+        }
+
+        .imagem-atual img{
+            width:150px;
+            height:150px;
+            object-fit:cover;
+            border-radius:12px;
+            border:1px solid #ddd;
+            display:block;
+        }
+
+        .galeria{
+            display:flex;
+            gap:12px;
+            flex-wrap:wrap;
+            margin-top:10px;
+        }
+
+        .thumb{
+            width:110px;
+            position:relative;
+        }
+
+        .thumb img{
+            width:110px;
+            height:110px;
+            object-fit:cover;
+            border-radius:10px;
+            border:1px solid #ddd;
+            display:block;
+        }
+
+        .btn-excluir{
+            position:absolute;
+            top:5px;
+            right:5px;
+            background:#dc2626;
+            color:white;
+            padding:4px 6px;
+            border-radius:6px;
+            text-decoration:none;
+            font-size:12px;
+            line-height:1;
+        }
+
+        .btn-principal{
+            display:block;
+            margin-top:6px;
+            background:#111827;
+            color:white;
+            text-align:center;
+            padding:6px 8px;
+            border-radius:8px;
+            text-decoration:none;
+            font-size:12px;
+        }
+
+        .checkbox{
+            display:flex;
+            align-items:center;
+            gap:10px;
+            margin-bottom:14px;
+            padding:12px 14px;
+            border:1px solid #e5e7eb;
+            border-radius:12px;
+            background:#f8fafc;
+        }
+
+        .checkbox input{
+            width:auto;
+            transform:scale(1.1);
+        }
+
+        .checkbox label{
+            margin:0;
+            font-weight:600;
+        }
+
+        .acoes{
+            display:flex;
+            gap:12px;
+            margin-top:24px;
+            flex-wrap:wrap;
+        }
+
+        .botao{
+            background:#111827;
+            color:white;
+            border:none;
+            padding:14px 18px;
+            border-radius:12px;
+            cursor:pointer;
+            font-size:15px;
+            text-decoration:none;
+        }
+
+        .botao-secundario{
+            background:white;
+            color:#111827;
+            border:1px solid #ccc;
+            padding:14px 18px;
+            border-radius:12px;
+            text-decoration:none;
+        }
+
+        @media (max-width:760px){
+            .preview-card,.preview-card img{
+                width:90px;
+                height:90px;
+            }
+
+            .thumb,.thumb img{
+                width:90px;
+                height:90px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="topo">
+    <div class="conteudo-topo">
+        <h1>{{ loja.nome }}</h1>
+        <div class="sub">Editar produto</div>
+    </div>
+</div>
+
+<div class="container">
+    <div class="box">
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+
+            <div class="secao">
+                <h3>Dados principais</h3>
+                <div class="secao-sub">Edite as informações básicas do produto.</div>
+
+                <div class="linha">
+                    <label>Nome</label>
+                    {{ form.nome }}
+                </div>
+
+                <div class="linha">
+                    <label>Categoria</label>
+                    {{ form.categoria }}
+                </div>
+
+                <div class="linha">
+                    <label>Preço</label>
+                    {{ form.preco }}
+                </div>
+
+                <div class="linha">
+                    <label>Descrição</label>
+                    {{ form.descricao }}
+                </div>
+
+                <div class="linha">
+                    <label>Estoque</label>
+                    {{ form.estoque }}
+                </div>
+            </div>
+
+            <div class="secao">
+                <h3>Imagens do produto</h3>
+                <div class="secao-sub">Troque a imagem principal ou defina uma imagem extra como principal.</div>
+
+                <div class="linha">
+                    <label>Imagem principal</label>
+                    <div class="upload-box">
+                        <div class="arquivo-linha">
+                            <input type="file" name="imagem" id="id_imagem" accept="image/*">
+                            <span class="arquivo-info" id="principalInfo">Nenhuma nova imagem selecionada</span>
+                        </div>
+                        <div class="preview-grid" id="principalPreview"></div>
+                    </div>
+
+                    {% if produto.imagem %}
+                    <div style="margin-top:10px;">
+                        <p style="margin-bottom:6px;">Imagem principal atual:</p>
+                        <div class="imagem-atual">
+                            <img src="{{ produto.imagem.url }}" alt="{{ produto.nome }}">
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <div class="linha">
+                    <label>Adicionar novas imagens extras</label>
+                    <div class="upload-box">
+                        <div class="arquivo-linha">
+                            <input type="file" name="imagens_extras" id="id_imagens_extras" accept="image/*" multiple>
+                            <span class="arquivo-info" id="extrasInfo">Nenhuma nova imagem selecionada</span>
+                        </div>
+                        <div class="preview-grid" id="extrasPreview"></div>
+                    </div>
+
+                    {% if imagens_extras %}
+                    <div style="margin-top:10px;">
+                        <p style="margin-bottom:6px;">Imagens extras atuais:</p>
+                        <div class="galeria">
+                            {% for img in imagens_extras %}
+                                <div class="thumb">
+                                    <img src="{{ img.imagem.url }}" alt="{{ produto.nome }}">
+                                    <a href="{% url 'excluir_imagem_produto' img.id %}" class="btn-excluir">X</a>
+                                    <a href="{% url 'definir_imagem_principal' img.id %}" class="btn-principal">Principal</a>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="secao">
+                <h3>Configurações</h3>
+
+                <div class="checkbox">
+                    {{ form.ativo }}
+                    <label for="{{ form.ativo.id_for_label }}">Produto ativo</label>
+                </div>
+
+                <div class="checkbox">
+                    {{ form.em_destaque }}
+                    <label for="{{ form.em_destaque.id_for_label }}">Produto em destaque</label>
+                </div>
+
+                <div class="checkbox">
+                    {{ form.produto_novo }}
+                    <label for="{{ form.produto_novo.id_for_label }}">Produto novo</label>
+                </div>
+
+                <div class="linha">
+                    <label>Desconto (%)</label>
+                    {{ form.percentual_promocao }}
+                </div>
+            </div>
+
+            <div class="acoes">
+                <button type="submit" class="botao">Salvar alterações</button>
+                <a href="/painel/" class="botao-secundario">Voltar</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function criarPreviewUnico(input, previewId, infoId){
+    const preview = document.getElementById(previewId);
+    const info = document.getElementById(infoId);
+    preview.innerHTML = "";
+
+    if (!input.files || !input.files[0]){
+        info.textContent = "Nenhuma nova imagem selecionada";
+        return;
+    }
+
+    info.textContent = input.files[0].name;
+
+    const reader = new FileReader();
+    reader.onload = function(e){
+        preview.innerHTML = `
+            <div class="preview-card">
+                <img src="${e.target.result}" alt="Preview principal">
+                <div class="preview-legenda">Nova imagem principal</div>
+            </div>
+        `;
+    };
+    reader.readAsDataURL(input.files[0]);
+}
+
+function criarPreviewMultiplo(input, previewId, infoId){
+    const preview = document.getElementById(previewId);
+    const info = document.getElementById(infoId);
+    preview.innerHTML = "";
+
+    if (!input.files || input.files.length === 0){
+        info.textContent = "Nenhuma nova imagem selecionada";
+        return;
+    }
+
+    info.textContent = input.files.length + " imagem(ns) selecionada(s)";
+
+    Array.from(input.files).forEach((file, index) => {
+        const reader = new FileReader();
+        reader.onload = function(e){
+            const card = document.createElement("div");
+            card.className = "preview-card";
+            card.innerHTML = `
+                <img src="${e.target.result}" alt="Preview extra">
+                <div class="preview-legenda">Nova imagem ${index + 1}</div>
+            `;
+            preview.appendChild(card);
+        };
+        reader.readAsDataURL(file);
+    });
+}
+
+const inputPrincipal = document.getElementById("id_imagem");
+const inputExtras = document.getElementById("id_imagens_extras");
+
+if (inputPrincipal){
+    inputPrincipal.addEventListener("change", function(){
+        criarPreviewUnico(this, "principalPreview", "principalInfo");
+    });
+}
+
+if (inputExtras){
+    inputExtras.addEventListener("change", function(){
+        criarPreviewMultiplo(this, "extrasPreview", "extrasInfo");
+    });
+}
+</script>
+
+</body>
+</html>

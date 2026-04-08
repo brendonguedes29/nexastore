@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Frete e Entrega</title>
+<style>
+body{
+    font-family:Arial,sans-serif;
+    background:#f4f6fb;
+    margin:0;
+    padding:24px;
+    color:#1f2937;
+}
+.box{
+    background:white;
+    padding:24px;
+    border-radius:18px;
+    box-shadow:0 8px 24px rgba(15,23,42,0.06);
+    margin-bottom:20px;
+}
+a.botao{
+    display:inline-block;
+    padding:10px 14px;
+    border-radius:10px;
+    background:#0b1220;
+    color:white;
+    text-decoration:none;
+    margin-right:8px;
+}
+table{
+    width:100%;
+    border-collapse:collapse;
+    margin-top:16px;
+}
+th,td{
+    padding:12px;
+    border-bottom:1px solid #e5e7eb;
+    text-align:left;
+}
+.info{
+    background:#f8fafc;
+    border:1px solid #e5e7eb;
+    border-radius:12px;
+    padding:14px 16px;
+    margin-top:14px;
+    line-height:1.6;
+    color:#475569;
+}
+</style>
+</head>
+<body>
+
+<div class="box">
+    <h1>Frete e Entrega</h1>
+    <p>Gerencie o endereço de origem da loja e as faixas de frete por km.</p>
+
+    <a href="{% url 'painel_loja' %}" class="botao">Voltar ao painel</a>
+    <a href="{% url 'editar_config_frete' %}" class="botao">Editar configuração</a>
+    <a href="{% url 'nova_faixa_frete' %}" class="botao">Nova faixa</a>
+</div>
+
+<div class="box">
+    <h2>Endereço de origem</h2>
+    <p><strong>CEP:</strong> {{ config.cep_origem|default:"-" }}</p>
+    <p><strong>Rua:</strong> {{ config.rua_origem|default:"-" }}</p>
+    <p><strong>Número:</strong> {{ config.numero_origem|default:"-" }}</p>
+    <p><strong>Complemento:</strong> {{ config.complemento_origem|default:"-" }}</p>
+    <p><strong>Bairro:</strong> {{ config.bairro_origem|default:"-" }}</p>
+    <p><strong>Cidade:</strong> {{ config.cidade_origem|default:"-" }}</p>
+    <p><strong>Estado:</strong> {{ config.estado_origem|default:"-" }}</p>
+</div>
+
+<div class="box">
+    <h2>Configuração geral</h2>
+    <p><strong>Valor fora do estado:</strong> R$ {{ config.valor_fora_estado }}</p>
+    <p><strong>Retirada na loja:</strong> {% if config.retirada_loja %}Sim{% else %}Não{% endif %}</p>
+    <p><strong>Entrega ativa:</strong> {% if config.entrega_ativa %}Sim{% else %}Não{% endif %}</p>
+
+    <div class="info">
+        Para entregas no mesmo estado, o sistema usa as <strong>faixas de frete por KM</strong> cadastradas abaixo.
+        O valor fora do estado continua sendo aplicado como valor fixo quando o estado do cliente for diferente do estado de origem da loja.
+    </div>
+</div>
+
+<div class="box">
+    <h2>Faixas de frete</h2>
+
+    {% if faixas %}
+    <table>
+        <thead>
+            <tr>
+                <th>KM inicial</th>
+                <th>KM final</th>
+                <th>Valor</th>
+                <th>Ativo</th>
+                <th>Ação</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for faixa in faixas %}
+            <tr>
+                <td>{{ faixa.km_inicial }}</td>
+                <td>{{ faixa.km_final }}</td>
+                <td>R$ {{ faixa.valor }}</td>
+                <td>{% if faixa.ativo %}Sim{% else %}Não{% endif %}</td>
+                <td><a href="{% url 'editar_faixa_frete' faixa.id %}">Editar</a></td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+        <p>Nenhuma faixa cadastrada ainda.</p>
+    {% endif %}
+</div>
+
+</body>
+</html>

@@ -1,0 +1,49 @@
+{% extends 'base_publico.html' %}
+{% block title %}Pagamento{% endblock %}
+
+{% block content %}
+<div style="background:white;padding:30px;border-radius:20px;box-shadow:0 8px 24px rgba(0,0,0,0.05);text-align:center;">
+
+    <h1>Pagamento</h1>
+
+    <h3>Total: R$ {{ total }}</h3>
+
+    {% if forma_pagamento == "pix" and pedido_pix %}
+
+        <h2>Pague via Pix</h2>
+
+        <p>Escaneie o QR Code abaixo:</p>
+
+        <img style="width:250px;margin:20px 0;"
+             src="data:image/png;base64,{{ pedido_pix.mp_qr_code_base64 }}" />
+
+        <p style="word-break:break-all;">
+            {{ pedido_pix.mp_qr_code }}
+        </p>
+
+        <p style="margin-top:20px;color:#555;">
+            Após o pagamento, o pedido será confirmado automaticamente.
+        </p>
+
+    {% elif forma_pagamento == "cartao" %}
+
+        <h2>Pagamento com cartão</h2>
+        <p>Você será redirecionado para o Mercado Pago.</p>
+
+    {% else %}
+
+        <h2>Pedido registrado</h2>
+        <p>Aguardando pagamento.</p>
+
+    {% endif %}
+
+    <br><br>
+
+    <a href="{% url 'loja' loja.slug %}">
+        <button style="background:#0b1220;color:white;padding:14px;border:none;border-radius:12px;font-weight:bold;">
+            Voltar para loja
+        </button>
+    </a>
+
+</div>
+{% endblock %}

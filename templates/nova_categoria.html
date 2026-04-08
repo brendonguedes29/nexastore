@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nova categoria</title>
+    <style>
+        body{font-family:Arial,sans-serif;background:#f4f6fb;margin:0;color:#1f2937;}
+        .topo{background:#0f172a;color:white;padding:20px 0;}
+        .wrap{width:92%;max-width:700px;margin:0 auto;}
+        .box{background:white;margin-top:30px;padding:24px;border-radius:18px;box-shadow:0 8px 24px rgba(15,23,42,0.06);}
+        label{display:block;margin-bottom:8px;font-weight:bold;}
+        input{width:100%;padding:12px;border:1px solid #ccc;border-radius:10px;margin-bottom:18px;}
+        .botao{background:#0f172a;color:white;text-decoration:none;padding:12px 16px;border-radius:10px;display:inline-block;border:none;cursor:pointer;margin-right:10px;}
+    </style>
+</head>
+<body>
+    <div class="topo">
+        <div class="wrap">
+            <h1>{{ loja.nome }}</h1>
+            <p>Nova categoria</p>
+        </div>
+    </div>
+
+    <div class="wrap">
+        <div class="box">
+            <form method="post">
+                {% csrf_token %}
+                {{ form.as_p }}
+                <button class="botao" type="submit">Salvar categoria</button>
+                <a class="botao" href="/painel/categorias/">Voltar</a>
+            </form>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nova senha | NexaStore</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            font-family: Arial, sans-serif;
+            background:
+                radial-gradient(circle at top, rgba(34,211,238,.16), transparent 35%),
+                linear-gradient(135deg, #07111f, #0b1220 45%, #111827);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            color: #fff;
+        }
+
+        .card {
+            width: 100%;
+            max-width: 480px;
+            background: rgba(15, 23, 42, 0.96);
+            border: 1px solid rgba(255,255,255,.08);
+            border-radius: 22px;
+            box-shadow: 0 30px 80px rgba(0,0,0,.45);
+            overflow: hidden;
+        }
+
+        .topo {
+            padding: 28px 30px 20px;
+            background: linear-gradient(90deg, #22d3ee, #3b82f6);
+        }
+
+        .marca {
+            font-size: 28px;
+            font-weight: 800;
+            color: #fff;
+            margin: 0 0 6px;
+        }
+
+        .submarca {
+            font-size: 14px;
+            color: #ecfeff;
+            margin: 0;
+        }
+
+        .conteudo {
+            padding: 30px;
+        }
+
+        .titulo {
+            margin: 0 0 10px;
+            font-size: 30px;
+            line-height: 1.1;
+            font-weight: 800;
+            color: #fff;
+        }
+
+        .texto {
+            margin: 0 0 24px;
+            color: #cbd5e1;
+            font-size: 15px;
+            line-height: 1.65;
+        }
+
+        form p {
+            margin: 0 0 16px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #e5e7eb;
+            font-size: 14px;
+            font-weight: 700;
+        }
+
+        input {
+            width: 100%;
+            padding: 15px 16px;
+            border-radius: 14px;
+            border: 1px solid rgba(255,255,255,.08);
+            background: #0f172a;
+            color: #fff;
+            outline: none;
+            font-size: 15px;
+        }
+
+        input:focus {
+            border-color: #22d3ee;
+            box-shadow: 0 0 0 3px rgba(34,211,238,.15);
+        }
+
+        ul.errorlist {
+            list-style: none;
+            padding: 0;
+            margin: 0 0 10px;
+            color: #fecaca;
+            font-size: 13px;
+            line-height: 1.5;
+            background: rgba(239,68,68,.12);
+            border: 1px solid rgba(239,68,68,.20);
+            border-radius: 10px;
+            padding: 10px 12px;
+        }
+
+        .ajuda {
+            margin-top: 20px;
+            padding: 14px 16px;
+            border-radius: 14px;
+            background: rgba(255,255,255,.04);
+            border: 1px solid rgba(255,255,255,.06);
+            color: #94a3b8;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+
+        .acoes {
+            margin-top: 24px;
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            border: 0;
+            border-radius: 14px;
+            padding: 14px 18px;
+            font-size: 15px;
+            font-weight: 800;
+            cursor: pointer;
+            text-decoration: none;
+            transition: .2s ease;
+        }
+
+        .btn-principal {
+            background: linear-gradient(90deg, #22d3ee, #38bdf8);
+            color: #0f172a;
+            flex: 1;
+            min-width: 180px;
+        }
+
+        .btn-principal:hover {
+            transform: translateY(-1px);
+            opacity: .96;
+        }
+
+        .btn-secundario {
+            background: rgba(255,255,255,.05);
+            color: #e5e7eb;
+            border: 1px solid rgba(255,255,255,.08);
+        }
+
+        .btn-secundario:hover {
+            background: rgba(255,255,255,.08);
+        }
+
+        @media (max-width: 520px) {
+            .conteudo {
+                padding: 24px 20px;
+            }
+
+            .topo {
+                padding: 24px 20px 18px;
+            }
+
+            .titulo {
+                font-size: 26px;
+            }
+
+            .acoes {
+                flex-direction: column;
+            }
+
+            .btn-principal {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="card">
+        <div class="topo">
+            <h1 class="marca">NexaStore</h1>
+            <p class="submarca">Redefinição segura de senha</p>
+        </div>
+
+        <div class="conteudo">
+            <h2 class="titulo">Crie sua nova senha</h2>
+            <p class="texto">
+                Digite uma nova senha para recuperar o acesso à sua conta.
+                Escolha uma combinação forte e fácil de lembrar.
+            </p>
+
+            <form method="post">
+                {% csrf_token %}
+                {{ form.as_p }}
+
+                <div class="ajuda">
+                    Use pelo menos 8 caracteres, misturando letras, números e, se possível, símbolos.
+                </div>
+
+                <div class="acoes">
+                    <button type="submit" class="btn btn-principal">Salvar nova senha</button>
+                    <a href="{% url 'login_loja' %}" class="btn btn-secundario">Voltar ao login</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+</body>
+</html>

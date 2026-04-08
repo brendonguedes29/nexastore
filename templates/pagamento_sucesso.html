@@ -1,0 +1,20 @@
+{% extends 'base_publico.html' %}
+{% block title %}Pagamento confirmado{% endblock %}
+
+{% block content %}
+<div style="background:white;padding:30px;border-radius:20px;box-shadow:0 8px 24px rgba(0,0,0,0.05);max-width:800px;margin:0 auto;text-align:center;">
+    <h1 style="margin-bottom:12px;">Pagamento confirmado!</h1>
+    <p style="font-size:18px;color:#334155;">
+        Obrigado pela sua compra.
+    </p>
+    <p style="margin-top:10px;color:#475569;">
+        Seu pedido <strong>{{ referencia }}</strong> foi recebido e estamos preparando tudo.
+    </p>
+
+    <div style="margin-top:24px;">
+        <a href="{% url 'meus_pedidos' %}" style="display:inline-block;background:#0b1220;color:white;padding:14px 20px;border-radius:12px;text-decoration:none;font-weight:bold;">
+            Ver meus pedidos
+        </a>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,194 @@
+{% extends 'base_publico.html' %}
+{% block title %}Seu carrinho{% endblock %}
+
+{% block content %}
+<div style="max-width:1100px;margin:0 auto;padding:10px 0 30px 0;">
+    <h1 style="font-size:42px;font-weight:900;margin-bottom:24px;color:#0f172a;">
+        Seu carrinho
+    </h1>
+
+    <div style="background:white;border-radius:22px;padding:28px;box-shadow:0 10px 30px rgba(15,23,42,.06);">
+        {% if itens %}
+            <form id="form-carrinho" method="post" action="{% url 'atualizar_carrinho' %}">
+                {% csrf_token %}
+                <input type="hidden" name="ir_checkout" id="ir_checkout" value="0">
+
+                {% for item in itens %}
+                <div style="display:grid;grid-template-columns:110px 1fr 170px 140px;gap:24px;align-items:center;padding:22px 0;border-bottom:1px solid #e5e7eb;">
+                    
+                    <!-- Imagem -->
+                    <div style="width:100px;height:100px;border-radius:18px;background:#f1f5f9;display:flex;align-items:center;justify-content:center;overflow:hidden;color:#64748b;font-size:13px;">
+                        {% if item.produto.imagem %}
+                            <img src="{{ item.produto.imagem.url }}" alt="{{ item.produto.nome }}" style="width:100%;height:100%;object-fit:cover;">
+                        {% else %}
+                            Sem imagem
+                        {% endif %}
+                    </div>
+
+                    <!-- Informações -->
+                    <div>
+                        <h3 style="font-size:24px;line-height:1.2;margin:0 0 14px 0;color:#111827;font-weight:800;">
+                            {{ item.produto.nome }}
+                        </h3>
+
+                        <div style="display:flex;flex-wrap:wrap;gap:12px;">
+                            <div style="min-width:170px;border:1px solid #e5e7eb;border-radius:14px;padding:12px 14px;">
+                                <div style="font-size:12px;font-weight:800;color:#64748b;margin-bottom:6px;">
+                                    PREÇO UNITÁRIO
+                                </div>
+                                <div style="font-size:22px;font-weight:900;color:#0f172a;">
+                                    R$ <span class="preco-unitario">{{ item.produto.preco|floatformat:2 }}</span>
+                                </div>
+                            </div>
+
+                            <div style="min-width:170px;border:1px solid #e5e7eb;border-radius:14px;padding:12px 14px;">
+                                <div style="font-size:12px;font-weight:800;color:#64748b;margin-bottom:6px;">
+                                    SUBTOTAL
+                                </div>
+                                <div style="font-size:22px;font-weight:900;color:#0f172a;">
+                                    R$ <span class="subtotal-item" data-preco="{{ item.produto.preco|floatformat:2 }}">{{ item.subtotal|floatformat:2 }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Quantidade -->
+                    <div>
+                        <div style="font-size:12px;font-weight:800;color:#64748b;margin-bottom:8px;">
+                            QUANTIDADE
+                        </div>
+                        <input
+                            type="number"
+                            name="qtd_{{ item.produto.id }}"
+                            value="{{ item.quantidade }}"
+                            min="1"
+                            class="qtd-input"
+                            data-preco="{{ item.produto.preco|floatformat:2 }}"
+                            style="width:100%;padding:12px 14px;border:2px solid #0f172a;border-radius:14px;font-size:20px;font-weight:700;"
+                        >
+                    </div>
+
+                    <!-- Remover -->
+                    <div style="text-align:right;">
+                        <a href="{% url 'remover_carrinho' item.produto.id %}"
+                           style="display:inline-block;background:#ef4444;color:white;text-decoration:none;padding:13px 18px;border-radius:14px;font-weight:800;">
+                            Remover
+                        </a>
+                    </div>
+                </div>
+                {% endfor %}
+
+                <!-- Botões -->
+                <div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap;padding-top:24px;">
+                    <button type="submit"
+                            style="background:#0f172a;color:white;border:none;padding:14px 20px;border-radius:14px;font-weight:800;cursor:pointer;">
+                        Atualizar carrinho
+                    </button>
+
+                    {% if loja %}
+                    <a href="{% url 'loja' loja.slug %}"
+                       style="display:inline-block;background:#f8fafc;color:#0f172a;text-decoration:none;padding:14px 20px;border-radius:14px;font-weight:800;border:1px solid #cbd5e1;">
+                        Adicionar mais itens
+                    </a>
+                    {% endif %}
+
+                    <button type="button"
+                            id="btn-confirmar-compra"
+                            style="background:linear-gradient(90deg,#22c55e,#06b6d4);color:white;border:none;padding:14px 22px;border-radius:14px;font-weight:900;cursor:pointer;">
+                        Confirmar compra
+                    </button>
+                </div>
+            </form>
+
+            <!-- Total -->
+            <div style="margin-top:28px;padding-top:22px;border-top:1px solid #e5e7eb;display:flex;justify-content:space-between;align-items:center;gap:20px;flex-wrap:wrap;">
+                <div style="font-size:30px;font-weight:900;color:#0f172a;">
+                    Total geral
+                </div>
+                <div style="font-size:30px;font-weight:900;color:#0f172a;">
+                    R$ <span id="total-geral">{{ total|floatformat:2 }}</span>
+                </div>
+            </div>
+        {% else %}
+            <div style="text-align:center;padding:30px 10px;">
+                <p style="font-size:22px;color:#64748b;margin-bottom:20px;">Seu carrinho está vazio.</p>
+                {% if loja %}
+                <a href="{% url 'loja' loja.slug %}"
+                   style="display:inline-block;background:#0f172a;color:white;text-decoration:none;padding:14px 22px;border-radius:14px;font-weight:800;">
+                    Ir para a loja
+                </a>
+                {% endif %}
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+{% if itens %}
+<script>
+(function () {
+    const form = document.getElementById("form-carrinho");
+    const btnConfirmar = document.getElementById("btn-confirmar-compra");
+    const irCheckout = document.getElementById("ir_checkout");
+    const inputs = document.querySelectorAll(".qtd-input");
+    const subtotais = document.querySelectorAll(".subtotal-item");
+    const totalGeral = document.getElementById("total-geral");
+
+    let timer = null;
+
+    function toNumber(valor) {
+        return Number(String(valor).replace(",", "."));
+    }
+
+    function formatarBR(valor) {
+        return valor.toFixed(2).replace(".", ",");
+    }
+
+    function recalcularVisualmente() {
+        let total = 0;
+
+        inputs.forEach((input, index) => {
+            const preco = toNumber(input.dataset.preco);
+            const qtd = Math.max(1, parseInt(input.value || "1", 10));
+            const subtotal = preco * qtd;
+
+            if (subtotais[index]) {
+                subtotais[index].textContent = formatarBR(subtotal);
+            }
+
+            total += subtotal;
+        });
+
+        totalGeral.textContent = formatarBR(total);
+    }
+
+    function enviarAtualizacao(irParaCheckout = false) {
+        irCheckout.value = irParaCheckout ? "1" : "0";
+        form.submit();
+    }
+
+    inputs.forEach((input) => {
+        input.addEventListener("input", function () {
+            recalcularVisualmente();
+
+            clearTimeout(timer);
+            timer = setTimeout(() => {
+                enviarAtualizacao(false);
+            }, 500);
+        });
+
+        input.addEventListener("change", function () {
+            recalcularVisualmente();
+            clearTimeout(timer);
+            enviarAtualizacao(false);
+        });
+    });
+
+    btnConfirmar.addEventListener("click", function () {
+        clearTimeout(timer);
+        recalcularVisualmente();
+        enviarAtualizacao(true);
+    });
+})();
+</script>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Editar configuração de frete</title>
+<style>
+body{
+    font-family:Arial,sans-serif;
+    background:#f4f6fb;
+    margin:0;
+    padding:24px;
+    color:#1f2937;
+}
+.box{
+    background:white;
+    padding:24px;
+    border-radius:18px;
+    box-shadow:0 8px 24px rgba(15,23,42,0.06);
+}
+input,select,textarea{
+    width:100%;
+    padding:10px;
+    border:1px solid #d1d5db;
+    border-radius:10px;
+    margin-top:6px;
+    margin-bottom:14px;
+}
+button{
+    background:#0b1220;
+    color:white;
+    border:none;
+    padding:12px 16px;
+    border-radius:10px;
+    cursor:pointer;
+}
+label{
+    font-weight:bold;
+}
+.info{
+    background:#f8fafc;
+    border:1px solid #e5e7eb;
+    border-radius:12px;
+    padding:14px 16px;
+    margin:16px 0 20px;
+    line-height:1.6;
+    color:#475569;
+}
+</style>
+</head>
+<body>
+
+<div class="box">
+    <h1>Editar configuração de frete e Pix</h1>
+
+   <div class="info">
+    Informe o endereço de origem da loja. Esse endereço será utilizado como ponto de partida para calcular a distância em KM até o cliente e determinar o valor do frete.
+    <br><br>
+    As faixas de frete por KM cadastradas serão aplicadas nas entregas dentro do mesmo estado. Para entregas fora do estado, será utilizado o valor fixo configurado abaixo.
+    <br><br>
+    Você também pode definir se a loja permite retirada no local e se as entregas estão ativas.
+</div>
+
+    <form method="post">
+        {% csrf_token %}
+
+        <label>CEP origem</label>
+        {{ form.cep_origem }}
+
+        <label>Rua origem</label>
+        {{ form.rua_origem }}
+
+        <label>Número origem</label>
+        {{ form.numero_origem }}
+
+        <label>Complemento origem</label>
+        {{ form.complemento_origem }}
+
+        <label>Bairro origem</label>
+        {{ form.bairro_origem }}
+
+        <label>Cidade origem</label>
+        {{ form.cidade_origem }}
+
+        <label>Estado origem</label>
+        {{ form.estado_origem }}
+
+        <label>Valor fora do estado</label>
+        {{ form.valor_fora_estado }}
+
+        <label>Retirada na loja</label>
+        {{ form.retirada_loja }}
+
+        <label>Entrega ativa</label>
+        {{ form.entrega_ativa }}
+
+        <hr style="margin:20px 0;">
+
+        <label>Chave Pix</label>
+        {{ form.chave_pix }}
+
+        <label>Nome do recebedor Pix</label>
+        {{ form.nome_recebedor_pix }}
+
+        <label>Banco / instituição Pix</label>
+        {{ form.banco_pix }}
+
+        <button type="submit">Salvar</button>
+    </form>
+</div>
+
+</body>
+</html>

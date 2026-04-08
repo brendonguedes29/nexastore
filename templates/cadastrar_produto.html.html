@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Novo produto</title>
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box;}
+        body{font-family:Arial, sans-serif;background:#f5f6fa;color:#222;}
+        .topo{background:#111827;color:white;padding:20px 0;}
+        .conteudo-topo,.container{width:92%;max-width:900px;margin:0 auto;}
+        .topo h1{font-size:28px;}
+        .sub{color:#cbd5e1;margin-top:6px;}
+        .container{padding:30px 0;}
+        .box{background:white;padding:24px;border-radius:16px;box-shadow:0 8px 24px rgba(0,0,0,0.06);}
+        .linha{margin-bottom:18px;}
+        label{display:block;margin-bottom:8px;font-weight:bold;}
+        input, textarea, select{width:100%;padding:14px;border:1px solid #ccc;border-radius:10px;font-size:15px;}
+        textarea{min-height:120px;resize:vertical;}
+        .checkbox{display:flex;align-items:center;gap:10px;}
+        .checkbox input{width:auto;}
+        .acoes{display:flex;gap:12px;margin-top:24px;flex-wrap:wrap;}
+        .botao{background:#111827;color:white;border:none;padding:14px 18px;border-radius:10px;cursor:pointer;font-size:15px;text-decoration:none;display:inline-block;}
+        .botao-secundario{background:white;color:#111827;border:1px solid #ccc;padding:14px 18px;border-radius:10px;cursor:pointer;font-size:15px;text-decoration:none;display:inline-block;}
+        .categoria-linha{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:end;}
+        .botao-categoria{background:#0f172a;color:white;text-decoration:none;padding:14px 18px;border-radius:10px;display:inline-block;}
+    </style>
+</head>
+<body>
+
+    <div class="topo">
+        <div class="conteudo-topo">
+            <h1>{{ loja.nome }}</h1>
+            <div class="sub">Cadastro de novo produto</div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="box">
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+
+                <div class="linha">
+                    <label>Nome</label>
+                    {{ form.nome }}
+                </div>
+
+                <div class="linha">
+                    <label>Categoria</label>
+                    <div class="categoria-linha">
+                        <div>{{ form.categoria }}</div>
+                        <a href="/painel/categorias/nova/" class="botao-categoria">+ Nova categoria</a>
+                    </div>
+                </div>
+
+                <div class="linha">
+                    <label>Preco</label>
+                    {{ form.preco }}
+                </div>
+
+                <div class="linha">
+                    <label>Descricao</label>
+                    {{ form.descricao }}
+                </div>
+
+                <div class="linha">
+                    <label>Estoque</label>
+                    {{ form.estoque }}
+                </div>
+
+                <div class="linha">
+                    <label>Imagem</label>
+                    {{ form.imagem }}
+                </div>
+
+                <div class="linha checkbox">
+                    {{ form.ativo }}
+                    <label>Produto ativo</label>
+                </div>
+
+                <div class="acoes">
+                    <button type="submit" class="botao">Salvar produto</button>
+                    <a href="/painel/" class="botao-secundario">Voltar</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+</body>
+</html>

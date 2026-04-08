@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Loja{% endblock %} | NexaStore</title>
+
+    <style>
+        :root{
+            --bg:#f4f6fb;
+            --card:#ffffff;
+            --text:#1f2937;
+            --muted:#64748b;
+            --line:#e5e7eb;
+            --header:#0b1220;
+            --accent:#22c55e;
+            --accent2:#38bdf8;
+        }
+
+        *{
+            margin:0;
+            padding:0;
+            box-sizing:border-box;
+        }
+
+        body{
+            font-family:Arial, sans-serif;
+            background:var(--bg);
+            color:var(--text);
+        }
+
+        .wrap{
+            width:92%;
+            max-width:1200px;
+            margin:0 auto;
+        }
+
+        .header{
+            background:var(--header);
+            color:white;
+            padding:16px 0;
+            box-shadow:0 2px 10px rgba(0,0,0,0.10);
+        }
+
+        .header-flex{
+            display:flex;
+            align-items:center;
+            justify-content:space-between;
+            gap:16px;
+            flex-wrap:wrap;
+        }
+
+        .logo-area{
+            display:flex;
+            align-items:center;
+            gap:12px;
+            text-decoration:none;
+            color:white;
+        }
+
+        .logo-badge{
+            width:46px;
+            height:46px;
+            border-radius:14px;
+            background:linear-gradient(135deg,var(--accent),var(--accent2));
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            font-weight:bold;
+            font-size:20px;
+            color:white;
+        }
+
+        .logo-texto{
+            display:flex;
+            flex-direction:column;
+        }
+
+        .logo-texto strong{
+            font-size:20px;
+            line-height:1.1;
+        }
+
+        .logo-texto span{
+            color:#cbd5e1;
+            font-size:12px;
+        }
+
+        .acoes-topo{
+            display:flex;
+            gap:10px;
+            flex-wrap:wrap;
+            align-items:center;
+        }
+
+        .acoes-topo a{
+            text-decoration:none;
+            color:white;
+            background:rgba(255,255,255,0.08);
+            padding:10px 14px;
+            border-radius:12px;
+            font-size:14px;
+        }
+
+        .acoes-topo a:hover{
+            background:rgba(255,255,255,0.14);
+        }
+
+        .conteudo{
+            padding:26px 0 40px;
+        }
+
+        .rodape-brand{
+            padding:0 0 28px;
+        }
+
+        .rodape-brand .wrap{
+            display:flex;
+            justify-content:center;
+        }
+
+        .rodape-brand span{
+            font-size:13px;
+            color:#64748b;
+            background:#ffffff;
+            border:1px solid #e5e7eb;
+            border-radius:999px;
+            padding:10px 14px;
+            box-shadow:0 6px 18px rgba(15,23,42,0.05);
+        }
+
+        .rodape-brand strong{
+            color:#0f172a;
+        }
+    </style>
+
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+
+    <div class="header">
+        <div class="wrap header-flex">
+            <a href="{% if loja %}{% url 'loja' loja.slug %}{% else %}{% url 'home' %}{% endif %}" class="logo-area">
+                <div class="logo-badge">
+                    {% if loja %}
+                        {{ loja.nome|slice:":1"|upper }}
+                    {% else %}
+                        L
+                    {% endif %}
+                </div>
+
+                <div class="logo-texto">
+                    <strong>
+                        {% if loja %}
+                            {{ loja.nome }}
+                        {% else %}
+                            Loja
+                        {% endif %}
+                    </strong>
+                    <span>
+                        Área do comprador • Powered by NexaStore
+                    </span>
+                </div>
+            </a>
+
+            <div class="acoes-topo">
+                {% if loja %}
+                    <a href="{% url 'loja' loja.slug %}">Início</a>
+                {% else %}
+                    <a href="{% url 'home' %}">Início</a>
+                {% endif %}
+
+                {% if comprador_logado %}
+                    <a href="{% url 'meus_pedidos' %}">Meus pedidos</a>
+                    <a href="{% url 'logout_comprador' %}">Sair</a>
+                {% elif loja %}
+                    <a href="{% url 'login_comprador' loja.slug %}">Entre</a>
+                    <a href="{% url 'cadastro_comprador' loja.slug %}">Cadastre-se</a>
+                {% endif %}
+
+                <a href="{% url 'ver_carrinho' %}">Carrinho</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="conteudo">
+        <div class="wrap">
+            {% block content %}{% endblock %}
+        </div>
+    </div>
+
+    <div class="rodape-brand">
+        <div class="wrap">
+            <span> <strong>NexaStore</strong></span>
+        </div>
+    </div>
+
+</body>
+</html>

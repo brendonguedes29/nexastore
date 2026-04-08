@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Escolher acesso</title>
+    <style>
+        *{
+            margin:0;
+            padding:0;
+            box-sizing:border-box;
+        }
+
+        body{
+            font-family:Arial,sans-serif;
+            min-height:100vh;
+            color:white;
+            background:
+                radial-gradient(circle at 15% 15%, rgba(34,211,238,0.10), transparent 22%),
+                radial-gradient(circle at 85% 30%, rgba(59,130,246,0.10), transparent 24%),
+                linear-gradient(180deg,#0b1220 0%,#111827 100%);
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            padding:24px;
+        }
+
+        .card{
+            width:100%;
+            max-width:560px;
+            background:rgba(255,255,255,.05);
+            border:1px solid rgba(255,255,255,.08);
+            border-radius:26px;
+            padding:30px;
+            box-shadow:0 24px 60px rgba(0,0,0,.25);
+        }
+
+        h1{
+            text-align:center;
+            font-size:26px;
+            margin-bottom:22px;
+            font-weight:900;
+        }
+
+        .erro{
+            background:#7f1d1d;
+            border:1px solid #b91c1c;
+            color:#fff;
+            padding:12px;
+            border-radius:12px;
+            margin-bottom:14px;
+        }
+
+        .btn{
+            width:100%;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            padding:15px 18px;
+            border:none;
+            border-radius:12px;
+            cursor:pointer;
+            font-weight:900;
+            font-size:16px;
+            text-decoration:none;
+        }
+
+        .btn-lojista{
+            background:linear-gradient(90deg,#22d3ee,#38bdf8);
+            color:#0f172a;
+        }
+
+        .btn-consumidor{
+            background:linear-gradient(90deg,#34d399,#2dd4bf);
+            color:white;
+            margin-top:12px;
+        }
+
+        .divisor{
+            height:2px;
+            background:rgba(255,255,255,.35);
+            margin:18px 0 22px;
+            border-radius:999px;
+        }
+
+        .label{
+            margin-bottom:10px;
+            color:#cbd5e1;
+            font-size:14px;
+            font-weight:700;
+        }
+
+        select{
+            width:100%;
+            padding:14px;
+            border-radius:12px;
+            border:none;
+            font-size:15px;
+            color:#111827;
+            background:white;
+        }
+
+        .obs{
+            margin-top:18px;
+            text-align:center;
+            color:#cbd5e1;
+            font-size:13px;
+            line-height:1.6;
+        }
+
+        .voltar{
+            display:block;
+            margin-top:18px;
+            text-align:center;
+            color:white;
+            text-decoration:none;
+            font-weight:800;
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1>Como deseja acessar?</h1>
+
+        {% if messages %}
+            {% for message in messages %}
+                <div class="erro">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+
+        <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="next" value="{{ next_url }}">
+<button type="submit" name="tipo_acesso" value="lojista" formnovalidate class="btn btn-azul">
+    Sou dono da loja
+</button>
+
+            <div class="divisor"></div>
+
+            <div class="label">Selecione a loja para entrar como consumidor</div>
+
+           <select name="slug_loja" required>
+    <option value="">Selecione uma loja</option>
+
+    {% for tipo, lojas in lojas_por_tipo.items %}
+        <optgroup label="{{ tipo }}">
+            {% for loja in lojas %}
+                <option value="{{ loja.slug }}">
+                    {{ loja.nome }}
+                </option>
+            {% endfor %}
+        </optgroup>
+    {% endfor %}
+</select>
+
+            <button type="submit" name="tipo_acesso" value="consumidor" class="btn btn-consumidor">
+                Entrar como consumidor
+            </button>
+        </form>
+
+        <div class="obs">
+            Dono da loja entra com usuário e senha no painel.<br>
+            Consumidor escolhe a loja e acessa a vitrine para comprar.
+        </div>
+
+        <a href="{% url 'landing_page' %}" class="voltar">Voltar para a plataforma</a>
+    </div>
+</body>
+</html>

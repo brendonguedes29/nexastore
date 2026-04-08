@@ -1,0 +1,140 @@
+{% extends 'base_publico.html' %}
+{% block title %}Finalizar compra{% endblock %}
+
+{% block content %}
+<div style="background:white;padding:30px;border-radius:20px;box-shadow:0 8px 24px rgba(0,0,0,0.05);">
+
+    <h1 style="margin-bottom:20px;">Finalizar pedido</h1>
+
+    <form method="post">
+        {% csrf_token %}
+
+        <h3>Seus dados</h3>
+
+        <input type="text" name="nome_cliente" value="{{ comprador.usuario.first_name }}" required placeholder="Seu nome" style="width:100%;padding:12px;margin:10px 0;border-radius:10px;border:1px solid #ccc;">
+        <input type="text" name="telefone" value="{{ comprador.telefone }}" required placeholder="Telefone" style="width:100%;padding:12px;margin:10px 0;border-radius:10px;border:1px solid #ccc;">
+
+        <h3>Tipo de recebimento</h3>
+
+        <select name="tipo_entrega" id="tipo_entrega" style="width:100%;padding:12px;margin:10px 0;border-radius:10px;border:1px solid #ccc;">
+            <option value="entrega">Entrega</option>
+            <option value="retirada">Retirar na loja</option>
+        </select>
+
+        <input type="hidden" name="distancia_km" id="distancia_km" value="0">
+
+        <div id="bloco_endereco">
+            <h3>Endereço de entrega</h3>
+
+            <input type="text" name="cep_entrega" id="cep_entrega" required placeholder="CEP" style="width:100%;padding:12px;margin:10px 0;border-radius:10px;border:1px solid #ccc;">
+            <input type="text" name="rua_entrega" id="rua_entrega" required placeholder="Rua" style="width:100%;padding:12px;margin:10px 0;border-radius:10px;border:1px solid #ccc;">
+            <input type="text" name="numero_entrega" id="numero_entrega" required placeholder="Número" style="width:100%;padding:12px;margin:10px 0;border-radius:10px;border:1px solid #ccc;">
+            <input type="text" name="complemento_entrega" id="complemento_entrega" placeholder="Complemento" style="width:100%;padding:12px;margin:10px 0;border-radius:10px;border:1px solid #ccc;">
+            <input type="text" name="bairro_entrega" id="bairro_entrega" placeholder="Bairro" style="width:100%;padding:12px;margin:10px 0;border-radius:10px;border:1px solid #ccc;">
+            <input type="text" name="cidade_entrega" id="cidade_entrega" required placeholder="Cidade" style="width:100%;padding:12px;margin:10px 0;border-radius:10px;border:1px solid #ccc;">
+            <input type="text" name="estado_entrega" id="estado_entrega" required placeholder="Estado" style="width:100%;padding:12px;margin:10px 0;border-radius:10px;border:1px solid #ccc;">
+        </div>
+
+        <div id="info_entrega" style="display:none;background:#f8fafc;padding:14px;border-radius:12px;margin:12px 0;">
+            Você escolheu retirar na loja. Não será cobrado frete.
+        </div>
+
+        <h3>Pagamento</h3>
+
+        <select name="forma_pagamento" id="forma_pagamento" style="width:100%;padding:12px;margin:10px 0;border-radius:10px;border:1px solid #ccc;">
+            <option value="pix">Pix</option>
+            <option value="cartao">Cartão</option>
+            <option value="dinheiro">Dinheiro</option>
+        </select>
+
+        <div id="tipo_cartao_box" style="display:none;">
+            <select name="tipo_cartao" id="tipo_cartao" style="width:100%;padding:12px;margin:10px 0;border-radius:10px;border:1px solid #ccc;">
+                <option value="debito">Débito</option>
+                <option value="credito">Crédito</option>
+            </select>
+        </div>
+
+        <div id="info_pagamento" style="background:#f8fafc;padding:14px;border-radius:12px;margin:12px 0;">
+            Escolha a forma de pagamento.
+        </div>
+
+        <h3>Observação</h3>
+        <textarea name="observacao" style="width:100%;padding:12px;margin:10px 0;border-radius:10px;border:1px solid #ccc;"></textarea>
+
+        <hr style="margin:20px 0;">
+
+        <h3>Resumo</h3>
+        <p>Subtotal: R$ {{ subtotal_geral }}</p>
+        <p>Frete: R$ {{ frete }}</p>
+        <h2>Total: R$ {{ total }}</h2>
+
+        <button type="submit" style="background:#0b1220;color:white;padding:14px;width:100%;border:none;border-radius:12px;font-weight:bold;cursor:pointer;">
+            Confirmar pedido
+        </button>
+    </form>
+
+</div>
+
+<script>
+const pagamento = document.getElementById("forma_pagamento");
+const tipoCartaoBox = document.getElementById("tipo_cartao_box");
+const infoPagamento = document.getElementById("info_pagamento");
+
+const tipoEntrega = document.getElementById("tipo_entrega");
+const blocoEndereco = document.getElementById("bloco_endereco");
+const infoEntrega = document.getElementById("info_entrega");
+
+const cep = document.getElementById("cep_entrega");
+const rua = document.getElementById("rua_entrega");
+const numero = document.getElementById("numero_entrega");
+const cidade = document.getElementById("cidade_entrega");
+const estado = document.getElementById("estado_entrega");
+const distanciaKm = document.getElementById("distancia_km");
+
+function atualizarPagamento() {
+    if (pagamento.value === "pix") {
+        tipoCartaoBox.style.display = "none";
+        infoPagamento.innerHTML = "Você pagará via Pix após confirmar o pedido.";
+    } 
+    else if (pagamento.value === "cartao") {
+        tipoCartaoBox.style.display = "block";
+        infoPagamento.innerHTML = "Pagamento com cartão será feito após confirmar.";
+    } 
+    else {
+        tipoCartaoBox.style.display = "none";
+        infoPagamento.innerHTML = "Pagamento em dinheiro na entrega.";
+    }
+}
+
+function atualizarEntrega() {
+    if (tipoEntrega.value === "retirada") {
+        blocoEndereco.style.display = "none";
+        infoEntrega.style.display = "block";
+
+        cep.required = false;
+        rua.required = false;
+        numero.required = false;
+        cidade.required = false;
+        estado.required = false;
+
+        distanciaKm.value = "0";
+    } else {
+        blocoEndereco.style.display = "block";
+        infoEntrega.style.display = "none";
+
+        cep.required = true;
+        rua.required = true;
+        numero.required = true;
+        cidade.required = true;
+        estado.required = true;
+    }
+}
+
+pagamento.addEventListener("change", atualizarPagamento);
+tipoEntrega.addEventListener("change", atualizarEntrega);
+
+atualizarPagamento();
+atualizarEntrega();
+</script>
+
+{% endblock %}

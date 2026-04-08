@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cadastro comprador</title>
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box;}
+        body{font-family:Arial,sans-serif;background:#f4f6fb;}
+        .wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;}
+        .card{width:100%;max-width:520px;background:white;border-radius:20px;padding:28px;box-shadow:0 10px 30px rgba(15,23,42,0.08);}
+        h1{margin-bottom:8px;font-size:30px;}
+        p{color:#64748b;margin-bottom:20px;}
+        input{width:100%;padding:12px 14px;border:1px solid #d1d5db;border-radius:12px;margin-bottom:12px;font-size:15px;}
+        button{width:100%;padding:12px 14px;border:none;border-radius:12px;background:#0b1220;color:white;font-weight:bold;cursor:pointer;}
+        ul{margin-bottom:12px;padding-left:18px;color:#991b1b;}
+        .link{display:inline-block;margin-top:16px;text-decoration:none;color:#0b1220;font-weight:bold;}
+    </style>
+</head>
+<body>
+<div class="wrap">
+    <div class="card">
+        <h1>Criar conta</h1>
+        <p>Cadastre-se como comprador em {{ loja.nome }}.</p>
+
+        {% if form.errors %}
+            {{ form.errors }}
+        {% endif %}
+
+        <form method="post">
+            {% csrf_token %}
+            <input type="text" name="nome" placeholder="Nome completo" value="{{ form.nome.value|default:'' }}" required>
+            <input type="text" name="username" placeholder="Usuário" value="{{ form.username.value|default:'' }}" required>
+            <input type="email" name="email" placeholder="E-mail" value="{{ form.email.value|default:'' }}" required>
+            <input type="text" name="telefone" placeholder="Telefone" value="{{ form.telefone.value|default:'' }}">
+            <input type="password" name="password1" placeholder="Senha" required>
+            <input type="password" name="password2" placeholder="Confirmar senha" required>
+            <button type="submit">Cadastrar</button>
+        </form>
+
+        <a href="{% url 'login_comprador' loja.slug %}" class="link">Já tenho conta</a>
+    </div>
+</div>
+</body>
+</html>
