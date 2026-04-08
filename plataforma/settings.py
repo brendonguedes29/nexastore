@@ -12,12 +12,16 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # =========================================
 SECRET_KEY = 'django-insecure-_jplnlu54(t!0ri^pxpn$c$j*b-pgp1#mr@8!9$^=ncf6&8t#='
 
-DEBUG = True
+DEBUG = False
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = [
+      'nexastore-xw5y.onrender.com',
+    '127.0.0.1',
+    'localhost',
+]
 
 CSRF_TRUSTED_ORIGINS = [
-    "https://sanyo-instructor-colour-wines.trycloudflare.com",
+     'https://nexastore-xw5y.onrender.com',
 ]
 
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
@@ -125,6 +129,9 @@ USE_TZ = True
 # ARQUIVOS ESTÁTICOS / MÍDIA
 # =========================================
 STATIC_URL = '/static/'
+
+import os
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
