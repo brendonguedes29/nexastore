@@ -5,23 +5,26 @@ Django settings for plataforma project.
 from pathlib import Path
 import os
 
-BASE_DIR = Path(__file__).resolve().parent.parent
+BASE_DIR = Path(_file_).resolve().parent.parent
 
 # =========================================
 # SEGURANÇA
 # =========================================
-SECRET_KEY = 'django-insecure-_jplnlu54(t!0ri^pxpn$c$j*b-pgp1#mr@8!9$^=ncf6&8t#='
+SECRET_KEY = os.environ.get(
+    "SECRET_KEY",
+    "django-insecure-_jplnlu54(t!0ri^pxpn$c$j*b-pgp1#mr@8!9$^=ncf6&8t#="
+)
 
 DEBUG = False
 
 ALLOWED_HOSTS = [
-      'nexastore-xw5y.onrender.com',
-    '127.0.0.1',
-    'localhost',
+    "nexastore-xw5y.onrender.com",
+    "127.0.0.1",
+    "localhost",
 ]
 
 CSRF_TRUSTED_ORIGINS = [
-     'https://nexastore-xw5y.onrender.com',
+    "https://nexastore-xw5y.onrender.com",
 ]
 
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
@@ -29,17 +32,29 @@ SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 # =========================================
 # URL BASE DA PLATAFORMA
 # =========================================
-PLATFORM_BASE_URL = "https://unsubscribe-authentic-chronicle-reaction.trycloudflare.com"
+PLATFORM_BASE_URL = "https://nexastore-xw5y.onrender.com"
 MERCADOPAGO_WEBHOOK_URL = f"{PLATFORM_BASE_URL}/webhooks/mercadopago/"
 MERCADOPAGO_REDIRECT_URI = f"{PLATFORM_BASE_URL}/painel/pagamentos/callback/"
 
 # =========================================
 # MERCADO PAGO
 # =========================================
-MERCADOPAGO_PUBLIC_KEY = "APP_USR-7f46cd3d-9974-4fa8-88cb-425c32de41bb"
-MERCADOPAGO_ACCESS_TOKEN = "APP_USR-6150318144469373-031900-8e4d128151d01b1fcb3986aa659bbb18-2902615519"
-MERCADOPAGO_CLIENT_ID = "6150318144469373"
-MERCADOPAGO_CLIENT_SECRET = "0XLWYhfcGLkKsdNvXjdqdJPVKK1QnsKU"
+MERCADOPAGO_PUBLIC_KEY = os.environ.get(
+    "MERCADOPAGO_PUBLIC_KEY",
+    "APP_USR-7f46cd3d-9974-4fa8-88cb-425c32de41bb"
+)
+MERCADOPAGO_ACCESS_TOKEN = os.environ.get(
+    "MERCADOPAGO_ACCESS_TOKEN",
+    "APP_USR-6150318144469373-031900-8e4d128151d01b1fcb3986aa659bbb18-2902615519"
+)
+MERCADOPAGO_CLIENT_ID = os.environ.get(
+    "MERCADOPAGO_CLIENT_ID",
+    "6150318144469373"
+)
+MERCADOPAGO_CLIENT_SECRET = os.environ.get(
+    "MERCADOPAGO_CLIENT_SECRET",
+    "0XLWYhfcGLkKsdNvXjdqdJPVKK1QnsKU"
+)
 
 # =========================================
 # LOGIN / LOGOUT
@@ -52,63 +67,64 @@ LOGOUT_REDIRECT_URL = "/"
 # APLICAÇÕES
 # =========================================
 INSTALLED_APPS = [
-    'django.contrib.admin',
-    'django.contrib.auth',
-    'django.contrib.contenttypes',
-    'django.contrib.sessions',
-    'django.contrib.messages',
-    'django.contrib.staticfiles',
+    "django.contrib.admin",
+    "django.contrib.auth",
+    "django.contrib.contenttypes",
+    "django.contrib.sessions",
+    "django.contrib.messages",
+    "django.contrib.staticfiles",
 
-    'produtos',
-    'lojas',
+    "produtos",
+    "lojas",
 ]
 
 # =========================================
 # MIDDLEWARES
 # =========================================
 MIDDLEWARE = [
-    'django.middleware.security.SecurityMiddleware',
-    'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
-    'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'django.contrib.messages.middleware.MessageMiddleware',
-    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",
+
+    "django.contrib.sessions.middleware.SessionMiddleware",
+    "django.middleware.common.CommonMiddleware",
+    "django.middleware.csrf.CsrfViewMiddleware",
+    "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "django.contrib.messages.middleware.MessageMiddleware",
+    "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
 # =========================================
 # URLS / TEMPLATES
 # =========================================
-ROOT_URLCONF = 'plataforma.urls'
+ROOT_URLCONF = "plataforma.urls"
 
-# 🔥 AQUI É A CORREÇÃO QUE VOCÊ PRECISAVA
-CSRF_FAILURE_VIEW = 'lojas.views.csrf_erro'
+CSRF_FAILURE_VIEW = "lojas.views.csrf_erro"
 
 TEMPLATES = [
     {
-        'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'templates'],
-        'APP_DIRS': True,
-        'OPTIONS': {
-            'context_processors': [
-                'django.template.context_processors.debug',
-                'django.template.context_processors.request',
-                'django.contrib.auth.context_processors.auth',
-                'django.contrib.messages.context_processors.messages',
+        "BACKEND": "django.template.backends.django.DjangoTemplates",
+        "DIRS": [BASE_DIR / "templates"],
+        "APP_DIRS": True,
+        "OPTIONS": {
+            "context_processors": [
+                "django.template.context_processors.debug",
+                "django.template.context_processors.request",
+                "django.contrib.auth.context_processors.auth",
+                "django.contrib.messages.context_processors.messages",
             ],
         },
     },
 ]
 
-WSGI_APPLICATION = 'plataforma.wsgi.application'
+WSGI_APPLICATION = "plataforma.wsgi.application"
 
 # =========================================
 # BANCO DE DADOS
 # =========================================
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+    "default": {
+        "ENGINE": "django.db.backends.sqlite3",
+        "NAME": BASE_DIR / "db.sqlite3",
     }
 }
 
@@ -120,28 +136,30 @@ AUTH_PASSWORD_VALIDATORS = []
 # =========================================
 # INTERNACIONALIZAÇÃO
 # =========================================
-LANGUAGE_CODE = 'pt-br'
-TIME_ZONE = 'America/Sao_Paulo'
+LANGUAGE_CODE = "pt-br"
+TIME_ZONE = "America/Sao_Paulo"
 USE_I18N = True
 USE_TZ = True
 
 # =========================================
 # ARQUIVOS ESTÁTICOS / MÍDIA
 # =========================================
-STATIC_URL = '/static/'
+STATIC_URL = "/static/"
+STATIC_ROOT = BASE_DIR / "staticfiles"
+STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
-import os
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+MEDIA_URL = "/media/"
+MEDIA_ROOT = BASE_DIR / "media"
 
-MEDIA_URL = '/media/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.gmail.com'
+# =========================================
+# E-MAIL
+# =========================================
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_HOST = "smtp.gmail.com"
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
-EMAIL_HOST_USER = 'bsg181818@gmail.com'
-EMAIL_HOST_PASSWORD = 'dlrpbrhjmzsexvls'
+EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER", "bsg181818@gmail.com")
+EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD", "dlrpbrhjmzsexvls")
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
