@@ -14,11 +14,7 @@ SECRET_KEY = 'django-insecure-_jplnlu54(t!0ri^pxpn$c$j*b-pgp1#mr@8!9$^=ncf6&8t#=
 
 DEBUG = True
 
-ALLOWED_HOSTS = [
-    "127.0.0.1",
-    "localhost",
-    "sanyo-instructor-colour-wines.trycloudflare.com",
-]
+ALLOWED_HOSTS = ['*']
 
 CSRF_TRUSTED_ORIGINS = [
     "https://sanyo-instructor-colour-wines.trycloudflare.com",
