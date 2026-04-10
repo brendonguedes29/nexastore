@@ -6,7 +6,6 @@ from .models import Produto, Categoria, ConfigFrete, FaixaFrete
 class ProdutoForm(forms.ModelForm):
     imagens_extras = forms.FileField(
         required=False,
-        widget=forms.ClearableFileInput(attrs={"multiple": True}),
     )
 
     class Meta:
