@@ -5,7 +5,7 @@ Django settings for plataforma project.
 from pathlib import Path
 import os
 
-BASE_DIR = Path(__file__).resolve().parent.parent
+BASE_DIR = Path(_file_).resolve().parent.parent
 
 # =========================================
 # SEGURANÇA
@@ -47,10 +47,22 @@ MERCADOPAGO_REDIRECT_URI = f"{PLATFORM_BASE_URL}/painel/pagamentos/callback/"
 # =========================================
 # MERCADO PAGO
 # =========================================
-MERCADOPAGO_PUBLIC_KEY = os.environ.get("MERCADOPAGO_PUBLIC_KEY", "")
-MERCADOPAGO_ACCESS_TOKEN = os.environ.get("MERCADOPAGO_ACCESS_TOKEN", "")
-MERCADOPAGO_CLIENT_ID = os.environ.get("MERCADOPAGO_CLIENT_ID", "")
-MERCADOPAGO_CLIENT_SECRET = os.environ.get("MERCADOPAGO_CLIENT_SECRET", "")
+MERCADOPAGO_PUBLIC_KEY = os.environ.get(
+    "MERCADOPAGO_PUBLIC_KEY",
+    "APP_USR-7f46cd3d-9974-4fa8-88cb-425c32de41bb"
+)
+MERCADOPAGO_ACCESS_TOKEN = os.environ.get(
+    "MERCADOPAGO_ACCESS_TOKEN",
+    "APP_USR-6150318144469373-031900-8e4d128151d01b1fcb3986aa659bbb18-2902615519"
+)
+MERCADOPAGO_CLIENT_ID = os.environ.get(
+    "MERCADOPAGO_CLIENT_ID",
+    "6150318144469373"
+)
+MERCADOPAGO_CLIENT_SECRET = os.environ.get(
+    "MERCADOPAGO_CLIENT_SECRET",
+    "0XLWYhfcGLkKsdNvXjdqdJPVKK1QnsKU"
+)
 
 # =========================================
 # LOGIN / LOGOUT
@@ -150,7 +162,14 @@ MEDIA_ROOT = BASE_DIR / "media"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # =========================================
-# E-MAIL (RESEND API)
+# E-MAIL (GMAIL SMTP)
 # =========================================
-RESEND_API_KEY = os.environ.get("RESEND_API_KEY", "")
-DEFAULT_FROM_EMAIL = "onboarding@resend.dev"
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_HOST = "smtp.gmail.com"
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+
+EMAIL_HOST_USER = "bsg181818@gmail.com"
+EMAIL_HOST_PASSWORD = "nxqwtdnswanpjzqq"
+
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER

@@ -1,6 +1,7 @@
 from django.contrib import messages
 from django.contrib.auth.models import User
 from django.contrib.auth.tokens import default_token_generator
+from django.core.mail import EmailMultiAlternatives
 from django.db import transaction
 from django.shortcuts import redirect, render
 from django.template.loader import render_to_string
@@ -8,8 +9,6 @@ from django.urls import reverse
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode
 from django.conf import settings
-
-import resend
 
 from .models import Loja
 
@@ -69,6 +68,7 @@ def criar_loja_publica(request):
                 },
             )
 
+        # ✅ cria usuário
         user = User.objects.create_user(
             username=email,
             email=email,
@@ -77,6 +77,7 @@ def criar_loja_publica(request):
             is_active=False,
         )
 
+        # ✅ cria loja
         Loja.objects.create(
             dono=user,
             nome=nome_loja,
@@ -94,6 +95,7 @@ def criar_loja_publica(request):
             texto_busca="O que você procura?",
         )
 
+        # ✅ gera link de ativação
         uid = urlsafe_base64_encode(force_bytes(user.pk))
         token = default_token_generator.make_token(user)
 
@@ -109,23 +111,23 @@ def criar_loja_publica(request):
             },
         )
 
+        # 🚀 ENVIO DE EMAIL (GMAIL SMTP)
         try:
-            resend.api_key = settings.RESEND_API_KEY
-
-            response = resend.Emails.send(
-                {
-                    "from": settings.DEFAULT_FROM_EMAIL,
-                    "to": [user.email],
-                    "subject": "Ative sua conta na NexaStore",
-                    "html": html_body,
-                }
+            msg = EmailMultiAlternatives(
+                subject="Ative sua conta na NexaStore",
+                body=f"Clique no link para ativar sua conta: {link}",
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                to=[email],
             )
 
-            print("EMAIL ENVIADO:", response)
+            msg.attach_alternative(html_body, "text/html")
+            msg.send()
+
+            print("EMAIL ENVIADO COM SUCESSO")
 
             messages.success(
                 request,
-                "Conta criada com sucesso. Verifique seu e-mail e clique no link de ativação para entrar.",
+                "Conta criada com sucesso. Verifique seu e-mail para ativar sua conta.",
             )
 
         except Exception as e:
