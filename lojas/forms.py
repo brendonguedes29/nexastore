@@ -79,15 +79,22 @@ class LojaDadosForm(forms.ModelForm):
     def save(self, commit=True):
         loja = super().save(commit=False)
 
-        novo_logo = self.cleaned_data.get("logo")
-        remover_logo = self.cleaned_data.get("remover_logo")
+        remover_logo = self.cleaned_data.get("remover_logo", False)
+        novo_logo = self.files.get("logo")
 
         if remover_logo:
             if self.instance.logo:
                 self.instance.logo.delete(save=False)
             loja.logo = None
+
         elif novo_logo:
+            if self.instance.logo:
+                try:
+                    self.instance.logo.delete(save=False)
+                except Exception:
+                    pass
             loja.logo = novo_logo
+
         else:
             loja.logo = self.instance.logo
 
@@ -129,9 +136,20 @@ class LojaVitrineForm(forms.ModelForm):
         loja = super().save(commit=False)
 
         if self.cleaned_data.get("remover_banner_imagem"):
-            if loja.banner_imagem:
-                loja.banner_imagem.delete(save=False)
+            if self.instance.banner_imagem:
+                self.instance.banner_imagem.delete(save=False)
             loja.banner_imagem = None
+        else:
+            novo_banner = self.files.get("banner_imagem")
+            if novo_banner:
+                if self.instance.banner_imagem:
+                    try:
+                        self.instance.banner_imagem.delete(save=False)
+                    except Exception:
+                        pass
+                loja.banner_imagem = novo_banner
+            else:
+                loja.banner_imagem = self.instance.banner_imagem
 
         if commit:
             loja.save()
@@ -180,15 +198,38 @@ class LojaForm(forms.ModelForm):
     def save(self, commit=True):
         loja = super().save(commit=False)
 
-        if self.cleaned_data.get("remover_logo"):
-            if loja.logo:
-                loja.logo.delete(save=False)
+        remover_logo = self.cleaned_data.get("remover_logo", False)
+        novo_logo = self.files.get("logo")
+
+        if remover_logo:
+            if self.instance.logo:
+                self.instance.logo.delete(save=False)
             loja.logo = None
+        elif novo_logo:
+            if self.instance.logo:
+                try:
+                    self.instance.logo.delete(save=False)
+                except Exception:
+                    pass
+            loja.logo = novo_logo
+        else:
+            loja.logo = self.instance.logo
 
         if self.cleaned_data.get("remover_banner_imagem"):
-            if loja.banner_imagem:
-                loja.banner_imagem.delete(save=False)
+            if self.instance.banner_imagem:
+                self.instance.banner_imagem.delete(save=False)
             loja.banner_imagem = None
+        else:
+            novo_banner = self.files.get("banner_imagem")
+            if novo_banner:
+                if self.instance.banner_imagem:
+                    try:
+                        self.instance.banner_imagem.delete(save=False)
+                    except Exception:
+                        pass
+                loja.banner_imagem = novo_banner
+            else:
+                loja.banner_imagem = self.instance.banner_imagem
 
         if commit:
             loja.save()
