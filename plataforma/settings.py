@@ -5,7 +5,7 @@ Django settings for plataforma project.
 from pathlib import Path
 import os
 
-BASE_DIR = Path(__file__).resolve().parent.parent
+BASE_DIR = Path(_file_).resolve().parent.parent
 
 # =========================================
 # SEGURANÇA
@@ -154,16 +154,7 @@ MEDIA_ROOT = BASE_DIR / "media"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # =========================================
-# E-MAIL
+# E-MAIL (RESEND API)
 # =========================================
-
-EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
-EMAIL_HOST = 'smtp.gmail.com'
-EMAIL_PORT = 587
-EMAIL_USE_TLS = True
-EMAIL_HOST_USER = 'bsg181818@gmail.com'
-EMAIL_HOST_PASSWORD = 'dlrpbrhjmzsexvls'
-DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
-
 RESEND_API_KEY = os.environ.get("RESEND_API_KEY", "")
-DEFAULT_FROM_EMAIL = "NexaStore <onboarding@resend.dev>"
+DEFAULT_FROM_EMAIL = "onboarding@resend.dev"
