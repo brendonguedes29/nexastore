@@ -71,8 +71,6 @@ from lojas.views import (
     recuperar_acesso_enviado,
     redefinir_senha_loja,
     redefinir_senha_concluida,
-
-    # 🔥 NOVA IMPORTAÇÃO
     excluir_imagem_produto,
 )
 
@@ -121,7 +119,6 @@ urlpatterns = [
     path("painel/produtos/<int:produto_id>/editar/", editar_produto, name="editar_produto"),
     path("painel/produtos/<int:produto_id>/excluir/", excluir_produto, name="excluir_produto"),
 
-    # 🔥 NOVA ROTA PRA EXCLUIR IMAGEM
     path("painel/produto/imagem/<int:imagem_id>/excluir/", excluir_imagem_produto, name="excluir_imagem_produto"),
 
     path("painel/minha-loja/", minha_loja, name="minha_loja"),
@@ -169,5 +166,5 @@ urlpatterns = [
     path("ativar/<uidb64>/<token>/", ativar_conta, name="ativar_conta"),
 ]
 
-if settings.DEBUG:
-    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+# 🔥 CORREÇÃO PRINCIPAL (MEDIA SEM DEBUG)
+urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

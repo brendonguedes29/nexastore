@@ -20,7 +20,7 @@ DEBUG = False
 ALLOWED_HOSTS = [
     "nexastore-xw5y.onrender.com",
     "nexastoreoficial.com.br",
-    "www.nexastoreoficial.com.br",
+    "www.nexastoreofficial.com.br",
     "127.0.0.1",
     "localhost",
 ]

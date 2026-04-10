@@ -17,6 +17,11 @@ CORES_BANNER = [
 
 
 class LojaDadosForm(forms.ModelForm):
+    remover_logo = forms.BooleanField(
+        required=False,
+        label="Remover logo atual"
+    )
+
     class Meta:
         model = Loja
         fields = [
@@ -73,6 +78,19 @@ class LojaDadosForm(forms.ModelForm):
             "valor_licenca": forms.NumberInput(attrs={"step": "0.01"}),
         }
 
+    def save(self, commit=True):
+        loja = super().save(commit=False)
+
+        if self.cleaned_data.get("remover_logo"):
+            if loja.logo:
+                loja.logo.delete(save=False)
+            loja.logo = None
+
+        if commit:
+            loja.save()
+
+        return loja
+
 
 class LojaVitrineForm(forms.ModelForm):
     banner_cor_inicio = forms.ChoiceField(
@@ -120,6 +138,7 @@ class LojaForm(forms.ModelForm):
     banner_cor_inicio = forms.ChoiceField(choices=CORES_BANNER, required=False)
     banner_cor_fim = forms.ChoiceField(choices=CORES_BANNER, required=False)
     remover_banner_imagem = forms.BooleanField(required=False)
+    remover_logo = forms.BooleanField(required=False, label="Remover logo atual")
 
     class Meta:
         model = Loja
@@ -158,6 +177,11 @@ class LojaForm(forms.ModelForm):
 
     def save(self, commit=True):
         loja = super().save(commit=False)
+
+        if self.cleaned_data.get("remover_logo"):
+            if loja.logo:
+                loja.logo.delete(save=False)
+            loja.logo = None
 
         if self.cleaned_data.get("remover_banner_imagem"):
             if loja.banner_imagem:

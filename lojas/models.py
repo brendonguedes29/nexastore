@@ -205,7 +205,7 @@ class PagamentoLicenca(models.Model):
     class Meta:
         ordering = ['-data_criacao']
 
-    def _str_(self):
+    def __str__(self):
         return f'{self.loja.nome} - {self.get_tipo_pagamento_display()} - {self.get_status_display()}'
 
     def marcar_aprovado(self):
