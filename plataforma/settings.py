@@ -153,15 +153,11 @@ USE_I18N = True
 USE_TZ = True
 
 # =========================================
-# ARQUIVOS ESTÁTICOS
+# ARQUIVOS ESTÁTICOS / MÍDIA
 # =========================================
 STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
-STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
-# =========================================
-# MÍDIA / IMAGENS (CLOUDINARY)
-# =========================================
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
@@ -171,7 +167,14 @@ CLOUDINARY_STORAGE = {
     "API_SECRET": os.environ.get("CLOUDINARY_API_SECRET", ""),
 }
 
-DEFAULT_FILE_STORAGE = "cloudinary_storage.storage.MediaCloudinaryStorage"
+STORAGES = {
+    "default": {
+        "BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage",
+    },
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+    },
+}
 
 # =========================================
 # DEFAULT
@@ -188,4 +191,5 @@ EMAIL_USE_TLS = True
 
 EMAIL_HOST_USER = "bsg181818@gmail.com"
 EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD", "")
+
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
