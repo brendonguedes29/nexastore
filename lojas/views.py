@@ -1425,14 +1425,41 @@ def editar_dados_loja(request):
         return redirect("login_loja")
 
     if request.method == "POST":
+        print("==== EDITAR LOJA - INICIO POST ====")
+        print("FILES RECEBIDOS:", request.FILES)
+        print("LOGO RECEBIDO:", request.FILES.get("logo"))
+
         form = LojaDadosForm(request.POST, request.FILES, instance=loja)
+
         if form.is_valid():
-            form.save()
+            loja_salva = form.save()
+
+            print("==== FORM SALVO COM SUCESSO ====")
+            print("LOJA ID:", loja_salva.id)
+            print("LOGO NAME:", getattr(loja_salva.logo, "name", None))
+
+            try:
+                print("LOGO URL:", loja_salva.logo.url if loja_salva.logo else None)
+            except Exception as e:
+                print("ERRO AO GERAR LOGO.URL:", str(e))
+
+            loja_recarregada = Loja.objects.get(pk=loja_salva.pk)
+            print("==== LOJA RECARREGADA DO BANCO ====")
+            print("LOGO NAME BANCO:", getattr(loja_recarregada.logo, "name", None))
+
+            try:
+                print("LOGO URL BANCO:", loja_recarregada.logo.url if loja_recarregada.logo else None)
+            except Exception as e:
+                print("ERRO AO GERAR LOGO.URL DO BANCO:", str(e))
+
+            print("==== EDITAR LOJA - FIM POST OK ====")
             return redirect("minha_loja")
+
         else:
-            print("ERROS FORM LOJA:", form.errors.as_json())
-            print("POST:", request.POST)
-            print("FILES:", request.FILES)
+            print("==== FORM INVALIDO ====")
+            print(form.errors.as_json())
+            print("==== EDITAR LOJA - FIM POST ERRO ====")
+
     else:
         form = LojaDadosForm(instance=loja)
 
