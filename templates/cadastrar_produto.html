@@ -59,6 +59,12 @@
         <form method="post" enctype="multipart/form-data">
             {% csrf_token %}
 
+{% if form.errors %}
+    <div style="background:#fee2e2;color:#991b1b;padding:12px 14px;border-radius:10px;margin-bottom:18px;border:1px solid #fecaca;">
+        {{ form.errors }}
+    </div>
+{% endif %}
+
             <div class="secao">
                 <h3>Dados principais</h3>
                 <div class="secao-sub">Cadastre as informações básicas do produto.</div>

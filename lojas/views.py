@@ -1296,34 +1296,37 @@ def cadastrar_produto(request):
         form.fields["categoria"].queryset = Categoria.objects.filter(loja=loja)
 
         if form.is_valid():
-            produto = form.save(commit=False)
-            produto.loja = loja
+            try:
+                produto = form.save(commit=False)
+                produto.loja = loja
+                produto.save()
 
-            if request.FILES.get("imagem"):
-                produto.imagem = request.FILES.get("imagem")
+                imagens_extras = request.FILES.getlist("imagens_extras")
+                for indice, imagem in enumerate(imagens_extras):
+                    ProdutoImagem.objects.create(
+                        produto=produto,
+                        imagem=imagem,
+                        ordem=indice
+                    )
 
-            produto.save()
+                if produto.estoque > 0:
+                    MovimentacaoEstoque.objects.create(
+                        loja=loja,
+                        produto=produto,
+                        tipo="entrada",
+                        quantidade=produto.estoque,
+                        motivo="Cadastro inicial",
+                    )
 
-            imagens_extras = request.FILES.getlist("imagens_extras")
-            for indice, imagem in enumerate(imagens_extras):
-                ProdutoImagem.objects.create(
-                    produto=produto,
-                    imagem=imagem,
-                    ordem=indice
-                )
+                return redirect("lista_produtos_painel")
 
-            if produto.estoque > 0:
-                MovimentacaoEstoque.objects.create(
-                    loja=loja,
-                    produto=produto,
-                    tipo="entrada",
-                    quantidade=produto.estoque,
-                    motivo="Cadastro inicial",
-                )
-
-            return redirect("lista_produtos_painel")
+            except Exception as e:
+                print("ERRO AO SALVAR PRODUTO:", str(e))
         else:
-            print("ERROS FORM CADASTRO:", form.errors)
+            print("ERROS FORM CADASTRO:", form.errors.as_json())
+            print("POST:", request.POST)
+            print("FILES:", request.FILES)
+
     else:
         form = ProdutoForm()
         form.fields["categoria"].queryset = Categoria.objects.filter(loja=loja)
@@ -1332,7 +1335,6 @@ def cadastrar_produto(request):
         "form": form,
         "loja": loja,
     })
-
 
 @login_required
 def editar_produto(request, produto_id):
