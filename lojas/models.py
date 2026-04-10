@@ -16,20 +16,22 @@ TIPOS_LOJA = [
     ("outros", "Outros"),
 ]
 
+# ✅ CORRIGIDO: FORA DA CLASSE (SEM ERRO DE INDENTAÇÃO)
+STATUS_LICENCA_CHOICES = [
+    ('pendente', 'Pendente'),
+    ('ativa', 'Ativa'),
+    ('vencida', 'Vencida'),
+]
+
 
 class Loja(models.Model):
+
     tipo_loja = models.CharField(
         max_length=30,
         choices=TIPOS_LOJA,
         default="outros",
         verbose_name="Tipo da loja"
     )
-
-    STATUS_LICENCA_CHOICES = [
-        ('pendente', 'Pendente'),
-        ('ativa', 'Ativa'),
-        ('vencida', 'Vencida'),
-    ]
 
     dono = models.OneToOneField(
         User,
@@ -40,6 +42,8 @@ class Loja(models.Model):
     nome = models.CharField(max_length=150)
     slug = models.SlugField(max_length=160, unique=True, blank=True)
     descricao = models.TextField(blank=True, null=True)
+
+    # ✅ LOGO (UPLOAD OK)
     logo = models.ImageField(upload_to='lojas/', blank=True, null=True)
 
     email_comercial = models.EmailField(blank=True, null=True)
@@ -59,7 +63,7 @@ class Loja(models.Model):
 
     ativa = models.BooleanField(default=True)
 
-    # ===== LICENÇA SIMPLES =====
+    # ===== LICENÇA =====
     valor_licenca = models.DecimalField(max_digits=10, decimal_places=2, default=49.90)
 
     data_ultimo_pagamento = models.DateField(blank=True, null=True)
@@ -71,7 +75,7 @@ class Loja(models.Model):
         default='pendente'
     )
 
-    # ===== PAGAMENTO MANUAL =====
+    # ===== PAGAMENTO =====
     link_pagamento = models.URLField(blank=True, null=True)
     chave_pix = models.CharField(max_length=255, blank=True, null=True)
     pix_copia_cola = models.TextField(blank=True, null=True)
@@ -90,7 +94,7 @@ class Loja(models.Model):
     class Meta:
         ordering = ['nome']
 
-    def __str__(self):
+    def _str_(self):
         return self.nome
 
     def save(self, *args, **kwargs):
@@ -187,7 +191,6 @@ class PagamentoLicenca(models.Model):
     external_reference = models.CharField(max_length=120, unique=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='criado')
 
-    # 👇 ADICIONADO AQUI (ESSA LINHA RESOLVE TUDO)
     plano_nome = models.CharField(max_length=100, default="Plano padrão")
 
     mp_payment_id = models.CharField(max_length=120, blank=True, null=True)
@@ -205,7 +208,7 @@ class PagamentoLicenca(models.Model):
     class Meta:
         ordering = ['-data_criacao']
 
-    def __str__(self):
+    def _str_(self):
         return f'{self.loja.nome} - {self.get_tipo_pagamento_display()} - {self.get_status_display()}'
 
     def marcar_aprovado(self):
@@ -214,7 +217,6 @@ class PagamentoLicenca(models.Model):
             self.data_aprovacao = timezone.now()
 
             self.save(update_fields=['status', 'data_aprovacao', 'data_atualizacao'])
-
             self.loja.renovar_licenca(30)
 
     def marcar_status_por_mp(self, status_mp):
