@@ -5,7 +5,7 @@ Django settings for plataforma project.
 from pathlib import Path
 import os
 
-BASE_DIR = Path(__file__).resolve().parent.parent
+BASE_DIR = Path(_file_).resolve().parent.parent
 
 # =========================================
 # SEGURANÇA
@@ -19,7 +19,7 @@ DEBUG = False
 
 ALLOWED_HOSTS = [
     "nexastore-xw5y.onrender.com",
-    "nexastoreoficial.com.br",
+    "nexastoreofficial.com.br",
     "www.nexastoreofficial.com.br",
     "127.0.0.1",
     "localhost",
@@ -27,8 +27,8 @@ ALLOWED_HOSTS = [
 
 CSRF_TRUSTED_ORIGINS = [
     "https://nexastore-xw5y.onrender.com",
-    "https://nexastoreoficial.com.br",
-    "https://www.nexastoreoficial.com.br",
+    "https://nexastoreofficial.com.br",
+    "https://www.nexastoreofficial.com.br",
 ]
 
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
@@ -38,7 +38,7 @@ SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 # =========================================
 PLATFORM_BASE_URL = os.environ.get(
     "PLATFORM_BASE_URL",
-    "https://nexastore-xw5y.onrender.com"
+    "https://nexastoreofficial.com.br"
 )
 
 MERCADOPAGO_WEBHOOK_URL = f"{PLATFORM_BASE_URL}/webhooks/mercadopago/"
@@ -47,22 +47,10 @@ MERCADOPAGO_REDIRECT_URI = f"{PLATFORM_BASE_URL}/painel/pagamentos/callback/"
 # =========================================
 # MERCADO PAGO
 # =========================================
-MERCADOPAGO_PUBLIC_KEY = os.environ.get(
-    "MERCADOPAGO_PUBLIC_KEY",
-    "APP_USR-7f46cd3d-9974-4fa8-88cb-425c32de41bb"
-)
-MERCADOPAGO_ACCESS_TOKEN = os.environ.get(
-    "MERCADOPAGO_ACCESS_TOKEN",
-    "APP_USR-6150318144469373-031900-8e4d128151d01b1fcb3986aa659bbb18-2902615519"
-)
-MERCADOPAGO_CLIENT_ID = os.environ.get(
-    "MERCADOPAGO_CLIENT_ID",
-    "6150318144469373"
-)
-MERCADOPAGO_CLIENT_SECRET = os.environ.get(
-    "MERCADOPAGO_CLIENT_SECRET",
-    "0XLWYhfcGLkKsdNvXjdqdJPVKK1QnsKU"
-)
+MERCADOPAGO_PUBLIC_KEY = os.environ.get("MERCADOPAGO_PUBLIC_KEY")
+MERCADOPAGO_ACCESS_TOKEN = os.environ.get("MERCADOPAGO_ACCESS_TOKEN")
+MERCADOPAGO_CLIENT_ID = os.environ.get("MERCADOPAGO_CLIENT_ID")
+MERCADOPAGO_CLIENT_SECRET = os.environ.get("MERCADOPAGO_CLIENT_SECRET")
 
 # =========================================
 # LOGIN / LOGOUT
