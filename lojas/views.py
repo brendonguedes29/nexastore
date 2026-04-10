@@ -2565,7 +2565,7 @@ def remover_logo_ajax(request):
         if loja.logo:
             loja.logo.delete(save=False)
         loja.logo = None
-        loja.save(update_fields=["logo", "atualizado_em"] if hasattr(loja, "atualizado_em") else ["logo"])
+        loja.save(update_fields=["logo"])
         return JsonResponse({"status": "ok"})
     except Exception as e:
         print("ERRO remover_logo_ajax:", str(e))

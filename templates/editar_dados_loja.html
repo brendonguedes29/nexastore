@@ -255,9 +255,9 @@ button{
                     </div>
                     {% endif %}
 
-                  {% if form.logo %}
+                 {% if form.logo %}
     <div class="campo campo-full">
-        <label for="{{ form.logo.id_for_label }}">Logo</label>
+        <label for="id_logo">Logo</label>
 
         {% if loja.logo %}
             <div id="logoContainer" style="margin-bottom:12px;">
@@ -278,14 +278,13 @@ button{
             </div>
         {% endif %}
 
-        {{ form.logo }}
+        <input type="file" name="logo" id="id_logo" accept="image/*">
 
         {% if form.logo.errors %}
             <div class="erro">{{ form.logo.errors|striptags }}</div>
         {% endif %}
     </div>
 {% endif %}
-
                     {% if form.ativa %}
                     <div class="campo campo-full">
                         <div class="checkbox-linha">
@@ -475,6 +474,6 @@ function removerLogo(){
         alert(err.message || "Erro ao remover o logo.");
     });
 }
-</script>
+</script> 
 </body>
 </html>
