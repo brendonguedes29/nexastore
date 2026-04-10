@@ -22,6 +22,7 @@ class ProdutoForm(forms.ModelForm):
             "descricao",
             "preco",
             "estoque",
+            "imagem",
             "ativo",
             "em_destaque",
             "produto_novo",

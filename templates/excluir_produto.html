@@ -1,22 +1,124 @@
 <!DOCTYPE html>
-<html>
+<html lang="pt-BR">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Excluir produto</title>
+    <style>
+        body{
+            font-family:Arial,sans-serif;
+            background:#f4f6fb;
+            margin:0;
+            color:#1f2937;
+        }
+        .wrap{
+            max-width:720px;
+            margin:50px auto;
+            padding:0 16px;
+        }
+        .box{
+            background:#fff;
+            border-radius:18px;
+            padding:32px;
+            box-shadow:0 8px 24px rgba(15,23,42,0.08);
+            border:1px solid #e5e7eb;
+        }
+        h2{
+            margin:0 0 12px 0;
+            font-size:28px;
+            color:#0f172a;
+        }
+        .texto{
+            color:#475569;
+            line-height:1.6;
+            margin-bottom:20px;
+        }
+        .produto{
+            background:#f8fafc;
+            border:1px solid #e2e8f0;
+            border-radius:14px;
+            padding:18px;
+            margin-bottom:24px;
+        }
+        .produto strong{
+            display:block;
+            font-size:14px;
+            color:#64748b;
+            margin-bottom:6px;
+        }
+        .produto .nome{
+            font-size:22px;
+            font-weight:800;
+            color:#111827;
+            margin-bottom:8px;
+        }
+        .produto .preco{
+            font-size:20px;
+            font-weight:700;
+            color:#0f172a;
+        }
+        .alerta{
+            background:#fee2e2;
+            color:#991b1b;
+            border:1px solid #fecaca;
+            padding:14px 16px;
+            border-radius:12px;
+            font-size:14px;
+            line-height:1.5;
+            margin-bottom:24px;
+        }
+        .acoes{
+            display:flex;
+            gap:12px;
+            flex-wrap:wrap;
+        }
+        .botao{
+            border:none;
+            border-radius:12px;
+            padding:12px 18px;
+            font-weight:800;
+            cursor:pointer;
+            text-decoration:none;
+            display:inline-block;
+            font-size:14px;
+        }
+        .botao-excluir{
+            background:#dc2626;
+            color:#fff;
+        }
+        .botao-cancelar{
+            background:#fff;
+            color:#0f172a;
+            border:1px solid #cbd5e1;
+        }
+    </style>
 </head>
 <body>
+    <div class="wrap">
+        <div class="box">
+            <h2>Excluir produto</h2>
+            <p class="texto">
+                Você está prestes a excluir este produto do painel da loja.
+            </p>
 
-<h2>Tem certeza que deseja excluir o produto?</h2>
+            <div class="produto">
+                <strong>Produto</strong>
+                <div class="nome">{{ produto.nome }}</div>
+                <div class="preco">R$ {{ produto.preco|floatformat:2 }}</div>
+            </div>
 
-<p>{{ produto.nome }}</p>
+            <div class="alerta">
+                Essa ação não pode ser desfeita.
+            </div>
 
-<form method="POST">
-    {% csrf_token %}
-    <button type="submit">Sim, excluir</button>
-</form>
-
-<br>
-
-<a href="{% url 'lista_produtos_painel' %}">Cancelar</a>
-
+            <form method="POST">
+                {% csrf_token %}
+                <div class="acoes">
+                    <button type="submit" class="botao botao-excluir">Sim, excluir produto</button>
+                    <a href="{% url 'lista_produtos_painel' %}" class="botao botao-cancelar">Cancelar</a>
+                </div>
+            </form>
+        </div>
+    </div>
 </body>
 </html>
