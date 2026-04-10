@@ -164,6 +164,7 @@ urlpatterns = [
     path("frete/faixa/excluir/<int:faixa_id>/", views.excluir_faixa_frete, name="excluir_faixa_frete"),
     path("painel/produto/imagem/<int:imagem_id>/principal/", views.definir_imagem_principal, name="definir_imagem_principal"),
     path("ativar/<uidb64>/<token>/", ativar_conta, name="ativar_conta"),
+    path("remover-logo/", views.remover_logo_ajax, name="remover_logo_ajax"),
 ]
 
 # 🔥 CORREÇÃO PRINCIPAL (MEDIA SEM DEBUG)

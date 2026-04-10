@@ -2551,5 +2551,28 @@ def ativar_conta(request, uidb64, token):
 
     return render(request, "ativacao_conta_resultado.html", contexto)
 
+@login_required
+def remover_logo_ajax(request):
+    if request.method == "POST":
+        loja = Loja.objects.filter(usuario=request.user).first()
+
+        if not loja:
+            return JsonResponse({"status": "erro", "msg": "Loja não encontrada"})
+
+        if loja.logo:
+            try:
+                loja.logo.delete(save=False)  # remove do Cloudinary/storage
+            except Exception as e:
+                print("Erro ao deletar logo:", e)
+
+            loja.logo = None
+            loja.save()
+
+            return JsonResponse({"status": "ok"})
+
+        return JsonResponse({"status": "ok"})  # já não tinha logo
+
+    return JsonResponse({"status": "erro"})
+
 def csrf_erro(request, reason=""):
     return render(request, "csrf_erro.html", status=403)

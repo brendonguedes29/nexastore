@@ -210,15 +210,25 @@
                     </div>
 
                     <div class="linha">
-                        <strong>Logo da loja</strong>
-                        <div class="valor logo-box">
-                            {% if loja.logo %}
-                                <img src="{{ loja.logo.url }}" alt="Logo da loja">
-                            {% else %}
-                                Não cadastrada
-                            {% endif %}
-                        </div>
-                    </div>
+    <strong>Logo da loja</strong>
+    <div class="valor logo-box">
+        {% if loja.logo %}
+            <img src="{{ loja.logo.url }}" alt="Logo da loja" id="logoAtual">
+
+            <div style="margin-top:10px;">
+                <button
+                    type="button"
+                    onclick="removerLogo()"
+                    style="background:#dc2626;color:white;border:none;padding:8px 12px;border-radius:8px;cursor:pointer;font-weight:bold;"
+                >
+                    Remover logo
+                </button>
+            </div>
+        {% else %}
+            Não cadastrada
+        {% endif %}
+    </div>
+</div>
 
                     <div class="linha">
                         <strong>E-mail comercial</strong>
@@ -409,5 +419,29 @@
             </div>
         </div>
     </div>
+<script>
+function removerLogo(){
+    if (!confirm("Deseja remover o logo?")) return;
+
+    fetch("/remover-logo/", {
+        method: "POST",
+        headers: {
+            "X-CSRFToken": "{{ csrf_token }}"
+        }
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.status === "ok"){
+            alert("Logo removido com sucesso");
+            location.reload();
+        } else {
+            alert("Não foi possível remover o logo.");
+        }
+    })
+    .catch(() => {
+        alert("Erro ao remover o logo.");
+    });
+}
+</script>
 </body>
 </html>
