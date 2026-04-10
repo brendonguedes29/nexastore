@@ -1,17 +1,12 @@
 from django import forms
 from django.contrib.auth.models import User
-from .models import Produto, ProdutoImagem, Categoria, ConfigFrete, FaixaFrete
-
-
-class MultipleFileInput(forms.ClearableFileInput):
-    allow_multiple_selected = True
+from .models import Produto, Categoria, ConfigFrete, FaixaFrete
 
 
 class ProdutoForm(forms.ModelForm):
     imagens_extras = forms.FileField(
         required=False,
-        widget=MultipleFileInput(attrs={"multiple": True}),
-        label="Imagens extras"
+        widget=forms.ClearableFileInput(attrs={"multiple": True}),
     )
 
     class Meta:
@@ -28,6 +23,9 @@ class ProdutoForm(forms.ModelForm):
             "produto_novo",
             "percentual_promocao",
         ]
+
+    def clean_imagens_extras(self):
+        return self.files.getlist("imagens_extras")
 
 
 class CategoriaForm(forms.ModelForm):
