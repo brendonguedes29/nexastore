@@ -19,7 +19,8 @@ CORES_BANNER = [
 class LojaDadosForm(forms.ModelForm):
     remover_logo = forms.BooleanField(
         required=False,
-        label="Remover logo atual"
+        label="Remover logo atual",
+        widget=forms.HiddenInput()
     )
 
     class Meta:
@@ -34,8 +35,6 @@ class LojaDadosForm(forms.ModelForm):
             "descricao",
             "logo",
             "ativa",
-
-            # ===== LICENÇA / FINANCEIRO =====
             "valor_licenca",
             "link_pagamento",
             "chave_pix",
@@ -58,7 +57,6 @@ class LojaDadosForm(forms.ModelForm):
             "descricao": "Descrição",
             "logo": "Logo da loja",
             "ativa": "Loja ativa",
-
             "valor_licenca": "Valor da licença",
             "link_pagamento": "Link de pagamento",
             "chave_pix": "Chave Pix",
@@ -81,10 +79,17 @@ class LojaDadosForm(forms.ModelForm):
     def save(self, commit=True):
         loja = super().save(commit=False)
 
-        if self.cleaned_data.get("remover_logo"):
-            if loja.logo:
-                loja.logo.delete(save=False)
+        novo_logo = self.cleaned_data.get("logo")
+        remover_logo = self.cleaned_data.get("remover_logo")
+
+        if remover_logo:
+            if self.instance.logo:
+                self.instance.logo.delete(save=False)
             loja.logo = None
+        elif novo_logo:
+            loja.logo = novo_logo
+        else:
+            loja.logo = self.instance.logo
 
         if commit:
             loja.save()
@@ -152,8 +157,6 @@ class LojaForm(forms.ModelForm):
             "descricao",
             "logo",
             "ativa",
-
-            # 🔥 SEM plano_licenca
             "valor_licenca",
             "link_pagamento",
             "chave_pix",
@@ -164,7 +167,6 @@ class LojaForm(forms.ModelForm):
             "aceitar_cartao",
             "aceitar_whatsapp_financeiro",
             "observacoes_licenca",
-
             "banner_titulo",
             "banner_subtitulo",
             "banner_botao_texto",
