@@ -5,7 +5,7 @@ Django settings for plataforma project.
 from pathlib import Path
 import os
 
-BASE_DIR = Path(__file__).resolve().parent.parent
+BASE_DIR = Path(_file_).resolve().parent.parent
 
 # =========================================
 # SEGURANÇA
@@ -47,10 +47,22 @@ MERCADOPAGO_REDIRECT_URI = f"{PLATFORM_BASE_URL}/painel/pagamentos/callback/"
 # =========================================
 # MERCADO PAGO
 # =========================================
-MERCADOPAGO_PUBLIC_KEY = os.environ.get("MERCADOPAGO_PUBLIC_KEY")
-MERCADOPAGO_ACCESS_TOKEN = os.environ.get("MERCADOPAGO_ACCESS_TOKEN")
-MERCADOPAGO_CLIENT_ID = os.environ.get("MERCADOPAGO_CLIENT_ID")
-MERCADOPAGO_CLIENT_SECRET = os.environ.get("MERCADOPAGO_CLIENT_SECRET")
+MERCADOPAGO_PUBLIC_KEY = os.environ.get(
+    "MERCADOPAGO_PUBLIC_KEY",
+    "APP_USR-7f46cd3d-9974-4fa8-88cb-425c32de41bb"
+)
+MERCADOPAGO_ACCESS_TOKEN = os.environ.get(
+    "MERCADOPAGO_ACCESS_TOKEN",
+    "APP_USR-6150318144469373-031900-8e4d128151d01b1fcb3986aa659bbb18-2902615519"
+)
+MERCADOPAGO_CLIENT_ID = os.environ.get(
+    "MERCADOPAGO_CLIENT_ID",
+    "6150318144469373"
+)
+MERCADOPAGO_CLIENT_SECRET = os.environ.get(
+    "MERCADOPAGO_CLIENT_SECRET",
+    "0XLWYhfcGLkKsdNvXjdqdJPVKK1QnsKU"
+)
 
 # =========================================
 # LOGIN / LOGOUT
@@ -69,6 +81,9 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+
+    "cloudinary",
+    "cloudinary_storage",
 
     "produtos",
     "lojas",
@@ -138,15 +153,29 @@ USE_I18N = True
 USE_TZ = True
 
 # =========================================
-# ARQUIVOS ESTÁTICOS / MÍDIA
+# ARQUIVOS ESTÁTICOS
 # =========================================
 STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
+# =========================================
+# MÍDIA / IMAGENS (CLOUDINARY)
+# =========================================
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
+CLOUDINARY_STORAGE = {
+    "CLOUD_NAME": os.environ.get("CLOUDINARY_CLOUD_NAME", ""),
+    "API_KEY": os.environ.get("CLOUDINARY_API_KEY", ""),
+    "API_SECRET": os.environ.get("CLOUDINARY_API_SECRET", ""),
+}
+
+DEFAULT_FILE_STORAGE = "cloudinary_storage.storage.MediaCloudinaryStorage"
+
+# =========================================
+# DEFAULT
+# =========================================
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # =========================================
@@ -158,6 +187,5 @@ EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 
 EMAIL_HOST_USER = "bsg181818@gmail.com"
-EMAIL_HOST_PASSWORD = "nxqwtdnswanpjzqq"
-
+EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD", "")
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
