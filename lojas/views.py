@@ -1426,9 +1426,20 @@ def editar_dados_loja(request):
 
     if request.method == "POST":
         form = LojaDadosForm(request.POST, request.FILES, instance=loja)
+
         if form.is_valid():
-            form.save()
+            loja_editada = form.save(commit=False)
+
+            if request.FILES.get("logo"):
+                loja_editada.logo = request.FILES.get("logo")
+
+            loja_editada.save()
             return redirect("minha_loja")
+        else:
+            print("ERROS FORM LOJA:", form.errors.as_json())
+            print("POST:", request.POST)
+            print("FILES:", request.FILES)
+
     else:
         form = LojaDadosForm(instance=loja)
 
@@ -1437,8 +1448,6 @@ def editar_dados_loja(request):
         "form": form,
         "licenca_bloqueada": loja_com_licenca_bloqueada(loja),
     })
-
-
 @login_required
 def editar_vitrine(request):
     loja = get_loja_do_dono(request)
