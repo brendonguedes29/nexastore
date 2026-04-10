@@ -1292,7 +1292,7 @@ def cadastrar_produto(request):
         return redirect("painel_loja")
 
     if request.method == "POST":
-        form = ProdutoForm(request.POST, request.FILES)
+        form = ProdutoForm(request.POST)
         form.fields["categoria"].queryset = Categoria.objects.filter(loja=loja)
 
         if form.is_valid():
@@ -1332,8 +1332,6 @@ def cadastrar_produto(request):
         "form": form,
         "loja": loja,
     })
-
-
 @login_required
 def editar_produto(request, produto_id):
     loja = get_loja_do_dono(request)
@@ -1349,7 +1347,7 @@ def editar_produto(request, produto_id):
     categorias = Categoria.objects.filter(loja=loja).order_by("nome")
 
     if request.method == "POST":
-        form = ProdutoForm(request.POST, request.FILES, instance=produto)
+        form = ProdutoForm(request.POST, instance=produto)
         form.fields["categoria"].queryset = categorias
 
         if form.is_valid():
