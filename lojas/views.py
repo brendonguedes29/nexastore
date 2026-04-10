@@ -2553,26 +2553,23 @@ def ativar_conta(request, uidb64, token):
 
 @login_required
 def remover_logo_ajax(request):
-    if request.method == "POST":
-        loja = Loja.objects.filter(usuario=request.user).first()
+    if request.method != "POST":
+        return JsonResponse({"status": "erro", "msg": "Método inválido"}, status=405)
 
-        if not loja:
-            return JsonResponse({"status": "erro", "msg": "Loja não encontrada"})
+    loja = Loja.objects.filter(dono=request.user).first()
 
+    if not loja:
+        return JsonResponse({"status": "erro", "msg": "Loja não encontrada"}, status=404)
+
+    try:
         if loja.logo:
-            try:
-                loja.logo.delete(save=False)  # remove do Cloudinary/storage
-            except Exception as e:
-                print("Erro ao deletar logo:", e)
-
-            loja.logo = None
-            loja.save()
-
-            return JsonResponse({"status": "ok"})
-
-        return JsonResponse({"status": "ok"})  # já não tinha logo
-
-    return JsonResponse({"status": "erro"})
+            loja.logo.delete(save=False)
+        loja.logo = None
+        loja.save(update_fields=["logo", "atualizado_em"] if hasattr(loja, "atualizado_em") else ["logo"])
+        return JsonResponse({"status": "ok"})
+    except Exception as e:
+        print("ERRO remover_logo_ajax:", str(e))
+        return JsonResponse({"status": "erro", "msg": str(e)}, status=500)
 
 def csrf_erro(request, reason=""):
     return render(request, "csrf_erro.html", status=403)

@@ -419,29 +419,6 @@
             </div>
         </div>
     </div>
-<script>
-function removerLogo(){
-    if (!confirm("Deseja remover o logo?")) return;
-
-    fetch("/remover-logo/", {
-        method: "POST",
-        headers: {
-            "X-CSRFToken": "{{ csrf_token }}"
-        }
-    })
-    .then(res => res.json())
-    .then(data => {
-        if (data.status === "ok"){
-            alert("Logo removido com sucesso");
-            location.reload();
-        } else {
-            alert("Não foi possível remover o logo.");
-        }
-    })
-    .catch(() => {
-        alert("Erro ao remover o logo.");
-    });
-}
 </script>
 </body>
 </html>
