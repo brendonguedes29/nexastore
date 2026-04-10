@@ -276,9 +276,13 @@ button{
                     Remover logo
                 </button>
             </div>
+        {% else %}
+            <div id="logoContainer" style="margin-bottom:12px; display:none;"></div>
         {% endif %}
 
         <input type="file" name="logo" id="id_logo" accept="image/*">
+
+        <div id="previewNovoLogo" style="margin-top:12px;"></div>
 
         {% if form.logo.errors %}
             <div class="erro">{{ form.logo.errors|striptags }}</div>
@@ -463,7 +467,8 @@ function removerLogo(){
         if (data.status === "ok") {
             const logoContainer = document.getElementById("logoContainer");
             if (logoContainer) {
-                logoContainer.remove();
+                logoContainer.innerHTML = "";
+                logoContainer.style.display = "none";
             }
             alert("Logo removido com sucesso.");
         } else {
@@ -474,6 +479,34 @@ function removerLogo(){
         alert(err.message || "Erro ao remover o logo.");
     });
 }
-</script> 
+
+const inputLogo = document.getElementById("id_logo");
+const previewNovoLogo = document.getElementById("previewNovoLogo");
+
+if (inputLogo && previewNovoLogo) {
+    inputLogo.addEventListener("change", function () {
+        previewNovoLogo.innerHTML = "";
+
+        if (!this.files || !this.files[0]) {
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = function (e) {
+            previewNovoLogo.innerHTML = `
+                <div style="margin-top:8px;">
+                    <img
+                        src="${e.target.result}"
+                        alt="Pré-visualização do novo logo"
+                        style="max-width:160px; max-height:160px; border-radius:12px; border:1px solid #ddd; padding:8px; background:#fff; display:block;"
+                    >
+                    <div style="font-size:13px; color:#64748b; margin-top:6px;">Pré-visualização do novo logo</div>
+                </div>
+            `;
+        };
+        reader.readAsDataURL(this.files[0]);
+    });
+}
+</script>
 </body>
 </html>
