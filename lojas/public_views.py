@@ -72,7 +72,7 @@ def criar_loja_publica(request):
             email=email,
             password=senha,
             first_name=nome_responsavel,
-            is_active=True,
+            is_active=False,
         )
 
         Loja.objects.create(
@@ -114,13 +114,19 @@ def criar_loja_publica(request):
                 html_body,
             )
             print("EMAIL ENVIADO COM RESEND:", resposta)
+
+            messages.success(
+                request,
+                "Conta criada com sucesso. Abra seu e-mail e clique no link de ativação para liberar o acesso ao painel.",
+            )
+
         except Exception as e:
             print("ERRO AO ENVIAR EMAIL:", e)
 
-        messages.success(
-            request,
-            "Conta criada com sucesso. Você já pode entrar no painel.",
-        )
+            messages.warning(
+                request,
+                "Conta criada, mas houve falha no envio do e-mail de ativação. Tente novamente mais tarde.",
+            )
 
         return redirect("login_loja")
 
