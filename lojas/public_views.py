@@ -1,16 +1,15 @@
 from django.contrib import messages
 from django.contrib.auth.models import User
 from django.contrib.auth.tokens import default_token_generator
-from django.core.mail import EmailMultiAlternatives
 from django.db import transaction
 from django.shortcuts import redirect, render
 from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode
-from django.conf import settings
 
 from .models import Loja
+from .email_service import enviar_email  # ✅ NOVO
 
 
 def landing_page(request):
@@ -111,19 +110,15 @@ def criar_loja_publica(request):
             },
         )
 
-        # 🚀 ENVIO DE EMAIL (GMAIL SMTP)
+        # 🚀 ENVIO COM RESEND (SUBSTITUI GMAIL)
         try:
-            msg = EmailMultiAlternatives(
-                subject="Ative sua conta na NexaStore",
-                body=f"Clique no link para ativar sua conta: {link}",
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                to=[email],
+            enviar_email(
+                email,
+                "Ative sua conta na NexaStore",
+                html_body
             )
 
-            msg.attach_alternative(html_body, "text/html")
-            msg.send()
-
-            print("EMAIL ENVIADO COM SUCESSO")
+            print("EMAIL ENVIADO COM RESEND")
 
             messages.success(
                 request,
