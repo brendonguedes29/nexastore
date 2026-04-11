@@ -9,7 +9,7 @@ from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode
 
 from .models import Loja
-from .email_service import enviar_email  # ✅ NOVO
+from .email_service import enviar_email
 
 
 def landing_page(request):
@@ -67,16 +67,14 @@ def criar_loja_publica(request):
                 },
             )
 
-        # ✅ cria usuário
         user = User.objects.create_user(
             username=email,
             email=email,
             password=senha,
             first_name=nome_responsavel,
-            is_active=False,
+            is_active=True,
         )
 
-        # ✅ cria loja
         Loja.objects.create(
             dono=user,
             nome=nome_loja,
@@ -94,7 +92,6 @@ def criar_loja_publica(request):
             texto_busca="O que você procura?",
         )
 
-        # ✅ gera link de ativação
         uid = urlsafe_base64_encode(force_bytes(user.pk))
         token = default_token_generator.make_token(user)
 
@@ -110,28 +107,20 @@ def criar_loja_publica(request):
             },
         )
 
-        # 🚀 ENVIO COM RESEND (SUBSTITUI GMAIL)
         try:
-            enviar_email(
+            resposta = enviar_email(
                 email,
                 "Ative sua conta na NexaStore",
-                html_body
+                html_body,
             )
-
-            print("EMAIL ENVIADO COM RESEND")
-
-            messages.success(
-                request,
-                "Conta criada com sucesso. Verifique seu e-mail para ativar sua conta.",
-            )
-
+            print("EMAIL ENVIADO COM RESEND:", resposta)
         except Exception as e:
             print("ERRO AO ENVIAR EMAIL:", e)
 
-            messages.warning(
-                request,
-                "Conta criada, mas houve falha no envio do e-mail de ativação.",
-            )
+        messages.success(
+            request,
+            "Conta criada com sucesso. Você já pode entrar no painel.",
+        )
 
         return redirect("login_loja")
 
