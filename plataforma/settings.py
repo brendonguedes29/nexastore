@@ -4,15 +4,16 @@ Django settings for plataforma project.
 
 from pathlib import Path
 import os
+import dj_database_url
 
-BASE_DIR = Path(__file__).resolve().parent.parent
+BASE_DIR = Path(_file_).resolve().parent.parent
 
 # =========================================
 # SEGURANÇA
 # =========================================
 SECRET_KEY = os.environ.get(
     "SECRET_KEY",
-    "django-insecure-_jplnlu54(t!0ri^pxpn$c$j*b-pgp1#mr@8!9$^=ncf6&8t#="
+    "django-insecure-dev-key"
 )
 
 DEBUG = False
@@ -34,7 +35,7 @@ CSRF_TRUSTED_ORIGINS = [
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
 # =========================================
-# URL BASE DA PLATAFORMA
+# URL BASE
 # =========================================
 PLATFORM_BASE_URL = os.environ.get(
     "PLATFORM_BASE_URL",
@@ -47,32 +48,20 @@ MERCADOPAGO_REDIRECT_URI = f"{PLATFORM_BASE_URL}/painel/pagamentos/callback/"
 # =========================================
 # MERCADO PAGO
 # =========================================
-MERCADOPAGO_PUBLIC_KEY = os.environ.get(
-    "MERCADOPAGO_PUBLIC_KEY",
-    "APP_USR-7f46cd3d-9974-4fa8-88cb-425c32de41bb"
-)
-MERCADOPAGO_ACCESS_TOKEN = os.environ.get(
-    "MERCADOPAGO_ACCESS_TOKEN",
-    "APP_USR-6150318144469373-031900-8e4d128151d01b1fcb3986aa659bbb18-2902615519"
-)
-MERCADOPAGO_CLIENT_ID = os.environ.get(
-    "MERCADOPAGO_CLIENT_ID",
-    "6150318144469373"
-)
-MERCADOPAGO_CLIENT_SECRET = os.environ.get(
-    "MERCADOPAGO_CLIENT_SECRET",
-    "0XLWYhfcGLkKsdNvXjdqdJPVKK1QnsKU"
-)
+MERCADOPAGO_PUBLIC_KEY = os.environ.get("MERCADOPAGO_PUBLIC_KEY", "")
+MERCADOPAGO_ACCESS_TOKEN = os.environ.get("MERCADOPAGO_ACCESS_TOKEN", "")
+MERCADOPAGO_CLIENT_ID = os.environ.get("MERCADOPAGO_CLIENT_ID", "")
+MERCADOPAGO_CLIENT_SECRET = os.environ.get("MERCADOPAGO_CLIENT_SECRET", "")
 
 # =========================================
-# LOGIN / LOGOUT
+# LOGIN
 # =========================================
 LOGIN_URL = "/entrar/"
 LOGIN_REDIRECT_URL = "/painel/"
 LOGOUT_REDIRECT_URL = "/"
 
 # =========================================
-# APLICAÇÕES
+# APPS
 # =========================================
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -90,7 +79,7 @@ INSTALLED_APPS = [
 ]
 
 # =========================================
-# MIDDLEWARES
+# MIDDLEWARE
 # =========================================
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
@@ -105,7 +94,7 @@ MIDDLEWARE = [
 ]
 
 # =========================================
-# URLS / TEMPLATES
+# URLS / TEMPLATE
 # =========================================
 ROOT_URLCONF = "plataforma.urls"
 
@@ -130,13 +119,12 @@ TEMPLATES = [
 WSGI_APPLICATION = "plataforma.wsgi.application"
 
 # =========================================
-# BANCO DE DADOS
+# BANCO DE DADOS (CORREÇÃO AQUI)
 # =========================================
 DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
-    }
+    "default": dj_database_url.parse(
+        os.environ.get("DATABASE_URL")
+    )
 }
 
 # =========================================
@@ -153,7 +141,7 @@ USE_I18N = True
 USE_TZ = True
 
 # =========================================
-# ARQUIVOS ESTÁTICOS / MÍDIA
+# STATIC / MEDIA
 # =========================================
 STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
@@ -182,7 +170,7 @@ STORAGES = {
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # =========================================
-# E-MAIL (GMAIL SMTP)
+# EMAIL
 # =========================================
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 EMAIL_HOST = "smtp.gmail.com"
