@@ -414,12 +414,15 @@ def cadastro_comprador(request, slug):
                 reverse("ativar_conta", kwargs={"uidb64": uid, "token": token})
             )
 
-            send_mail(
-                "Confirme sua conta",
-                f"Clique no link para ativar sua conta:\n{link}",
-                settings.DEFAULT_FROM_EMAIL,
-                [user.email],
-            )
+            try:
+    send_mail(
+        "Confirme sua conta",
+        f"Clique no link para ativar sua conta:\n{link}",
+        settings.DEFAULT_FROM_EMAIL,
+        [user.email],
+    )
+except Exception as e:
+    print("ERRO EMAIL:", e)
 
             return render(request, "cadastro_comprador.html", {
                 "loja": loja,
@@ -2457,14 +2460,17 @@ def recuperar_acesso_loja(request):
                 "token": token,
             })
 
-            send_mail(
-                "Recuperação de acesso - NexaStore",
-                f"Usuário: {user.username}\n\nAcesse o link para redefinir sua senha:\nhttp://{domain}/login/redefinir/{uid}/{token}/",
-                settings.DEFAULT_FROM_EMAIL,
-                [user.email],
-                html_message=html,
-                fail_silently=False,
-            )
+           try:
+    send_mail(
+        "Recuperação de acesso - NexaStore",
+        f"Usuário: {user.username}\n\nAcesse o link para redefinir sua senha:\nhttp://{domain}/login/redefinir/{uid}/{token}/",
+        settings.DEFAULT_FROM_EMAIL,
+        [user.email],
+        html_message=html,
+        fail_silently=False,
+    )
+except Exception as e:
+    print("ERRO EMAIL:", e)
 
         return redirect("recuperar_acesso_enviado")
 
