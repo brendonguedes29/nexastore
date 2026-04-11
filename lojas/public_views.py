@@ -1,15 +1,16 @@
 from django.contrib import messages
 from django.contrib.auth.models import User
 from django.contrib.auth.tokens import default_token_generator
+from django.core.mail import EmailMultiAlternatives
 from django.db import transaction
 from django.shortcuts import redirect, render
 from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode
+from django.conf import settings
 
 from .models import Loja
-from .email_service import enviar_email
 
 
 def landing_page(request):
@@ -67,6 +68,7 @@ def criar_loja_publica(request):
                 },
             )
 
+        # 🔥 cria usuário INATIVO (precisa ativar por e-mail)
         user = User.objects.create_user(
             username=email,
             email=email,
@@ -75,6 +77,7 @@ def criar_loja_publica(request):
             is_active=False,
         )
 
+        # 🔥 cria loja
         Loja.objects.create(
             dono=user,
             nome=nome_loja,
@@ -92,6 +95,7 @@ def criar_loja_publica(request):
             texto_busca="O que você procura?",
         )
 
+        # 🔗 gera link de ativação
         uid = urlsafe_base64_encode(force_bytes(user.pk))
         token = default_token_generator.make_token(user)
 
@@ -107,13 +111,19 @@ def criar_loja_publica(request):
             },
         )
 
+        # 🚀 ENVIO VIA GMAIL SMTP (igual esqueci senha)
         try:
-            resposta = enviar_email(
-                email,
-                "Ative sua conta na NexaStore",
-                html_body,
+            msg = EmailMultiAlternatives(
+                subject="Ative sua conta na NexaStore",
+                body=f"Clique no link para ativar sua conta: {link}",
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                to=[email],
             )
-            print("EMAIL ENVIADO COM RESEND:", resposta)
+
+            msg.attach_alternative(html_body, "text/html")
+            msg.send()
+
+            print("EMAIL ENVIADO COM GMAIL")
 
             messages.success(
                 request,
