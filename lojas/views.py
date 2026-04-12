@@ -2438,38 +2438,40 @@ def categorias(request):
     })
 def recuperar_acesso_loja(request):
     if request.method == "POST":
-        email = request.POST.get("email", "").strip()
+        email = request.POST.get("email", "").strip().lower()
 
-        loja = Loja.objects.filter(email_comercial__iexact=email).order_by("-id").first()
+        if not email:
+            messages.error(request, "Informe o e-mail cadastrado.")
+            return render(request, "recuperar_acesso_loja.html")
 
-        if loja and loja.dono and loja.dono.email:
-            user = loja.dono
+        user = User.objects.filter(email=email).first()
 
-            uid = urlsafe_base64_encode(force_bytes(user.pk))
-            token = default_token_generator.make_token(user)
-            domain = get_current_site(request).domain
+        if not user:
+            messages.error(request, "Não encontramos uma conta com esse e-mail.")
+            return render(request, "recuperar_acesso_loja.html")
 
-            html = render_to_string("senha/email.html", {
-                "user": user,
-                "loja": loja,
-                "domain": domain,
-                "uid": uid,
-                "token": token,
-            })
+        uid = urlsafe_base64_encode(force_bytes(user.pk))
+        token = default_token_generator.make_token(user)
 
-            send_mail(
-                "Recuperação de acesso - NexaStore",
-                f"Usuário: {user.username}\n\nAcesse o link para redefinir sua senha:\nhttp://{domain}/login/redefinir/{uid}/{token}/",
-                settings.DEFAULT_FROM_EMAIL,
-                [user.email],
-                html_message=html,
-                fail_silently=False,
-            )
+        link = request.build_absolute_uri(
+            reverse("redefinir_senha_loja", kwargs={"uidb64": uid, "token": token})
+        )
 
-        return redirect("recuperar_acesso_enviado")
+        print("=" * 80)
+        print("LINK DE RECUPERACAO GERADO:")
+        print(link)
+        print("=" * 80)
 
-    return render(request, "senha/form.html")
+        return render(
+            request,
+            "recuperacao_manual.html",
+            {
+                "email": email,
+                "link_recuperacao": link,
+            },
+        )
 
+    return render(request, "recuperar_acesso_loja.html")
 
 def recuperar_acesso_enviado(request):
     return render(request, "senha/enviado.html")

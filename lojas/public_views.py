@@ -1,7 +1,12 @@
 from django.contrib import messages
 from django.contrib.auth.models import User
+from django.contrib.auth.tokens import default_token_generator
 from django.db import transaction
 from django.shortcuts import redirect, render
+from django.template.loader import render_to_string
+from django.urls import reverse
+from django.utils.encoding import force_bytes
+from django.utils.http import urlsafe_base64_encode
 
 from .models import Loja
 
@@ -42,8 +47,6 @@ def criar_loja_publica(request):
             erro = "Informe o nome da loja."
         elif not email:
             erro = "Informe o e-mail."
-        elif not telefone:
-            erro = "Informe o telefone ou WhatsApp."
         elif not senha:
             erro = "Informe uma senha."
         elif senha != confirmar_senha:
@@ -68,7 +71,7 @@ def criar_loja_publica(request):
             email=email,
             password=senha,
             first_name=nome_responsavel,
-            is_active=True,
+            is_active=False,
         )
 
         Loja.objects.create(
@@ -88,12 +91,43 @@ def criar_loja_publica(request):
             texto_busca="O que você procura?",
         )
 
-        messages.success(
-            request,
-            "Conta criada com sucesso. Revise os dados informados e entre no painel com seu e-mail e senha cadastrados."
+        uid = urlsafe_base64_encode(force_bytes(user.pk))
+        token = default_token_generator.make_token(user)
+
+        link = request.build_absolute_uri(
+            reverse("ativar_conta", kwargs={"uidb64": uid, "token": token})
         )
 
-        return redirect("login_loja")
+        html_body = render_to_string(
+            "email/ativar_conta.html",
+            {
+                "nome": nome_responsavel,
+                "link_ativacao": link,
+            },
+        )
+
+        print("=" * 80)
+        print("LINK DE ATIVACAO GERADO:")
+        print(link)
+        print("=" * 80)
+        print("EMAIL HTML DE ATIVACAO:")
+        print(html_body)
+        print("=" * 80)
+
+        messages.success(
+            request,
+            "Conta criada com sucesso. Use o link abaixo para ativar sua conta.",
+        )
+
+        return render(
+            request,
+            "ativacao_manual.html",
+            {
+                "nome": nome_responsavel,
+                "email": email,
+                "link_ativacao": link,
+            },
+        )
 
     return render(
         request,
