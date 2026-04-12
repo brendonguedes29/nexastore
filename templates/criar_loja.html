@@ -84,6 +84,39 @@
             box-shadow:0 0 0 3px rgba(34,211,238,.12);
         }
 
+        .confirmacao-box{
+            margin:10px 0 18px 0;
+            padding:12px 14px;
+            border-radius:14px;
+            background:rgba(255,255,255,.04);
+            border:1px solid rgba(255,255,255,.08);
+        }
+
+        .confirmacao-box label{
+            display:flex;
+            gap:10px;
+            align-items:flex-start;
+            font-size:14px;
+            line-height:1.5;
+            color:#e5e7eb;
+            font-weight:700;
+            cursor:pointer;
+        }
+
+        .confirmacao-box input[type="checkbox"]{
+            width:auto;
+            margin-top:2px;
+            accent-color:#22d3ee;
+        }
+
+        .aviso{
+            margin-top:-4px;
+            margin-bottom:16px;
+            font-size:13px;
+            line-height:1.5;
+            color:#93c5fd;
+        }
+
         .btn{
             width:100%;
             border:none;
@@ -169,7 +202,7 @@
                     </div>
                 {% endif %}
 
-                <form method="post">
+                <form method="post" onsubmit="return confirmarCadastro()">
                     {% csrf_token %}
 
                     <div class="campo">
@@ -202,6 +235,17 @@
                         <input type="password" id="confirmar_senha" name="confirmar_senha" required>
                     </div>
 
+                    <div class="confirmacao-box">
+                        <label for="confirmacao_dados">
+                            <input type="checkbox" id="confirmacao_dados" required>
+                            <span>Confirmo que revisei meus dados e que o e-mail, telefone e senha informados estão corretos.</span>
+                        </label>
+                    </div>
+
+                    <div class="aviso">
+                        Antes de concluir, será exibida uma confirmação final com os dados preenchidos.
+                    </div>
+
                     <button type="submit" class="btn">Criar minha conta</button>
                 </form>
 
@@ -232,5 +276,25 @@
             </div>
         </div>
     </div>
+
+    <script>
+        function confirmarCadastro() {
+            const nome = document.getElementById("nome_responsavel").value.trim();
+            const loja = document.getElementById("nome_loja").value.trim();
+            const email = document.getElementById("email").value.trim();
+            const telefone = document.getElementById("telefone").value.trim();
+
+            const mensagem =
+                "⚠️ CONFIRME SEUS DADOS:\\n\\n" +
+                "Responsável: " + nome + "\\n" +
+                "Loja: " + loja + "\\n" +
+                "E-mail: " + email + "\\n" +
+                "Telefone: " + (telefone || "Não informado") + "\\n\\n" +
+                "Confira principalmente o e-mail e a senha antes de continuar.\\n\\n" +
+                "Deseja concluir o cadastro?";
+
+            return confirm(mensagem);
+        }
+    </script>
 </body>
 </html>

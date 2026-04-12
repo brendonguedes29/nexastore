@@ -1,14 +1,7 @@
 from django.contrib import messages
 from django.contrib.auth.models import User
-from django.contrib.auth.tokens import default_token_generator
-from django.core.mail import EmailMultiAlternatives
 from django.db import transaction
 from django.shortcuts import redirect, render
-from django.template.loader import render_to_string
-from django.urls import reverse
-from django.utils.encoding import force_bytes
-from django.utils.http import urlsafe_base64_encode
-from django.conf import settings
 
 from .models import Loja
 
@@ -49,6 +42,8 @@ def criar_loja_publica(request):
             erro = "Informe o nome da loja."
         elif not email:
             erro = "Informe o e-mail."
+        elif not telefone:
+            erro = "Informe o telefone ou WhatsApp."
         elif not senha:
             erro = "Informe uma senha."
         elif senha != confirmar_senha:
@@ -68,16 +63,14 @@ def criar_loja_publica(request):
                 },
             )
 
-        # cria usuário inativo
         user = User.objects.create_user(
             username=email,
             email=email,
             password=senha,
             first_name=nome_responsavel,
-            is_active=False,
+            is_active=True,
         )
 
-        # cria loja
         Loja.objects.create(
             dono=user,
             nome=nome_loja,
@@ -95,46 +88,10 @@ def criar_loja_publica(request):
             texto_busca="O que você procura?",
         )
 
-        # gera link de ativação
-        uid = urlsafe_base64_encode(force_bytes(user.pk))
-        token = default_token_generator.make_token(user)
-
-        link = request.build_absolute_uri(
-            reverse("ativar_conta", kwargs={"uidb64": uid, "token": token})
+        messages.success(
+            request,
+            "Conta criada com sucesso. Revise os dados informados e entre no painel com seu e-mail e senha cadastrados."
         )
-
-        html_body = render_to_string(
-            "email/ativar_conta.html",
-            {
-                "nome": nome_responsavel,
-                "link_ativacao": link,
-            },
-        )
-
-        try:
-            msg = EmailMultiAlternatives(
-                subject="Ative sua conta na NexaStore",
-                body=f"Clique no link para ativar sua conta: {link}",
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                to=[email],
-            )
-            msg.attach_alternative(html_body, "text/html")
-            msg.send()
-
-            print("EMAIL DE ATIVACAO ENVIADO COM SUCESSO")
-
-            messages.success(
-                request,
-                "Conta criada com sucesso. Abra seu e-mail e clique no link de ativação para liberar o acesso ao painel.",
-            )
-
-        except Exception as e:
-            print("ERRO AO ENVIAR EMAIL:", e)
-
-            messages.warning(
-                request,
-                "Conta criada, mas houve falha no envio do e-mail de ativação. Tente novamente mais tarde.",
-            )
 
         return redirect("login_loja")
 
