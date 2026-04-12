@@ -1,2 +1,163 @@
-<h2>Senha alterada</h2>
-<a href="{% url 'login_loja' %}">Entrar</a>
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Senha alterada - NexaStore</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            font-family: "Segoe UI", Arial, sans-serif;
+            background: linear-gradient(135deg, #081226 0%, #0b1f48 45%, #0ea5e9 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            color: #ffffff;
+        }
+
+        .card {
+            width: 100%;
+            max-width: 520px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.14);
+            backdrop-filter: blur(12px);
+            border-radius: 24px;
+            padding: 36px 32px;
+            box-shadow: 0 24px 60px rgba(0, 0, 0, 0.30);
+            text-align: center;
+        }
+
+        .brand {
+            font-size: 18px;
+            font-weight: 700;
+            letter-spacing: 0.3px;
+            margin-bottom: 20px;
+            opacity: 0.95;
+        }
+
+        .icon {
+            width: 84px;
+            height: 84px;
+            margin: 0 auto 20px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #22c55e, #16a34a);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 40px;
+            box-shadow: 0 10px 30px rgba(34, 197, 94, 0.35);
+        }
+
+        h1 {
+            margin: 0 0 14px;
+            font-size: 38px;
+            line-height: 1.1;
+            font-weight: 800;
+        }
+
+        p {
+            margin: 0 auto;
+            max-width: 420px;
+            font-size: 17px;
+            line-height: 1.6;
+            color: rgba(255, 255, 255, 0.86);
+        }
+
+        .actions {
+            margin-top: 30px;
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            text-decoration: none;
+            border: none;
+            border-radius: 14px;
+            padding: 14px 22px;
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: 0.2s ease;
+            display: inline-block;
+            min-width: 180px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(90deg, #22c55e, #16a34a);
+            color: #fff;
+            box-shadow: 0 12px 26px rgba(34, 197, 94, 0.25);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            opacity: 0.96;
+        }
+
+        .btn-secondary {
+            background: rgba(255,255,255,0.08);
+            color: #fff;
+            border: 1px solid rgba(255,255,255,0.14);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255,255,255,0.12);
+        }
+
+        .hint {
+            margin-top: 20px;
+            font-size: 13px;
+            color: rgba(255,255,255,0.65);
+        }
+
+        @media (max-width: 600px) {
+            .card {
+                padding: 28px 22px;
+                border-radius: 20px;
+            }
+
+            h1 {
+                font-size: 31px;
+            }
+
+            p {
+                font-size: 15px;
+            }
+
+            .btn {
+                width: 100%;
+                min-width: unset;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <div class="brand">NexaStore</div>
+
+        <div class="icon">✓</div>
+
+        <h1>Senha alterada</h1>
+
+        <p>
+            Sua senha foi redefinida com sucesso. Agora você já pode acessar sua conta com a nova senha.
+        </p>
+
+        <div class="actions">
+            <a href="/login/" class="btn btn-primary">Ir para o login</a>
+            <a href="/" class="btn btn-secondary">Voltar para a plataforma</a>
+        </div>
+
+        <div class="hint">
+            Use seu e-mail cadastrado e a nova senha para entrar no painel.
+        </div>
+    </div>
+</body>
+</html>
