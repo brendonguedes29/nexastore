@@ -180,9 +180,192 @@
             font-weight:700;
         }
 
+        .modal-overlay{
+            position:fixed;
+            inset:0;
+            background:rgba(2,6,23,.72);
+            display:none;
+            align-items:center;
+            justify-content:center;
+            padding:20px;
+            z-index:9999;
+            backdrop-filter:blur(4px);
+        }
+
+        .modal-overlay.ativo{
+            display:flex;
+        }
+
+        .modal{
+            width:100%;
+            max-width:520px;
+            background:#111827;
+            border:1px solid rgba(255,255,255,.10);
+            border-radius:24px;
+            box-shadow:0 25px 60px rgba(0,0,0,.45);
+            overflow:hidden;
+            animation:subir .18s ease;
+        }
+
+        @keyframes subir{
+            from{
+                opacity:0;
+                transform:translateY(10px) scale(.98);
+            }
+            to{
+                opacity:1;
+                transform:translateY(0) scale(1);
+            }
+        }
+
+        .modal-topo{
+            padding:22px 24px 14px 24px;
+            border-bottom:1px solid rgba(255,255,255,.08);
+        }
+
+        .modal-tag{
+            display:inline-flex;
+            align-items:center;
+            gap:8px;
+            font-size:12px;
+            font-weight:800;
+            color:#93c5fd;
+            background:rgba(59,130,246,.12);
+            border:1px solid rgba(147,197,253,.18);
+            padding:8px 10px;
+            border-radius:999px;
+            margin-bottom:12px;
+        }
+
+        .modal h3{
+            font-size:28px;
+            line-height:1.2;
+            margin-bottom:8px;
+        }
+
+        .modal-sub{
+            color:#cbd5e1;
+            line-height:1.6;
+            font-size:14px;
+        }
+
+        .modal-corpo{
+            padding:20px 24px;
+        }
+
+        .resumo{
+            display:grid;
+            gap:10px;
+            margin-bottom:18px;
+        }
+
+        .resumo-item{
+            display:flex;
+            justify-content:space-between;
+            gap:12px;
+            padding:13px 14px;
+            border-radius:14px;
+            background:rgba(255,255,255,.04);
+            border:1px solid rgba(255,255,255,.06);
+        }
+
+        .resumo-label{
+            color:#93a3b8;
+            font-size:14px;
+            font-weight:700;
+        }
+
+        .resumo-valor{
+            color:#fff;
+            font-size:14px;
+            font-weight:800;
+            text-align:right;
+            word-break:break-word;
+        }
+
+        .bloco-aviso{
+            padding:14px 16px;
+            border-radius:16px;
+            background:rgba(34,211,238,.08);
+            border:1px solid rgba(34,211,238,.18);
+            color:#dbeafe;
+            line-height:1.6;
+            font-size:14px;
+        }
+
+        .modal-rodape{
+            display:flex;
+            gap:12px;
+            justify-content:flex-end;
+            padding:18px 24px 24px 24px;
+            border-top:1px solid rgba(255,255,255,.08);
+        }
+
+        .btn-secundario,
+        .btn-primario{
+            border:none;
+            border-radius:14px;
+            padding:12px 18px;
+            font-size:14px;
+            font-weight:900;
+            cursor:pointer;
+            transition:.2s ease;
+        }
+
+        .btn-secundario{
+            background:transparent;
+            color:#e5e7eb;
+            border:1px solid rgba(255,255,255,.12);
+        }
+
+        .btn-secundario:hover{
+            background:rgba(255,255,255,.04);
+        }
+
+        .btn-primario{
+            background:#ffffff;
+            color:#0f172a;
+        }
+
+        .btn-primario:hover{
+            transform:translateY(-1px);
+        }
+
         @media (max-width:900px){
             .grid{
                 grid-template-columns:1fr;
+            }
+        }
+
+        @media (max-width:640px){
+            h1{
+                font-size:32px;
+            }
+
+            .card h2{
+                font-size:24px;
+            }
+
+            .modal h3{
+                font-size:23px;
+            }
+
+            .modal-rodape{
+                flex-direction:column-reverse;
+            }
+
+            .btn-secundario,
+            .btn-primario{
+                width:100%;
+            }
+
+            .resumo-item{
+                flex-direction:column;
+                align-items:flex-start;
+            }
+
+            .resumo-valor{
+                text-align:left;
             }
         }
     </style>
@@ -202,7 +385,7 @@
                     </div>
                 {% endif %}
 
-                <form method="post" onsubmit="return confirmarCadastro()">
+                <form method="post" id="formCriarLoja">
                     {% csrf_token %}
 
                     <div class="campo">
@@ -246,7 +429,7 @@
                         Antes de concluir, será exibida uma confirmação final com os dados preenchidos.
                     </div>
 
-                    <button type="submit" class="btn">Criar minha conta</button>
+                    <button type="button" class="btn" id="btnAbrirConfirmacao">Criar minha conta</button>
                 </form>
 
                 <a href="{% url 'login_loja' %}" class="link">Já tenho conta</a>
@@ -277,24 +460,101 @@
         </div>
     </div>
 
+    <div class="modal-overlay" id="modalConfirmacao">
+        <div class="modal">
+            <div class="modal-topo">
+                <div class="modal-tag">Revisão final do cadastro</div>
+                <h3>Confirmar criação da loja</h3>
+                <div class="modal-sub">
+                    Revise as informações abaixo antes de concluir. Isso ajuda a evitar erro no acesso e na ativação da conta.
+                </div>
+            </div>
+
+            <div class="modal-corpo">
+                <div class="resumo">
+                    <div class="resumo-item">
+                        <div class="resumo-label">Responsável</div>
+                        <div class="resumo-valor" id="resumoNome">-</div>
+                    </div>
+
+                    <div class="resumo-item">
+                        <div class="resumo-label">Loja</div>
+                        <div class="resumo-valor" id="resumoLoja">-</div>
+                    </div>
+
+                    <div class="resumo-item">
+                        <div class="resumo-label">E-mail (login)</div>
+                        <div class="resumo-valor" id="resumoEmail">-</div>
+                    </div>
+
+                    <div class="resumo-item">
+                        <div class="resumo-label">Telefone</div>
+                        <div class="resumo-valor" id="resumoTelefone">Não informado</div>
+                    </div>
+                </div>
+
+                <div class="bloco-aviso">
+                    Você utilizará este e-mail para acessar o painel, ativar sua conta e recuperar sua senha.
+                </div>
+            </div>
+
+            <div class="modal-rodape">
+                <button type="button" class="btn-secundario" id="btnVoltarModal">Voltar e revisar</button>
+                <button type="button" class="btn-primario" id="btnConfirmarCadastro">Confirmar cadastro</button>
+            </div>
+        </div>
+    </div>
+
     <script>
-        function confirmarCadastro() {
+        const formCriarLoja = document.getElementById("formCriarLoja");
+        const modalConfirmacao = document.getElementById("modalConfirmacao");
+
+        const btnAbrirConfirmacao = document.getElementById("btnAbrirConfirmacao");
+        const btnVoltarModal = document.getElementById("btnVoltarModal");
+        const btnConfirmarCadastro = document.getElementById("btnConfirmarCadastro");
+
+        function abrirModalConfirmacao() {
+            if (!formCriarLoja.reportValidity()) {
+                return;
+            }
+
             const nome = document.getElementById("nome_responsavel").value.trim();
             const loja = document.getElementById("nome_loja").value.trim();
             const email = document.getElementById("email").value.trim();
             const telefone = document.getElementById("telefone").value.trim();
 
-            const mensagem =
-                "⚠️ CONFIRME SEUS DADOS:\\n\\n" +
-                "Responsável: " + nome + "\\n" +
-                "Loja: " + loja + "\\n" +
-                "E-mail: " + email + "\\n" +
-                "Telefone: " + (telefone || "Não informado") + "\\n\\n" +
-                "Confira principalmente o e-mail e a senha antes de continuar.\\n\\n" +
-                "Deseja concluir o cadastro?";
+            document.getElementById("resumoNome").textContent = nome || "-";
+            document.getElementById("resumoLoja").textContent = loja || "-";
+            document.getElementById("resumoEmail").textContent = email || "-";
+            document.getElementById("resumoTelefone").textContent = telefone || "Não informado";
 
-            return confirm(mensagem);
+            modalConfirmacao.classList.add("ativo");
+            document.body.style.overflow = "hidden";
         }
+
+        function fecharModalConfirmacao() {
+            modalConfirmacao.classList.remove("ativo");
+            document.body.style.overflow = "";
+        }
+
+        btnAbrirConfirmacao.addEventListener("click", abrirModalConfirmacao);
+        btnVoltarModal.addEventListener("click", fecharModalConfirmacao);
+
+        btnConfirmarCadastro.addEventListener("click", function () {
+            formCriarLoja.submit();
+        });
+
+        modalConfirmacao.addEventListener("click", function (event) {
+            if (event.target === modalConfirmacao) {
+                fecharModalConfirmacao();
+            }
+        });
+
+        document.addEventListener("keydown", function (event) {
+            if (event.key === "Escape" && modalConfirmacao.classList.contains("ativo")) {
+                fecharModalConfirmacao();
+            }
+        });
     </script>
 </body>
 </html>
