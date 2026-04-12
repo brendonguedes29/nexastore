@@ -6,16 +6,9 @@ from pathlib import Path
 import os
 import dj_database_url
 
-BASE_DIR = Path(__file__).resolve().parent.parent
+BASE_DIR = Path(_file_).resolve().parent.parent
 
-# =========================================
-# SEGURANÇA
-# =========================================
-SECRET_KEY = os.environ.get(
-    "SECRET_KEY",
-    "django-insecure-dev-key"
-)
-
+SECRET_KEY = os.environ.get("SECRET_KEY", "django-insecure-dev-key")
 DEBUG = False
 
 ALLOWED_HOSTS = [
@@ -34,9 +27,6 @@ CSRF_TRUSTED_ORIGINS = [
 
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
-# =========================================
-# URL BASE
-# =========================================
 PLATFORM_BASE_URL = os.environ.get(
     "PLATFORM_BASE_URL",
     "https://nexastoreofficial.com.br"
@@ -45,24 +35,15 @@ PLATFORM_BASE_URL = os.environ.get(
 MERCADOPAGO_WEBHOOK_URL = f"{PLATFORM_BASE_URL}/webhooks/mercadopago/"
 MERCADOPAGO_REDIRECT_URI = f"{PLATFORM_BASE_URL}/painel/pagamentos/callback/"
 
-# =========================================
-# MERCADO PAGO
-# =========================================
 MERCADOPAGO_PUBLIC_KEY = os.environ.get("MERCADOPAGO_PUBLIC_KEY", "")
 MERCADOPAGO_ACCESS_TOKEN = os.environ.get("MERCADOPAGO_ACCESS_TOKEN", "")
 MERCADOPAGO_CLIENT_ID = os.environ.get("MERCADOPAGO_CLIENT_ID", "")
 MERCADOPAGO_CLIENT_SECRET = os.environ.get("MERCADOPAGO_CLIENT_SECRET", "")
 
-# =========================================
-# LOGIN
-# =========================================
 LOGIN_URL = "/entrar/"
 LOGIN_REDIRECT_URL = "/painel/"
 LOGOUT_REDIRECT_URL = "/"
 
-# =========================================
-# APPS
-# =========================================
 INSTALLED_APPS = [
     "django.contrib.admin",
     "django.contrib.auth",
@@ -70,21 +51,15 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-
     "cloudinary",
     "cloudinary_storage",
-
     "produtos",
     "lojas",
 ]
 
-# =========================================
-# MIDDLEWARE
-# =========================================
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
-
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -93,11 +68,7 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
-# =========================================
-# URLS / TEMPLATE
-# =========================================
 ROOT_URLCONF = "plataforma.urls"
-
 CSRF_FAILURE_VIEW = "lojas.views.csrf_erro"
 
 TEMPLATES = [
@@ -118,31 +89,17 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "plataforma.wsgi.application"
 
-# =========================================
-# BANCO DE DADOS
-# =========================================
 DATABASES = {
-    "default": dj_database_url.parse(
-        os.environ.get("DATABASE_URL")
-    )
+    "default": dj_database_url.parse(os.environ.get("DATABASE_URL"))
 }
 
-# =========================================
-# SENHAS
-# =========================================
 AUTH_PASSWORD_VALIDATORS = []
 
-# =========================================
-# INTERNACIONALIZAÇÃO
-# =========================================
 LANGUAGE_CODE = "pt-br"
 TIME_ZONE = "America/Sao_Paulo"
 USE_I18N = True
 USE_TZ = True
 
-# =========================================
-# STATIC / MEDIA
-# =========================================
 STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
@@ -164,15 +121,14 @@ STORAGES = {
     },
 }
 
-# =========================================
-# DEFAULT
-# =========================================
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-# =========================================
-# EMAIL
-# =========================================
-EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
-DEFAULT_FROM_EMAIL = "noreply@nexastoreofficial.com.br"
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_HOST = os.environ.get("EMAIL_HOST", "smtp-relay.brevo.com")
+EMAIL_PORT = int(os.environ.get("EMAIL_PORT", 587))
+EMAIL_USE_TLS = os.environ.get("EMAIL_USE_TLS", "True") == "True"
+EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER", "")
+EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD", "")
+DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL", EMAIL_HOST_USER)
 SERVER_EMAIL = DEFAULT_FROM_EMAIL
 EMAIL_TIMEOUT = 10

@@ -1,12 +1,14 @@
 from django.contrib import messages
 from django.contrib.auth.models import User
 from django.contrib.auth.tokens import default_token_generator
+from django.core.mail import EmailMultiAlternatives
 from django.db import transaction
 from django.shortcuts import redirect, render
 from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode
+from django.conf import settings
 
 from .models import Loja
 
@@ -106,28 +108,29 @@ def criar_loja_publica(request):
             },
         )
 
-        print("=" * 80)
-        print("LINK DE ATIVACAO GERADO:")
-        print(link)
-        print("=" * 80)
-        print("EMAIL HTML DE ATIVACAO:")
-        print(html_body)
-        print("=" * 80)
+        try:
+            msg = EmailMultiAlternatives(
+                subject="Ative sua conta na NexaStore",
+                body=f"Clique no link para ativar sua conta: {link}",
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                to=[email],
+            )
+            msg.attach_alternative(html_body, "text/html")
+            msg.send()
 
-        messages.success(
-            request,
-            "Conta criada com sucesso. Use o link abaixo para ativar sua conta.",
-        )
+            messages.success(
+                request,
+                "Conta criada com sucesso. Abra seu e-mail e clique no link de ativação para liberar o acesso ao painel.",
+            )
 
-        return render(
-            request,
-            "ativacao_manual.html",
-            {
-                "nome": nome_responsavel,
-                "email": email,
-                "link_ativacao": link,
-            },
-        )
+        except Exception as e:
+            print("ERRO AO ENVIAR EMAIL:", e)
+            messages.warning(
+                request,
+                "Conta criada, mas houve falha no envio do e-mail de ativação. Tente novamente mais tarde.",
+            )
+
+        return redirect("login_loja")
 
     return render(
         request,
