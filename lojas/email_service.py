@@ -3,11 +3,16 @@ from django.conf import settings
 
 
 def enviar_email(destinatario, assunto, html):
+    api_key = settings.BREVO_API_KEY.strip()
+
+    print("BREVO API KEY CARREGADA:", bool(api_key))
+    print("BREVO API KEY INICIO:", api_key[:12] if api_key else "VAZIA")
+
     url = "https://api.brevo.com/v3/smtp/email"
 
     headers = {
+        "api-key": api_key,
         "accept": "application/json",
-        "api-key": settings.BREVO_API_KEY,
         "content-type": "application/json",
     }
 
