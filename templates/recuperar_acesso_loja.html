@@ -3,16 +3,114 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Recuperar acesso</title>
+    <title>Recuperar acesso - NexaStore</title>
+
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #0f172a, #0ea5e9);
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .card {
+            background: rgba(255,255,255,0.05);
+            backdrop-filter: blur(20px);
+            padding: 40px;
+            border-radius: 20px;
+            width: 100%;
+            max-width: 420px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+            color: white;
+        }
+
+        .logo {
+            font-size: 22px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        h1 {
+            margin: 0 0 10px;
+            font-size: 26px;
+        }
+
+        p {
+            font-size: 14px;
+            opacity: 0.8;
+            margin-bottom: 25px;
+        }
+
+        input {
+            width: 100%;
+            padding: 14px;
+            border-radius: 10px;
+            border: none;
+            margin-bottom: 20px;
+            outline: none;
+            font-size: 14px;
+        }
+
+        button {
+            width: 100%;
+            padding: 14px;
+            border-radius: 10px;
+            border: none;
+            background: linear-gradient(90deg, #22c55e, #16a34a);
+            color: white;
+            font-weight: bold;
+            font-size: 15px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        button:hover {
+            opacity: 0.9;
+        }
+
+        .back {
+            margin-top: 15px;
+            display: block;
+            text-align: center;
+            color: #cbd5f5;
+            font-size: 13px;
+            text-decoration: none;
+        }
+
+        .message {
+            background: rgba(255,255,255,0.1);
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            font-size: 13px;
+        }
+    </style>
 </head>
 <body>
+
+<div class="card">
+    <div class="logo">NexaStore</div>
+
     <h1>Recuperar acesso</h1>
+    <p>Digite seu e-mail para receber o link de redefinição de senha.</p>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="message">{{ message }}</div>
+        {% endfor %}
+    {% endif %}
 
     <form method="post">
         {% csrf_token %}
-        <label for="email">E-mail cadastrado</label>
-        <input type="email" name="email" id="email" required>
-        <button type="submit">Enviar</button>
+        <input type="email" name="email" placeholder="Seu e-mail cadastrado" required>
+        <button type="submit">Enviar link de recuperação</button>
     </form>
+
+    <a href="/login/" class="back">Voltar para o login</a>
+</div>
+
 </body>
 </html>
