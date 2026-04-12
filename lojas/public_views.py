@@ -68,7 +68,7 @@ def criar_loja_publica(request):
                 },
             )
 
-        # 🔥 cria usuário INATIVO (precisa ativar por e-mail)
+        # cria usuário inativo
         user = User.objects.create_user(
             username=email,
             email=email,
@@ -77,7 +77,7 @@ def criar_loja_publica(request):
             is_active=False,
         )
 
-        # 🔥 cria loja
+        # cria loja
         Loja.objects.create(
             dono=user,
             nome=nome_loja,
@@ -95,7 +95,7 @@ def criar_loja_publica(request):
             texto_busca="O que você procura?",
         )
 
-        # 🔗 gera link de ativação
+        # gera link de ativação
         uid = urlsafe_base64_encode(force_bytes(user.pk))
         token = default_token_generator.make_token(user)
 
@@ -111,7 +111,6 @@ def criar_loja_publica(request):
             },
         )
 
-        # 🚀 ENVIO VIA GMAIL SMTP (igual esqueci senha)
         try:
             msg = EmailMultiAlternatives(
                 subject="Ative sua conta na NexaStore",
@@ -119,11 +118,10 @@ def criar_loja_publica(request):
                 from_email=settings.DEFAULT_FROM_EMAIL,
                 to=[email],
             )
-
             msg.attach_alternative(html_body, "text/html")
             msg.send()
 
-            print("EMAIL ENVIADO COM GMAIL")
+            print("EMAIL DE ATIVACAO ENVIADO COM SUCESSO")
 
             messages.success(
                 request,
