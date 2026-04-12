@@ -2442,45 +2442,43 @@ def recuperar_acesso_loja(request):
         email = request.POST.get("email", "").strip().lower()
 
         if not email:
-            messages.error(request, "Informe o e-mail cadastrado.")
+            messages.error(request, "Informe o e-mail.")
             return render(request, "recuperar_acesso_loja.html")
 
         user = User.objects.filter(email=email).first()
 
         if not user:
-            messages.error(request, "Não encontramos uma conta com esse e-mail.")
+            messages.error(request, "E-mail não encontrado.")
             return render(request, "recuperar_acesso_loja.html")
 
-        uid = urlsafe_base64_encode(force_bytes(user.pk))
-        token = default_token_generator.make_token(user)
-
-        link = request.build_absolute_uri(
-            reverse("redefinir_senha_loja", kwargs={"uidb64": uid, "token": token})
-        )
-
-        html_body = render_to_string(
-            "email/recuperar_senha_loja.html",
-            {
-                "user": user,
-                "link_recuperacao": link,
-            },
-        )
-
         try:
+            uid = urlsafe_base64_encode(force_bytes(user.pk))
+            token = default_token_generator.make_token(user)
+
+            link = request.build_absolute_uri(
+                reverse("redefinir_senha_loja", kwargs={"uidb64": uid, "token": token})
+            )
+
+            html_body = render_to_string(
+                "email/recuperar_senha_loja.html",
+                {
+                    "user": user,
+                    "link_recuperacao": link,
+                },
+            )
+
             enviar_email(
                 email,
-                "Redefina sua senha na NexaStore",
+                "Recuperação de senha - NexaStore",
                 html_body,
             )
 
-            return redirect("recuperar_acesso_enviado")
+            messages.success(request, "E-mail enviado com sucesso.")
+            return redirect("login_loja")
 
         except Exception as e:
-            print("ERRO AO ENVIAR RECUPERACAO:", e)
-            messages.error(
-                request,
-                "Houve falha no envio do e-mail de recuperação. Tente novamente mais tarde.",
-            )
+            print("ERRO RECUPERACAO:", e)
+            messages.error(request, "Erro ao enviar e-mail.")
             return render(request, "recuperar_acesso_loja.html")
 
     return render(request, "recuperar_acesso_loja.html")
