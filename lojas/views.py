@@ -37,6 +37,7 @@ from django.core.mail import send_mail
 
 from django.http import HttpResponse, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
+from .email_service import enviar_email
 
 from .models import Loja
 from .forms import LojaForm, LojaDadosForm, LojaVitrineForm
@@ -2457,19 +2458,30 @@ def recuperar_acesso_loja(request):
             reverse("redefinir_senha_loja", kwargs={"uidb64": uid, "token": token})
         )
 
-        print("=" * 80)
-        print("LINK DE RECUPERACAO GERADO:")
-        print(link)
-        print("=" * 80)
-
-        return render(
-            request,
-            "recuperacao_manual.html",
+        html_body = render_to_string(
+            "email/recuperar_senha_loja.html",
             {
-                "email": email,
+                "user": user,
                 "link_recuperacao": link,
             },
         )
+
+        try:
+            enviar_email(
+                email,
+                "Redefina sua senha na NexaStore",
+                html_body,
+            )
+
+            return redirect("recuperar_acesso_enviado")
+
+        except Exception as e:
+            print("ERRO AO ENVIAR RECUPERACAO:", e)
+            messages.error(
+                request,
+                "Houve falha no envio do e-mail de recuperação. Tente novamente mais tarde.",
+            )
+            return render(request, "recuperar_acesso_loja.html")
 
     return render(request, "recuperar_acesso_loja.html")
 
