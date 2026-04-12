@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Recuperação de senha</title>
+</head>
+<body style="font-family: Arial, sans-serif; background:#f5f7fb; padding:30px;">
+    <div style="max-width:600px; margin:0 auto; background:#ffffff; border-radius:16px; padding:32px; border:1px solid #e5e7eb;">
+        <h2 style="margin-top:0; color:#0f172a;">Recuperação de senha</h2>
+
+        <p>Olá{% if user.first_name %}, {{ user.first_name }}{% endif %}.</p>
+        <p>Recebemos uma solicitação para redefinir a senha da sua conta na NexaStore.</p>
+
+        <p style="margin:30px 0;">
+            <a href="{{ link_recuperacao }}" style="background:#0ea5e9; color:#ffffff; text-decoration:none; padding:14px 22px; border-radius:10px; font-weight:bold;">
+                Redefinir minha senha
+            </a>
+        </p>
+
+        <p>Se preferir, use este link:</p>
+        <p><a href="{{ link_recuperacao }}">{{ link_recuperacao }}</a></p>
+
+        <p style="margin-top:30px; color:#64748b;">
+            Se você não pediu essa recuperação, pode ignorar este e-mail.
+        </p>
+    </div>
+</body>
+</html>
