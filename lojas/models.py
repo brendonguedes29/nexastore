@@ -16,16 +16,14 @@ TIPOS_LOJA = [
     ("outros", "Outros"),
 ]
 
-# ✅ CORRIGIDO: FORA DA CLASSE (SEM ERRO DE INDENTAÇÃO)
 STATUS_LICENCA_CHOICES = [
-    ('pendente', 'Pendente'),
-    ('ativa', 'Ativa'),
-    ('vencida', 'Vencida'),
+    ("pendente", "Pendente"),
+    ("ativa", "Ativa"),
+    ("vencida", "Vencida"),
 ]
 
 
 class Loja(models.Model):
-
     tipo_loja = models.CharField(
         max_length=30,
         choices=TIPOS_LOJA,
@@ -36,34 +34,31 @@ class Loja(models.Model):
     dono = models.OneToOneField(
         User,
         on_delete=models.CASCADE,
-        related_name='loja'
+        related_name="loja"
     )
 
     nome = models.CharField(max_length=150)
     slug = models.SlugField(max_length=160, unique=True, blank=True)
     descricao = models.TextField(blank=True, null=True)
 
-    # ✅ LOGO (UPLOAD OK)
-    logo = models.ImageField(upload_to='lojas/', blank=True, null=True)
+    logo = models.ImageField(upload_to="lojas/", blank=True, null=True)
 
     email_comercial = models.EmailField(blank=True, null=True)
     telefone = models.CharField(max_length=30, blank=True, null=True)
     cnpj = models.CharField(max_length=30, blank=True, null=True)
     endereco = models.CharField(max_length=255, blank=True, null=True)
 
-    # ===== BANNER =====
     banner_titulo = models.CharField(max_length=150, blank=True, null=True)
     banner_subtitulo = models.CharField(max_length=255, blank=True, null=True)
     banner_botao_texto = models.CharField(max_length=100, blank=True, null=True)
     banner_botao_link = models.CharField(max_length=255, blank=True, null=True)
     banner_cor_inicio = models.CharField(max_length=20, blank=True, null=True)
     banner_cor_fim = models.CharField(max_length=20, blank=True, null=True)
-    banner_imagem = models.ImageField(upload_to='banners/', blank=True, null=True)
+    banner_imagem = models.ImageField(upload_to="banners/", blank=True, null=True)
     texto_busca = models.CharField(max_length=150, blank=True, null=True)
 
     ativa = models.BooleanField(default=True)
 
-    # ===== LICENÇA =====
     valor_licenca = models.DecimalField(max_digits=10, decimal_places=2, default=49.90)
 
     data_ultimo_pagamento = models.DateField(blank=True, null=True)
@@ -72,10 +67,9 @@ class Loja(models.Model):
     status_licenca = models.CharField(
         max_length=20,
         choices=STATUS_LICENCA_CHOICES,
-        default='pendente'
+        default="pendente"
     )
 
-    # ===== PAGAMENTO =====
     link_pagamento = models.URLField(blank=True, null=True)
     chave_pix = models.CharField(max_length=255, blank=True, null=True)
     pix_copia_cola = models.TextField(blank=True, null=True)
@@ -92,19 +86,19 @@ class Loja(models.Model):
     atualizado_em = models.DateTimeField(auto_now=True)
 
     class Meta:
-        ordering = ['nome']
+        ordering = ["nome"]
 
     def _str_(self):
         return self.nome
 
     def save(self, *args, **kwargs):
         if not self.slug:
-            base_slug = slugify(self.nome) or f'loja-{self.dono_id}'
+            base_slug = slugify(self.nome) or f"loja-{self.dono_id}"
             slug = base_slug
             contador = 1
 
             while Loja.objects.filter(slug=slug).exclude(pk=self.pk).exists():
-                slug = f'{base_slug}-{contador}'
+                slug = f"{base_slug}-{contador}"
                 contador += 1
 
             self.slug = slug
@@ -113,34 +107,44 @@ class Loja(models.Model):
 
     def renovar_licenca(self, dias=30):
         hoje = timezone.localdate()
+
+        # Se a licença ainda estiver válida, soma em cima do vencimento atual
+        if self.data_vencimento_licenca and self.data_vencimento_licenca >= hoje:
+            nova_data_vencimento = self.data_vencimento_licenca + timedelta(days=dias)
+        else:
+            # Se estiver vencida ou sem data, começa a contar de hoje
+            nova_data_vencimento = hoje + timedelta(days=dias)
+
         self.data_ultimo_pagamento = hoje
-        self.data_vencimento_licenca = hoje + timedelta(days=dias)
-        self.status_licenca = 'ativa'
+        self.data_vencimento_licenca = nova_data_vencimento
+        self.status_licenca = "ativa"
         self.ativa = True
 
         self.save(update_fields=[
-            'data_ultimo_pagamento',
-            'data_vencimento_licenca',
-            'status_licenca',
-            'ativa',
-            'atualizado_em',
+            "data_ultimo_pagamento",
+            "data_vencimento_licenca",
+            "status_licenca",
+            "ativa",
+            "atualizado_em",
         ])
 
     def verificar_licenca(self):
         hoje = timezone.localdate()
 
         if not self.data_vencimento_licenca:
-            self.status_licenca = 'pendente'
+            self.status_licenca = "pendente"
+            self.ativa = False
+            self.save(update_fields=["status_licenca", "ativa", "atualizado_em"])
             return
 
         if hoje > self.data_vencimento_licenca:
-            self.status_licenca = 'vencida'
+            self.status_licenca = "vencida"
             self.ativa = False
         else:
-            self.status_licenca = 'ativa'
+            self.status_licenca = "ativa"
             self.ativa = True
 
-        self.save(update_fields=['status_licenca', 'ativa', 'atualizado_em'])
+        self.save(update_fields=["status_licenca", "ativa", "atualizado_em"])
 
     @property
     def licenca_ativa(self):
@@ -166,30 +170,30 @@ class Loja(models.Model):
 
 class PagamentoLicenca(models.Model):
     STATUS_CHOICES = [
-        ('criado', 'Criado'),
-        ('pendente', 'Pendente'),
-        ('aprovado', 'Aprovado'),
-        ('recusado', 'Recusado'),
-        ('cancelado', 'Cancelado'),
-        ('expirado', 'Expirado'),
+        ("criado", "Criado"),
+        ("pendente", "Pendente"),
+        ("aprovado", "Aprovado"),
+        ("recusado", "Recusado"),
+        ("cancelado", "Cancelado"),
+        ("expirado", "Expirado"),
     ]
 
     TIPO_CHOICES = [
-        ('pix', 'Pix'),
-        ('checkout', 'Checkout'),
+        ("pix", "Pix"),
+        ("checkout", "Checkout"),
     ]
 
     loja = models.ForeignKey(
         Loja,
         on_delete=models.CASCADE,
-        related_name='pagamentos_licenca'
+        related_name="pagamentos_licenca"
     )
 
     valor = models.DecimalField(max_digits=10, decimal_places=2)
     tipo_pagamento = models.CharField(max_length=20, choices=TIPO_CHOICES)
 
     external_reference = models.CharField(max_length=120, unique=True)
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='criado')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="criado")
 
     plano_nome = models.CharField(max_length=100, default="Plano padrão")
 
@@ -206,33 +210,32 @@ class PagamentoLicenca(models.Model):
     data_aprovacao = models.DateTimeField(blank=True, null=True)
 
     class Meta:
-        ordering = ['-data_criacao']
+        ordering = ["-data_criacao"]
 
     def _str_(self):
-        return f'{self.loja.nome} - {self.get_tipo_pagamento_display()} - {self.get_status_display()}'
+        return f"{self.loja.nome} - {self.get_tipo_pagamento_display()} - {self.get_status_display()}"
 
     def marcar_aprovado(self):
-        if self.status != 'aprovado':
-            self.status = 'aprovado'
+        if self.status != "aprovado":
+            self.status = "aprovado"
             self.data_aprovacao = timezone.now()
-
-            self.save(update_fields=['status', 'data_aprovacao', 'data_atualizacao'])
+            self.save(update_fields=["status", "data_aprovacao", "data_atualizacao"])
             self.loja.renovar_licenca(30)
 
     def marcar_status_por_mp(self, status_mp):
         mapa = {
-            'approved': 'aprovado',
-            'pending': 'pendente',
-            'in_process': 'pendente',
-            'rejected': 'recusado',
-            'cancelled': 'cancelado',
-            'expired': 'expirado',
+            "approved": "aprovado",
+            "pending": "pendente",
+            "in_process": "pendente",
+            "rejected": "recusado",
+            "cancelled": "cancelado",
+            "expired": "expirado",
         }
 
-        novo_status = mapa.get(status_mp, 'pendente')
+        novo_status = mapa.get(status_mp, "pendente")
 
-        if novo_status == 'aprovado':
+        if novo_status == "aprovado":
             self.marcar_aprovado()
         else:
             self.status = novo_status
-            self.save(update_fields=['status', 'data_atualizacao'])
+            self.save(update_fields=["status", "data_atualizacao"])
