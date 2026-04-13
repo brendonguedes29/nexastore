@@ -749,7 +749,7 @@
             }
 
             try {
-                const response = await fetch(/painel/financeiro/status/${pagamentoLicencaId}/);
+                const response = await fetch('/painel/financeiro/status/${pagamentoLicencaId}/');
                 const data = await response.json();
 
                 if (data.ok && data.status === "aprovado") {
