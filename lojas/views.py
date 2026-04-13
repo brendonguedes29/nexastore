@@ -61,6 +61,7 @@ from produtos.forms import (
     FaixaFreteForm,
 )
 
+
 def ativar_ou_renovar_licenca(loja, dias=30):
     agora = timezone.now()
 
@@ -2584,6 +2585,18 @@ def remover_logo_ajax(request):
     except Exception as e:
         print("ERRO remover_logo_ajax:", str(e))
         return JsonResponse({"status": "erro", "msg": str(e)}, status=500)
+
+def status_licenca(request, pk):
+    try:
+        pagamento = PagamentoLicenca.objects.get(id=pk)
+
+        return JsonResponse({
+            "ok": True,
+            "status": pagamento.status,
+            "dias_restantes": pagamento.dias_restantes if hasattr(pagamento, 'dias_restantes') else None
+        })
+    except PagamentoLicenca.DoesNotExist:
+        return JsonResponse({"ok": False}, status=404)
 
 def csrf_erro(request, reason=""):
     return render(request, "csrf_erro.html", status=403)

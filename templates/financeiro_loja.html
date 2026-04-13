@@ -694,6 +694,7 @@
                 mostrarStatus("Erro ao gerar Pix da licença: " + e);
             }
         }
+const pagamentoLicencaId = "{{ pagamento_pendente.id|default:'' }}";
 
         async function gerarCheckoutLicenca() {
             console.log("clicou no botão CARTÃO");
@@ -748,7 +749,7 @@ async function verificarStatusLicenca() {
     }
 
     try {
-        const response = await fetch('/painel/financeiro/status/${pagamentoLicencaId}/');
+        const response = await fetch(`/painel/financeiro/status/${pagamentoLicencaId}/`);
         const data = await response.json();
 
         console.log("STATUS LICENCA:", data);

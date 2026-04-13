@@ -88,7 +88,7 @@ class Loja(models.Model):
     class Meta:
         ordering = ["nome"]
 
-    def _str_(self):
+    def __str__(self):
         return self.nome
 
     def save(self, *args, **kwargs):
@@ -108,11 +108,9 @@ class Loja(models.Model):
     def renovar_licenca(self, dias=30):
         hoje = timezone.localdate()
 
-        # Se a licença ainda estiver válida, soma em cima do vencimento atual
         if self.data_vencimento_licenca and self.data_vencimento_licenca >= hoje:
             nova_data_vencimento = self.data_vencimento_licenca + timedelta(days=dias)
         else:
-            # Se estiver vencida ou sem data, começa a contar de hoje
             nova_data_vencimento = hoje + timedelta(days=dias)
 
         self.data_ultimo_pagamento = hoje
@@ -212,7 +210,7 @@ class PagamentoLicenca(models.Model):
     class Meta:
         ordering = ["-data_criacao"]
 
-    def _str_(self):
+    def __str__(self):
         return f"{self.loja.nome} - {self.get_tipo_pagamento_display()} - {self.get_status_display()}"
 
     def marcar_aprovado(self):
