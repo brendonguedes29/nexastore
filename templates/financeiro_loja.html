@@ -694,7 +694,7 @@
                 mostrarStatus("Erro ao gerar Pix da licença: " + e);
             }
         }
-const pagamentoLicencaId = "{{ pagamento_pendente.id|default:'' }}";
+
 
         async function gerarCheckoutLicenca() {
             console.log("clicou no botão CARTÃO");
@@ -743,6 +743,9 @@ const pagamentoLicencaId = "{{ pagamento_pendente.id|default:'' }}";
                 mostrarStatus("Erro ao gerar checkout da licença: " + e);
             }
         }
+
+const pagamentoLicencaId = "{{ pagamento_pendente.id|default:'' }}";
+
 async function verificarStatusLicenca() {
     if (!pagamentoLicencaId) {
         return;
@@ -758,7 +761,7 @@ async function verificarStatusLicenca() {
             let mensagem = "Pagamento aprovado com sucesso.";
 
             if (data.dias_restantes) {
-                mensagem += " Sua licença agora possui ${data.dias_restantes} dia(s) restante(s).";
+                mensagem += ` Sua licença agora possui ${data.dias_restantes} dia(s) restante(s).`;
             }
 
             mostrarStatus(mensagem);
