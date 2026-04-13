@@ -38,6 +38,7 @@ from django.core.mail import send_mail
 from django.http import HttpResponse, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from .email_service import enviar_email
+from .marketing_email import enviar_notificacao_produto
 
 from .models import Loja
 from .forms import LojaForm, LojaDadosForm, LojaVitrineForm
@@ -1302,6 +1303,10 @@ def cadastrar_produto(request):
                 produto = form.save(commit=False)
                 produto.loja = loja
                 produto.save()
+
+         # 🔥 DISPARO DE EMAIL
+if produto.produto_novo or produto.em_destaque or produto.percentual_promocao > 0:
+    enviar_notificacao_produto(produto)
 
                 imagens_extras = request.FILES.getlist("imagens_extras")
                 for indice, imagem in enumerate(imagens_extras):
