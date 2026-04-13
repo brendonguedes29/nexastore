@@ -681,7 +681,7 @@
                     return;
                 }
 
-                pagamentoLicencaId = data.pagamento_id;
+                pagamentoLicencaId = data.pagamento_id || null;
                 mostrarPix(data.qr_code_base64, data.qr_code, data.ticket_url);
 
                 if (licencaAtiva) {
@@ -719,6 +719,11 @@
                 });
 
                 console.log("response checkout:", response);
+
+                if (!response.ok) {
+                    throw new Error(Erro HTTP ${response.status});
+                }
+
                 const data = await response.json();
                 console.log("data checkout:", data);
 
@@ -744,7 +749,7 @@
             }
         }
 
-const pagamentoLicencaId = "{{ pagamento_pendente.id|default:'' }}";
+let pagamentoLicencaId = "{{ pagamento_pendente.id|default:'' }}";
 
 async function verificarStatusLicenca() {
     if (!pagamentoLicencaId) {
@@ -752,7 +757,12 @@ async function verificarStatusLicenca() {
     }
 
     try {
-        const response = await fetch(`/painel/financeiro/status/${pagamentoLicencaId}/`);
+        const response = await fetch(/painel/financeiro/status/${pagamentoLicencaId}/);
+
+        if (!response.ok) {
+            throw new Error(Erro HTTP ${response.status});
+        }
+
         const data = await response.json();
 
         console.log("STATUS LICENCA:", data);
