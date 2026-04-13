@@ -78,6 +78,11 @@ def _dias_licenca():
     return 30
 
 
+def _montar_url_absoluta(caminho):
+    base = str(getattr(settings, "PLATFORM_BASE_URL", "")).rstrip("/")
+    return f"{base}{caminho}"
+
+
 def _consultar_pagamento_mp(payment_id):
     token = _get_mp_token()
 
@@ -123,10 +128,14 @@ def _processar_pagamento_licenca_por_payment_id(payment_id):
     if not pagamento:
         return False
 
-    pagamento.mp_payment_id = str(pagamento_mp.get("id", ""))
-    pagamento.status = _mapear_status_mp(status_mp)
+    status_antigo = pagamento.status
+    novo_status = _mapear_status_mp(status_mp)
 
-    if pagamento.status == "aprovado":
+    pagamento.mp_payment_id = str(pagamento_mp.get("id", ""))
+    pagamento.status = novo_status
+
+    # só renova uma vez
+    if novo_status == "aprovado" and status_antigo != "aprovado":
         pagamento.loja.renovar_licenca(dias=_dias_licenca())
 
     pagamento.save()
@@ -230,16 +239,16 @@ def gerar_pix_licenca(request):
             })
 
     external_reference = _criar_external_reference(loja, "pix")
-    notification_url = request.build_absolute_uri(reverse("webhook_mercadopago_licenca"))
+    notification_url = _montar_url_absoluta(reverse("webhook_mercadopago_licenca"))
 
     pagamento = PagamentoLicenca.objects.create(
-    loja=loja,
-    valor=loja.valor_licenca,
-    tipo_pagamento="pix",
-    external_reference=external_reference,
-    status="criado",
-    plano_nome="Plano padrão"
-)
+        loja=loja,
+        valor=loja.valor_licenca,
+        tipo_pagamento="pix",
+        external_reference=external_reference,
+        status="criado",
+        plano_nome="Plano padrão",
+    )
 
     payload = {
         "transaction_amount": valor,
@@ -317,6 +326,7 @@ def gerar_pix_licenca(request):
 @login_required
 def gerar_checkout_licenca(request):
     loja = get_loja_do_dono(request)
+
     if not loja:
         return JsonResponse({"ok": False, "erro": "Loja não encontrada."}, status=404)
 
@@ -342,17 +352,17 @@ def gerar_checkout_licenca(request):
         }, status=400)
 
     external_reference = _criar_external_reference(loja, "checkout")
-    notification_url = request.build_absolute_uri(reverse("webhook_mercadopago_licenca"))
-    retorno_url = request.build_absolute_uri(reverse("financeiro_loja"))
+    notification_url = _montar_url_absoluta(reverse("webhook_mercadopago_licenca"))
+    retorno_url = _montar_url_absoluta(reverse("financeiro_loja"))
 
     pagamento = PagamentoLicenca.objects.create(
-    loja=loja,
-    valor=loja.valor_licenca,
-    tipo_pagamento="checkout",
-    external_reference=external_reference,
-    status="criado",
-    plano_nome="Plano padrão"
-  )
+        loja=loja,
+        valor=loja.valor_licenca,
+        tipo_pagamento="checkout",
+        external_reference=external_reference,
+        status="criado",
+        plano_nome="Plano padrão",
+    )
 
     payload = {
         "items": [
@@ -441,9 +451,13 @@ def status_pagamento_licenca(request, pagamento_id):
         _processar_pagamento_licenca_por_payment_id(pagamento.mp_payment_id)
         pagamento.refresh_from_db()
 
+    loja.refresh_from_db()
+
     return JsonResponse({
         "ok": True,
         "status": pagamento.status,
+        "loja_ativa": loja.ativa,
+        "status_licenca": loja.status_licenca,
     })
 
 
