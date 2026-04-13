@@ -757,7 +757,7 @@ async function verificarStatusLicenca() {
     }
 
     try {
-        const response = await fetch(/painel/financeiro/status/${pagamentoLicencaId}/);
+        const response = await fetch(`/painel/financeiro/status/${pagamentoLicencaId}/`);
 
         if (!response.ok) {
             throw new Error(Erro HTTP ${response.status});
