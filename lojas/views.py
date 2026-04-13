@@ -395,40 +395,53 @@ def cadastro_comprador(request, slug):
         form = CadastroCompradorForm(request.POST)
 
         if form.is_valid():
-            user = User.objects.create_user(
-                username=form.cleaned_data["username"],
-                email=form.cleaned_data["email"],
-                password=form.cleaned_data["password1"],
-                first_name=form.cleaned_data["nome"],
-                is_active=False
-            )
+            try:
+                user = User.objects.create_user(
+                    username=form.cleaned_data["username"],
+                    email=form.cleaned_data["email"],
+                    password=form.cleaned_data["password1"],
+                    first_name=form.cleaned_data["nome"],
+                    is_active=False
+                )
 
-            Comprador.objects.create(
-                usuario=user,
-                loja=loja,
-                telefone=form.cleaned_data["telefone"],
-                ativo=True,
-            )
+                Comprador.objects.create(
+                    usuario=user,
+                    loja=loja,
+                    telefone=form.cleaned_data["telefone"],
+                    ativo=True,
+                )
 
-            uid = urlsafe_base64_encode(force_bytes(user.pk))
-            token = default_token_generator.make_token(user)
+                uid = urlsafe_base64_encode(force_bytes(user.pk))
+                token = default_token_generator.make_token(user)
 
-            link = request.build_absolute_uri(
-                reverse("ativar_conta", kwargs={"uidb64": uid, "token": token})
-            )
+                link = request.build_absolute_uri(
+                    reverse("ativar_conta", kwargs={"uidb64": uid, "token": token})
+                )
 
-            send_mail(
-                "Confirme sua conta",
-                f"Clique no link para ativar sua conta:\n{link}",
-                settings.DEFAULT_FROM_EMAIL,
-                [user.email],
-            )
+                assunto = "Confirme sua conta"
+                mensagem = f"Clique no link para ativar sua conta:\n{link}"
 
-            return render(request, "cadastro_comprador.html", {
-                "loja": loja,
-                "form": CadastroCompradorForm(),
-                "mensagem": "Conta criada! Verifique seu e-mail para ativar.",
-            })
+                send_mail(
+                    assunto,
+                    mensagem,
+                    settings.DEFAULT_FROM_EMAIL,
+                    [user.email],
+                    fail_silently=False,
+                )
+
+                return render(request, "cadastro_comprador.html", {
+                    "loja": loja,
+                    "form": CadastroCompradorForm(),
+                    "mensagem": "Conta criada! Verifique seu e-mail para ativar.",
+                })
+
+            except Exception as e:
+                print("ERRO AO CADASTRAR COMPRADOR:", str(e))
+                return render(request, "cadastro_comprador.html", {
+                    "loja": loja,
+                    "form": form,
+                    "erro": f"Erro ao criar conta: {str(e)}",
+                })
     else:
         form = CadastroCompradorForm()
 
