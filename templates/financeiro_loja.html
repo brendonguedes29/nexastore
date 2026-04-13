@@ -586,224 +586,122 @@
             {% endif %}
         </div></div>
 
-    <script>
-        let pagamentoLicencaId = {% if pagamento_pendente %}{{ pagamento_pendente.id }}{% else %}null{% endif %};
-        const licencaAtiva = "{{ loja.status_licenca }}" === "ativa";
-        const diasRestantes = {{ loja.dias_restantes_licenca|default:0 }};
+   <script>
+    let pagamentoLicencaId = "{{ pagamento_pendente.id|default:'' }}";
+    const licencaAtiva = "{{ loja.status_licenca }}" === "ativa";
 
-        function mostrarStatus(texto) {
-            const box = document.getElementById("statusPagamento");
-            if (!box) return;
-            box.style.display = "block";
-            box.innerText = texto;
+    function confirmarNovaCompraLicenca() {
+        if (!pagamentoLicencaId) {
+            return true;
         }
-
-        function confirmarNovaCompraLicenca() {
-            if (!licencaAtiva) {
-                return true;
-            }
-
-            return confirm(
-                "Sua licença já está ativa" +
-                (diasRestantes > 0 ? " e ainda possui " + diasRestantes + " dia(s) restante(s)." : "") +
-                "\n\nDeseja adicionar mais 30 dias ao período atual da licença?"
-            );
-        }
-
-        function mostrarPix(qrBase64, qrCode, ticketUrl) {
-            const pixArea = document.getElementById("pixArea");
-            const qrImage = document.getElementById("pixQrImage");
-            const pixCode = document.getElementById("pixCode");
-            const ticketLink = document.getElementById("pixTicketLink");
-
-            if (!pixArea || !qrImage || !pixCode || !ticketLink) {
-                mostrarStatus("Erro: elementos do Pix não encontrados na página.");
-                return;
-            }
-
-            qrImage.src = "data:image/png;base64," + qrBase64;
-            pixCode.value = qrCode || "";
-            pixArea.style.display = "block";
-
-            if (ticketUrl) {
-                ticketLink.href = ticketUrl;
-                ticketLink.style.display = "inline-flex";
-            } else {
-                ticketLink.style.display = "none";
-            }
-        }
-
-        function copiarPix() {
-            const pixCode = document.getElementById("pixCode");
-            if (!pixCode) return;
-
-            pixCode.select();
-            pixCode.setSelectionRange(0, 99999);
-            document.execCommand("copy");
-            mostrarStatus("Código Pix copiado com sucesso.");
-        }
-
-        async function gerarPixLicenca() {
-            console.log("clicou no botão PIX");
-
-            if (!confirmarNovaCompraLicenca()) {
-                mostrarStatus("Nova cobrança cancelada.");
-                return;
-            }
-
-            try {
-                mostrarStatus("Gerando Pix da licença...");
-
-                const response = await fetch("{% url 'gerar_pix_licenca' %}", {
-                    method: "GET",
-                    headers: {
-                        "X-Requested-With": "XMLHttpRequest"
-                    }
-                });
-
-                console.log("response pix:", response);
-                const data = await response.json();
-                console.log("data pix:", data);
-
-                if (!data.ok) {
-                    mostrarStatus(
-                        (data.erro || "Não foi possível gerar o Pix.") +
-                        (data.resposta_mp ? "\n\n" + JSON.stringify(data.resposta_mp) : "")
-                    );
-                    return;
-                }
-
-                if (data.ja_pago) {
-                    mostrarStatus(data.mensagem || "A licença já foi paga.");
-                    setTimeout(() => {
-                        window.location.reload();
-                    }, 1200);
-                    return;
-                }
-
-                pagamentoLicencaId = data.pagamento_id || null;
-                mostrarPix(data.qr_code_base64, data.qr_code, data.ticket_url);
-
-                if (licencaAtiva) {
-                    mostrarStatus("Pix gerado com sucesso. Após a aprovação, serão adicionados mais 30 dias à sua licença.");
-                } else {
-                    mostrarStatus("Pix gerado com sucesso. Após o pagamento, a licença será ativada automaticamente.");
-                }
-            } catch (e) {
-                console.error("erro pix:", e);
-                mostrarStatus("Erro ao gerar Pix da licença: " + e);
-            }
-        }
-
-
-        async function gerarCheckoutLicenca() {
-            console.log("clicou no botão CARTÃO");
-
-            if (!confirmarNovaCompraLicenca()) {
-                mostrarStatus("Nova cobrança cancelada.");
-                return;
-            }
-
-            try {
-                if (licencaAtiva) {
-                    mostrarStatus("Gerando novo pagamento para adicionar mais 30 dias...");
-                } else {
-                    mostrarStatus("Gerando checkout de cartão...");
-                }
-
-                const response = await fetch("{% url 'gerar_checkout_licenca' %}", {
-                    method: "GET",
-                    headers: {
-                        "X-Requested-With": "XMLHttpRequest"
-                    }
-                });
-
-                console.log("response checkout:", response);
-
-                if (!response.ok) {
-                    throw new Error(Erro HTTP ${response.status});
-                }
-
-                const data = await response.json();
-                console.log("data checkout:", data);
-
-                if (!data.ok) {
-                    mostrarStatus(
-                        (data.erro || "Não foi possível gerar o checkout.") +
-                        (data.resposta_mp ? "\n\n" + JSON.stringify(data.resposta_mp) : "")
-                    );
-                    return;
-                }
-
-                if (!data.checkout_url) {
-                    mostrarStatus("Erro: checkout_url não veio da view.");
-                    return;
-                }
-
-                pagamentoLicencaId = data.pagamento_id || null;
-                mostrarStatus("Redirecionando para o pagamento...");
-                window.location.href = data.checkout_url;
-            } catch (e) {
-                console.error("erro checkout:", e);
-                mostrarStatus("Erro ao gerar checkout da licença: " + e);
-            }
-        }
-
-let pagamentoLicencaId = "{{ pagamento_pendente.id|default:'' }}";
-
-async function verificarStatusLicenca() {
-    if (!pagamentoLicencaId) {
-        return;
+        return confirm("Já existe um pagamento pendente. Deseja gerar uma nova cobrança mesmo assim?");
     }
 
-    try {
-        const response = await fetch(`/painel/financeiro/status/${pagamentoLicencaId}/`);
-
-        if (!response.ok) {
-            throw new Error(Erro HTTP ${response.status});
+    function mostrarStatus(texto) {
+        const el = document.getElementById("statusPagamento");
+        if (el) {
+            el.innerText = texto;
         }
+    }
 
-        const data = await response.json();
+    function mostrarPix(qrBase64, codigo, link) {
+        document.getElementById("pixArea").style.display = "block";
+        document.getElementById("pixQrImage").src = "data:image/png;base64," + qrBase64;
+        document.getElementById("pixCopiaCola").value = codigo;
 
-        console.log("STATUS LICENCA:", data);
+        const btn = document.getElementById("btnAbrirComprovante");
+        if (link) {
+            btn.style.display = "inline-block";
+            btn.onclick = () => window.open(link, "_blank");
+        }
+    }
 
-        if (data.ok && data.status === "aprovado") {
-            let mensagem = "Pagamento aprovado com sucesso.";
+    function copiarCodigoPix() {
+        const el = document.getElementById("pixCopiaCola");
+        el.select();
+        document.execCommand("copy");
+        mostrarStatus("Código Pix copiado.");
+    }
 
-            if (data.dias_restantes) {
-                mensagem += " Sua licença agora possui ${data.dias_restantes} dia(s) restante(s).";
+    async function gerarPixLicenca() {
+        try {
+            mostrarStatus("Gerando Pix...");
+
+            const response = await fetch("{% url 'gerar_pix_licenca' %}");
+
+            if (!response.ok) throw new Error("Erro HTTP");
+
+            const data = await response.json();
+
+            if (!data.ok) {
+                mostrarStatus(data.erro || "Erro ao gerar Pix");
+                return;
             }
 
-            mostrarStatus(mensagem);
+            pagamentoLicencaId = data.pagamento_id;
 
-            setTimeout(() => {
-                window.location.reload();
-            }, 1800);
+            mostrarPix(data.qr_code_base64, data.qr_code, data.ticket_url);
+            mostrarStatus("Pix gerado com sucesso.");
+
+        } catch (e) {
+            console.error(e);
+            mostrarStatus("Erro Pix");
         }
-    } catch (e) {
-        console.log("Falha ao consultar status da licença.", e);
     }
-}
 
-{% if pagamento_pendente and pagamento_pendente.qr_code and pagamento_pendente.qr_code_base64 %}
-    mostrarPix(
-        "{{ pagamento_pendente.qr_code_base64|escapejs }}",
-        "{{ pagamento_pendente.qr_code|escapejs }}",
-        "{{ pagamento_pendente.ticket_url|default:''|escapejs }}"
-    );
+    async function gerarCheckoutLicenca() {
+        try {
+            mostrarStatus("Redirecionando...");
 
-    {% if loja.status_licenca == "ativa" %}
-        mostrarStatus("Existe um pagamento pendente. Se ele for aprovado, sua licença receberá mais 30 dias automaticamente.");
-    {% else %}
-        mostrarStatus("Existe um pagamento pendente para esta licença. Assim que ele for aprovado, a licença será ativada automaticamente.");
+            const response = await fetch("{% url 'gerar_checkout_licenca' %}");
+
+            if (!response.ok) throw new Error("Erro HTTP");
+
+            const data = await response.json();
+
+            if (!data.ok) {
+                mostrarStatus("Erro checkout");
+                return;
+            }
+
+            pagamentoLicencaId = data.pagamento_id;
+            window.location.href = data.checkout_url;
+
+        } catch (e) {
+            console.error(e);
+            mostrarStatus("Erro checkout");
+        }
+    }
+
+    async function verificarStatusLicenca() {
+        if (!pagamentoLicencaId) return;
+
+        try {
+            const response = await fetch(`/painel/financeiro/status/${pagamentoLicencaId}/`);
+
+            if (!response.ok) return;
+
+            const data = await response.json();
+
+            if (data.ok && data.status === "aprovado") {
+                mostrarStatus("Pagamento aprovado!");
+                setTimeout(() => location.reload(), 1500);
+            }
+
+        } catch (e) {
+            console.log("Erro status", e);
+        }
+    }
+
+    {% if pagamento_pendente and pagamento_pendente.qr_code_base64 %}
+        mostrarPix(
+            "{{ pagamento_pendente.qr_code_base64|escapejs }}",
+            "{{ pagamento_pendente.qr_code|escapejs }}",
+            "{{ pagamento_pendente.ticket_url|default:''|escapejs }}"
+        );
     {% endif %}
-{% endif %}
 
-setInterval(verificarStatusLicenca, 5000);
-
-window.addEventListener("focus", function () {
-    verificarStatusLicenca();
-});
+    setInterval(verificarStatusLicenca, 5000);
 </script>
 </body>
 </html>
