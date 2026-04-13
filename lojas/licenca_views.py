@@ -198,103 +198,144 @@ def renovar_licenca_manual(request):
 
 @login_required
 def gerar_pix_licenca(request):
-    loja = get_loja_do_dono(request)
-
-    if not loja:
-        return JsonResponse({"ok": False, "erro": "Loja não encontrada."}, status=404)
-
-    token = _get_mp_token()
-    if not token:
-        return JsonResponse({
-            "ok": False,
-            "erro": "O token MERCADOPAGO_ACCESS_TOKEN não está configurado."
-        }, status=400)
-
     try:
-        valor = float(loja.valor_licenca or 0)
-    except Exception:
-        return JsonResponse({
-            "ok": False,
-            "erro": "Valor da licença inválido."
-        }, status=400)
+        loja = get_loja_do_dono(request)
 
-    if valor <= 0:
-        return JsonResponse({
-            "ok": False,
-            "erro": "O valor da licença precisa ser maior que zero."
-        }, status=400)
+        if not loja:
+            return JsonResponse({"ok": False, "erro": "Loja não encontrada."}, status=404)
 
-    pagamento_existente = (
-        PagamentoLicenca.objects
-        .filter(loja=loja, tipo_pagamento="pix", status__in=["criado", "pendente"])
-        .order_by("-data_criacao")
-        .first()
-    )
-
-    if pagamento_existente:
-        if pagamento_existente.mp_payment_id:
-            _processar_pagamento_licenca_por_payment_id(pagamento_existente.mp_payment_id)
-            pagamento_existente.refresh_from_db()
-
-        if pagamento_existente.status == "aprovado":
+        token = _get_mp_token()
+        if not token:
             return JsonResponse({
-                "ok": True,
-                "ja_pago": True,
-                "mensagem": "A licença já foi paga e ativada."
-            })
+                "ok": False,
+                "erro": "O token MERCADOPAGO_ACCESS_TOKEN não está configurado."
+            }, status=400)
 
-        if pagamento_existente.qr_code and pagamento_existente.qr_code_base64:
+        try:
+            valor = float(loja.valor_licenca or 0)
+        except Exception:
             return JsonResponse({
-                "ok": True,
-                "pagamento_id": pagamento_existente.id,
-                "status": pagamento_existente.status,
-                "qr_code": pagamento_existente.qr_code,
-                "qr_code_base64": pagamento_existente.qr_code_base64,
-                "ticket_url": pagamento_existente.ticket_url or "",
-                "reutilizado": True,
-            })
+                "ok": False,
+                "erro": "Valor da licença inválido."
+            }, status=400)
 
-    external_reference = _criar_external_reference(loja, "pix")
-    notification_url = _montar_url_absoluta(reverse("webhook_mercadopago_licenca"))
+        if valor <= 0:
+            return JsonResponse({
+                "ok": False,
+                "erro": "O valor da licença precisa ser maior que zero."
+            }, status=400)
 
-    pagamento = PagamentoLicenca.objects.create(
-        loja=loja,
-        valor=loja.valor_licenca,
-        tipo_pagamento="pix",
-        external_reference=external_reference,
-        status="criado",
-        plano_nome="Plano padrão",
-    )
+        pagamento_existente = (
+            PagamentoLicenca.objects
+            .filter(loja=loja, tipo_pagamento="pix", status__in=["criado", "pendente"])
+            .order_by("-data_criacao")
+            .first()
+        )
 
-    payload = {
-        "transaction_amount": valor,
-        "description": f"Licença da loja {loja.nome}",
-        "payment_method_id": "pix",
-        "external_reference": external_reference,
-        "notification_url": notification_url,
-        "payer": {
-            "email": loja.email_comercial or request.user.email or "cliente@exemplo.com"
+        if pagamento_existente:
+            if pagamento_existente.mp_payment_id:
+                _processar_pagamento_licenca_por_payment_id(pagamento_existente.mp_payment_id)
+                pagamento_existente.refresh_from_db()
+
+            if pagamento_existente.status == "aprovado":
+                return JsonResponse({
+                    "ok": True,
+                    "ja_pago": True,
+                    "mensagem": "A licença já foi paga e ativada."
+                })
+
+            if pagamento_existente.qr_code and pagamento_existente.qr_code_base64:
+                return JsonResponse({
+                    "ok": True,
+                    "pagamento_id": pagamento_existente.id,
+                    "status": pagamento_existente.status,
+                    "qr_code": pagamento_existente.qr_code,
+                    "qr_code_base64": pagamento_existente.qr_code_base64,
+                    "ticket_url": pagamento_existente.ticket_url or "",
+                    "reutilizado": True,
+                })
+
+        external_reference = _criar_external_reference(loja, "pix")
+        notification_url = _montar_url_absoluta(reverse("webhook_mercadopago_licenca"))
+
+        pagamento = PagamentoLicenca.objects.create(
+            loja=loja,
+            valor=loja.valor_licenca,
+            tipo_pagamento="pix",
+            external_reference=external_reference,
+            status="criado",
+            plano_nome="Plano padrão",
+        )
+
+        payload = {
+            "transaction_amount": valor,
+            "description": f"Licença da loja {loja.nome}",
+            "payment_method_id": "pix",
+            "external_reference": external_reference,
+            "notification_url": notification_url,
+            "payer": {
+                "email": loja.email_comercial or request.user.email or "cliente@exemplo.com"
+            }
         }
-    }
 
-    try:
         response = requests.post(
             "https://api.mercadopago.com/v1/payments",
             headers=_headers_mp(idempotency_key=f"licenca-pix-{external_reference}"),
             json=payload,
             timeout=30,
         )
-    except requests.Timeout:
-        return JsonResponse({
-            "ok": False,
-            "erro": "Tempo esgotado ao gerar o Pix da licença."
-        }, status=504)
-    except Exception as e:
-        return JsonResponse({
-            "ok": False,
-            "erro": str(e)
-        }, status=500)
 
+        try:
+            data = response.json()
+        except Exception:
+            data = {"raw": response.text}
+
+        if response.status_code not in [200, 201]:
+            return JsonResponse({
+                "ok": False,
+                "erro": "Não foi possível gerar o Pix da licença.",
+                "status_code_mp": response.status_code,
+                "resposta_mp": data,
+            }, status=400)
+
+        tx = data.get("point_of_interaction", {}).get("transaction_data", {})
+
+        qr_code = tx.get("qr_code")
+        qr_code_base64 = tx.get("qr_code_base64")
+        ticket_url = tx.get("ticket_url", "")
+        mp_payment_id = str(data.get("id", ""))
+
+        if not qr_code or not qr_code_base64:
+            return JsonResponse({
+                "ok": False,
+                "erro": "O Mercado Pago não retornou os dados do QR Code.",
+                "resposta_mp": data,
+            }, status=400)
+
+        pagamento.mp_payment_id = mp_payment_id
+        pagamento.qr_code = qr_code
+        pagamento.qr_code_base64 = qr_code_base64
+        pagamento.ticket_url = ticket_url
+        pagamento.status = "pendente"
+        pagamento.save()
+
+        return JsonResponse({
+            "ok": True,
+            "pagamento_id": pagamento.id,
+            "status": pagamento.status,
+            "qr_code": pagamento.qr_code,
+            "qr_code_base64": pagamento.qr_code_base64,
+            "ticket_url": pagamento.ticket_url or "",
+            "payment_id": mp_payment_id,
+        })
+
+    except Exception as e:
+        import traceback
+        return JsonResponse({
+            "ok": False,
+            "erro": str(e),
+            "traceback": traceback.format_exc(),
+        }, status=500)
     try:
         data = response.json()
     except Exception:
