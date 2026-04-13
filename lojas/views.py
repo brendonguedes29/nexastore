@@ -1298,37 +1298,36 @@ def cadastrar_produto(request):
         form = ProdutoForm(request.POST, request.FILES)
         form.fields["categoria"].queryset = Categoria.objects.filter(loja=loja)
 
-        if form.is_valid():
-            try:
-                produto = form.save(commit=False)
-                produto.loja = loja
-                produto.save()
+       if form.is_valid():
+    try:
+        produto = form.save(commit=False)
+        produto.loja = loja
+        produto.save()
 
-         # 🔥 DISPARO DE EMAIL
-if produto.produto_novo or produto.em_destaque or produto.percentual_promocao > 0:
-    enviar_notificacao_produto(produto)
+        if produto.produto_novo or produto.em_destaque or produto.percentual_promocao > 0:
+            enviar_notificacao_produto(produto)
 
-                imagens_extras = request.FILES.getlist("imagens_extras")
-                for indice, imagem in enumerate(imagens_extras):
-                    ProdutoImagem.objects.create(
-                        produto=produto,
-                        imagem=imagem,
-                        ordem=indice
-                    )
+        imagens_extras = request.FILES.getlist("imagens_extras")
+        for indice, imagem in enumerate(imagens_extras):
+            ProdutoImagem.objects.create(
+                produto=produto,
+                imagem=imagem,
+                ordem=indice
+            )
 
-                if produto.estoque > 0:
-                    MovimentacaoEstoque.objects.create(
-                        loja=loja,
-                        produto=produto,
-                        tipo="entrada",
-                        quantidade=produto.estoque,
-                        motivo="Cadastro inicial",
-                    )
+        if produto.estoque > 0:
+            MovimentacaoEstoque.objects.create(
+                loja=loja,
+                produto=produto,
+                tipo="entrada",
+                quantidade=produto.estoque,
+                motivo="Cadastro inicial",
+            )
 
-                return redirect("lista_produtos_painel")
+        return redirect("lista_produtos_painel")
 
-            except Exception as e:
-                print("ERRO AO SALVAR PRODUTO:", str(e))
+    except Exception as e:
+        print("ERRO AO SALVAR PRODUTO:", str(e))
         else:
             print("ERROS FORM CADASTRO:", form.errors.as_json())
             print("POST:", request.POST)
