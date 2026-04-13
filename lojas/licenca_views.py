@@ -113,12 +113,14 @@ def _processar_pagamento_licenca_por_payment_id(payment_id):
     pagamento_mp, erro = _consultar_pagamento_mp(payment_id)
 
     if erro or not pagamento_mp:
+        print("ERRO AO CONSULTAR PAGAMENTO MP:", erro)
         return False
 
     external_reference = pagamento_mp.get("external_reference")
     status_mp = pagamento_mp.get("status")
 
     if not external_reference:
+        print("PAGAMENTO MP SEM EXTERNAL_REFERENCE")
         return False
 
     pagamento = PagamentoLicenca.objects.filter(
@@ -126,6 +128,7 @@ def _processar_pagamento_licenca_por_payment_id(payment_id):
     ).first()
 
     if not pagamento:
+        print("PAGAMENTO LICENCA NÃO ENCONTRADO:", external_reference)
         return False
 
     status_antigo = pagamento.status
@@ -134,11 +137,24 @@ def _processar_pagamento_licenca_por_payment_id(payment_id):
     pagamento.mp_payment_id = str(pagamento_mp.get("id", ""))
     pagamento.status = novo_status
 
-    # só renova uma vez
     if novo_status == "aprovado" and status_antigo != "aprovado":
+        pagamento.data_aprovacao = timezone.now()
+        pagamento.save(update_fields=[
+            "mp_payment_id",
+            "status",
+            "data_aprovacao",
+            "data_atualizacao",
+        ])
         pagamento.loja.renovar_licenca(dias=_dias_licenca())
+        print("LICENÇA RENOVADA COM SUCESSO:", pagamento.loja.nome)
+        return True
 
-    pagamento.save()
+    pagamento.save(update_fields=[
+        "mp_payment_id",
+        "status",
+        "data_atualizacao",
+    ])
+
     return True
 
 
@@ -447,36 +463,57 @@ def status_pagamento_licenca(request, pagamento_id):
         loja=loja
     )
 
-    if pagamento.mp_payment_id and pagamento.status != "aprovado":
+    if pagamento.mp_payment_id:
         _processar_pagamento_licenca_por_payment_id(pagamento.mp_payment_id)
         pagamento.refresh_from_db()
-
-    loja.refresh_from_db()
+        loja.refresh_from_db()
+        loja.verificar_licenca()
+        loja.refresh_from_db()
 
     return JsonResponse({
         "ok": True,
         "status": pagamento.status,
         "loja_ativa": loja.ativa,
         "status_licenca": loja.status_licenca,
+        "dias_restantes": loja.dias_restantes_licenca,
+        "vencimento": (
+            loja.data_vencimento_licenca.strftime("%d/%m/%Y")
+            if loja.data_vencimento_licenca else ""
+        ),
     })
-
 
 @csrf_exempt
 def webhook_mercadopago_licenca(request):
     try:
+        print("WEBHOOK LICENCA RECEBIDO")
+        print("METHOD:", request.method)
+        print("GET:", dict(request.GET))
+
         payment_id = request.GET.get("data.id") or request.GET.get("id")
 
-        if not payment_id:
+        body_data = {}
+        if request.body:
             try:
-                data = json.loads(request.body.decode("utf-8") or "{}")
-                payment_id = data.get("data", {}).get("id") or data.get("id")
+                body_data = json.loads(request.body.decode("utf-8"))
+                print("BODY:", body_data)
             except Exception:
-                payment_id = None
+                print("BODY INVÁLIDO")
+
+        if not payment_id:
+            payment_id = (
+                body_data.get("data", {}).get("id")
+                or body_data.get("id")
+                or body_data.get("resource", "").split("/")[-1] if body_data.get("resource") else None
+            )
 
         if payment_id:
+            print("PAYMENT_ID CAPTURADO:", payment_id)
             _processar_pagamento_licenca_por_payment_id(payment_id)
+        else:
+            print("WEBHOOK SEM PAYMENT_ID")
 
         return JsonResponse({"ok": True})
 
     except Exception as e:
+        print("ERRO WEBHOOK LICENCA:", e)
         return JsonResponse({"ok": False, "erro": str(e)})

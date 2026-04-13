@@ -742,42 +742,54 @@
                 mostrarStatus("Erro ao gerar checkout da licença: " + e);
             }
         }
+async function verificarStatusLicenca() {
+    if (!pagamentoLicencaId) {
+        return;
+    }
 
-        async function verificarStatusLicenca() {
-            if (!pagamentoLicencaId) {
-                return;
+    try {
+        const response = await fetch(/painel/financeiro/status/${pagamentoLicencaId}/);
+        const data = await response.json();
+
+        console.log("STATUS LICENCA:", data);
+
+        if (data.ok && data.status === "aprovado") {
+            let mensagem = "Pagamento aprovado com sucesso.";
+
+            if (data.dias_restantes) {
+                mensagem += ` Sua licença agora possui ${data.dias_restantes} dia(s) restante(s).`;
             }
 
-            try {
-                const response = await fetch('/painel/financeiro/status/${pagamentoLicencaId}/');
-                const data = await response.json();
+            mostrarStatus(mensagem);
 
-                if (data.ok && data.status === "aprovado") {
-                    mostrarStatus("Pagamento aprovado. Atualizando licença...");
-                    setTimeout(() => {
-                        window.location.reload();
-                    }, 1500);
-                }
-            } catch (e) {
-                console.log("Falha ao consultar status da licença.", e);
-            }
+            setTimeout(() => {
+                window.location.reload();
+            }, 1800);
         }
+    } catch (e) {
+        console.log("Falha ao consultar status da licença.", e);
+    }
+}
 
-        {% if pagamento_pendente and pagamento_pendente.qr_code and pagamento_pendente.qr_code_base64 %}
-            mostrarPix(
-                "{{ pagamento_pendente.qr_code_base64|escapejs }}",
-                "{{ pagamento_pendente.qr_code|escapejs }}",
-                "{{ pagamento_pendente.ticket_url|default:''|escapejs }}"
-            );
+{% if pagamento_pendente and pagamento_pendente.qr_code and pagamento_pendente.qr_code_base64 %}
+    mostrarPix(
+        "{{ pagamento_pendente.qr_code_base64|escapejs }}",
+        "{{ pagamento_pendente.qr_code|escapejs }}",
+        "{{ pagamento_pendente.ticket_url|default:''|escapejs }}"
+    );
 
-            {% if loja.status_licenca == "ativa" %}
-                mostrarStatus("Existe um pagamento pendente. Se ele for aprovado, sua licença receberá mais 30 dias automaticamente.");
-            {% else %}
-                mostrarStatus("Existe um pagamento pendente para esta licença. Assim que ele for aprovado, a licença será ativada automaticamente.");
-            {% endif %}
-        {% endif %}
+    {% if loja.status_licenca == "ativa" %}
+        mostrarStatus("Existe um pagamento pendente. Se ele for aprovado, sua licença receberá mais 30 dias automaticamente.");
+    {% else %}
+        mostrarStatus("Existe um pagamento pendente para esta licença. Assim que ele for aprovado, a licença será ativada automaticamente.");
+    {% endif %}
+{% endif %}
 
-        setInterval(verificarStatusLicenca, 5000);
-    </script>
+setInterval(verificarStatusLicenca, 5000);
+
+window.addEventListener("focus", function () {
+    verificarStatusLicenca();
+});
+</script>
 </body>
 </html>
