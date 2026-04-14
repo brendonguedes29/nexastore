@@ -67,7 +67,7 @@ from lojas.views import (
     criar_pagamento_pix,
     criar_pagamento_cartao,
     escolher_acesso,
-    licensa_bloqueada,
+    licenca_bloqueada,
 
     # LOJISTA
     recuperar_acesso_loja,
