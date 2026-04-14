@@ -29,6 +29,7 @@ class Produto(models.Model):
     categoria = models.ForeignKey(Categoria, on_delete=models.SET_NULL, null=True, blank=True)
     nome = models.CharField(max_length=200)
     preco = models.DecimalField(max_digits=10, decimal_places=2)
+    custo = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     descricao = models.TextField()
     ativo = models.BooleanField(default=True)
     em_destaque = models.BooleanField(default=False)
@@ -57,6 +58,10 @@ class Produto(models.Model):
             desconto = (Decimal(self.percentual_promocao) / Decimal("100")) * self.preco
             return self.preco - desconto
         return self.preco
+
+    @property
+    def valor_estoque(self):
+        return self.custo * self.estoque
 
 
 class ProdutoImagem(models.Model):

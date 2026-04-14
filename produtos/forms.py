@@ -4,9 +4,7 @@ from .models import Produto, Categoria, ConfigFrete, FaixaFrete
 
 
 class ProdutoForm(forms.ModelForm):
-    imagens_extras = forms.FileField(
-        required=False,
-    )
+    imagens_extras = forms.FileField(required=False)
 
     class Meta:
         model = Produto
@@ -15,6 +13,7 @@ class ProdutoForm(forms.ModelForm):
             "categoria",
             "descricao",
             "preco",
+            "custo",
             "estoque",
             "imagem",
             "ativo",
@@ -22,6 +21,10 @@ class ProdutoForm(forms.ModelForm):
             "produto_novo",
             "percentual_promocao",
         ]
+        widgets = {
+            "preco": forms.NumberInput(attrs={"step": "0.01"}),
+            "custo": forms.NumberInput(attrs={"step": "0.01"}),
+        }
 
     def clean_imagens_extras(self):
         return self.files.getlist("imagens_extras")

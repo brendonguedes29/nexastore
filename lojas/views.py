@@ -39,6 +39,7 @@ from django.http import HttpResponse, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from .email_service import enviar_email
 from .marketing_email import enviar_notificacao_produto
+from django.db.models import F, Sum
 
 from .models import Loja
 from .forms import LojaForm, LojaDadosForm, LojaVitrineForm
@@ -1079,6 +1080,11 @@ def painel_loja(request):
         percentual = int((item["total"] / maior_total) * 100) if maior_total > 0 else 0
         item["altura"] = max(percentual, 12)
 
+    valor_total_estoque = sum(
+        (produto.custo or 0) * (produto.estoque or 0)
+        for produto in produtos
+    )
+
     return render(request, "painel_loja.html", {
         "loja": loja,
         "total_produtos": produtos.count(),
@@ -1089,6 +1095,7 @@ def painel_loja(request):
         "faturamento_total": faturamento_total,
         "categorias_resumo": categorias_resumo,
         "total_estoque": total_estoque,
+        "valor_total_estoque": valor_total_estoque,
         "movimento_mensal": movimento_mensal,
         "total_clientes": total_clientes,
         "licenca_bloqueada": loja_com_licenca_bloqueada(loja),
