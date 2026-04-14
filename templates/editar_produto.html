@@ -264,7 +264,7 @@
 
                 <div class="linha">
                     <label>Custo do produto</label>
-                    {{ form.custo }}
+                    {{ form.preco_custo }}
                 </div>
 
                 <div class="linha">
@@ -320,7 +320,7 @@
                         <div class="galeria">
                             {% for img in imagens_extras %}
                                 <div class="thumb">
-                                    <img src="{{ img.imagem.url }}" alt="{{ produto.nome }}">
+                                    <img src="{{ img.imagem.url }}">
                                     <a href="{% url 'excluir_imagem_produto' img.id %}">X</a>
                                 </div>
                             {% endfor %}
@@ -335,17 +335,17 @@
 
                 <div class="checkbox">
                     {{ form.ativo }}
-                    <label for="{{ form.ativo.id_for_label }}">Produto ativo</label>
+                    <label>Produto ativo</label>
                 </div>
 
                 <div class="checkbox">
                     {{ form.em_destaque }}
-                    <label for="{{ form.em_destaque.id_for_label }}">Produto em destaque</label>
+                    <label>Produto em destaque</label>
                 </div>
 
                 <div class="checkbox">
                     {{ form.produto_novo }}
-                    <label for="{{ form.produto_novo.id_for_label }}">Produto novo</label>
+                    <label>Produto novo</label>
                 </div>
 
                 <div class="linha">
@@ -379,7 +379,7 @@ function criarPreviewUnico(input, previewId, infoId){
     reader.onload = function(e){
         preview.innerHTML = `
             <div class="preview-card">
-                <img src="${e.target.result}" alt="Preview principal">
+                <img src="${e.target.result}">
                 <div class="preview-legenda">Nova imagem principal</div>
             </div>
         `;
@@ -405,7 +405,7 @@ function criarPreviewMultiplo(input, previewId, infoId){
             const card = document.createElement("div");
             card.className = "preview-card";
             card.innerHTML = `
-                <img src="${e.target.result}" alt="Preview extra">
+                <img src="${e.target.result}">
                 <div class="preview-legenda">Nova imagem ${index + 1}</div>
             `;
             preview.appendChild(card);
@@ -414,20 +414,13 @@ function criarPreviewMultiplo(input, previewId, infoId){
     });
 }
 
-const inputPrincipal = document.getElementById("id_imagem");
-const inputExtras = document.getElementById("id_imagens_extras");
+document.getElementById("id_imagem")?.addEventListener("change", function(){
+    criarPreviewUnico(this, "principalPreview", "principalInfo");
+});
 
-if (inputPrincipal){
-    inputPrincipal.addEventListener("change", function(){
-        criarPreviewUnico(this, "principalPreview", "principalInfo");
-    });
-}
-
-if (inputExtras){
-    inputExtras.addEventListener("change", function(){
-        criarPreviewMultiplo(this, "extrasPreview", "extrasInfo");
-    });
-}
+document.getElementById("id_imagens_extras")?.addEventListener("change", function(){
+    criarPreviewMultiplo(this, "extrasPreview", "extrasInfo");
+});
 </script>
 
 </body>
