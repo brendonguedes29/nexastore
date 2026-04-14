@@ -39,7 +39,6 @@ from django.http import HttpResponse, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from .email_service import enviar_email
 from .marketing_email import enviar_notificacao_produto
-from django.db.models import F, Sum
 
 from .models import Loja
 from .forms import LojaForm, LojaDadosForm, LojaVitrineForm
@@ -1080,14 +1079,6 @@ def painel_loja(request):
         percentual = int((item["total"] / maior_total) * 100) if maior_total > 0 else 0
         item["altura"] = max(percentual, 12)
 
-    valor_total_estoque = sum(
-        (produto.custo or 0) * (produto.estoque or 0)
-        for produto in produtos
-    )
-
-    config_frete = ConfigFrete.objects.filter(loja=loja).first()
-    mp_connected = config_frete.mp_connected if config_frete else False
-
     return render(request, "painel_loja.html", {
         "loja": loja,
         "total_produtos": produtos.count(),
@@ -1098,11 +1089,9 @@ def painel_loja(request):
         "faturamento_total": faturamento_total,
         "categorias_resumo": categorias_resumo,
         "total_estoque": total_estoque,
-        "valor_total_estoque": valor_total_estoque,
         "movimento_mensal": movimento_mensal,
         "total_clientes": total_clientes,
         "licenca_bloqueada": loja_com_licenca_bloqueada(loja),
-        "mp_connected": mp_connected,
     })
 @login_required
 def financeiro_loja(request):
@@ -1408,6 +1397,9 @@ def editar_produto(request, produto_id):
             novo_estoque = produto_editado.estoque
             diferenca = novo_estoque - estoque_anterior
 
+            if request.FILES.get("imagem"):
+                produto_editado.imagem = request.FILES.get("imagem")
+
             produto_editado.save()
 
             imagens_extras = request.FILES.getlist("imagens_extras")
@@ -1440,12 +1432,11 @@ def editar_produto(request, produto_id):
             return redirect("lista_produtos_painel")
         else:
             print("ERROS FORM EDITAR:", form.errors)
-            print("FILES RECEBIDOS:", request.FILES)
     else:
         form = ProdutoForm(instance=produto)
         form.fields["categoria"].queryset = categorias
 
-    return render(request, "editar_produto.html", {
+    return render(request, "editar_produto_manual.html", {
         "form": form,
         "loja": loja,
         "produto": produto,

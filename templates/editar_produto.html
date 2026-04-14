@@ -237,12 +237,6 @@
         <form method="post" enctype="multipart/form-data">
             {% csrf_token %}
 
-            {% if form.errors %}
-                <div style="background:#fee2e2;color:#991b1b;padding:12px 14px;border-radius:10px;margin-bottom:18px;border:1px solid #fecaca;">
-                    {{ form.errors }}
-                </div>
-            {% endif %}
-
             <div class="secao">
                 <h3>Dados principais</h3>
                 <div class="secao-sub">Edite as informações básicas do produto.</div>
@@ -260,11 +254,6 @@
                 <div class="linha">
                     <label>Preço</label>
                     {{ form.preco }}
-                </div>
-
-                <div class="linha">
-                    <label>Custo do produto</label>
-                    {{ form.custo }}
                 </div>
 
                 <div class="linha">
@@ -332,7 +321,6 @@
 
             <div class="secao">
                 <h3>Configurações</h3>
-                <div class="secao-sub">Defina como o produto será exibido para o consumidor.</div>
 
                 <div class="checkbox">
                     {{ form.ativo }}
