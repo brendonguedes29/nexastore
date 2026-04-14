@@ -1019,66 +1019,52 @@ def compra_sucesso(request):
 
 @login_required
 def painel_loja(request):
-    loja = get_loja_do_dono(request)
-
-    if not loja:
-        return redirect("login_loja")
+    loja = get_object_or_404(Loja, usuario=request.user)
 
     produtos = Produto.objects.filter(loja=loja)
+    pedidos = Pedido.objects.filter(loja=loja)
 
+    # 📦 TOTAL DE PRODUTOS
     total_produtos = produtos.count()
-    produtos_ativos = produtos.filter(ativo=True).count()
 
-    total_estoque = produtos.aggregate(
-        total=Sum("estoque")
+    # 🧾 PEDIDOS
+    pedidos_pendentes = pedidos.filter(status="pendente").count()
+    pedidos_entregues = pedidos.filter(status="entregue").count()
+
+    # 💰 FATURAMENTO TOTAL (venda)
+    faturamento_total = pedidos.filter(status="entregue").aggregate(
+        total=Sum("valor_total")
     )["total"] or 0
 
-    # 🔥 AQUI ESTÁ A CORREÇÃO DO VALOR DE ESTOQUE
-    valor_total_estoque = produtos.aggregate(
-        total=Sum(
-            ExpressionWrapper(
-                F("custo") * F("estoque"),
-                output_field=DecimalField()
-            )
-        )
-    )["total"] or 0
-
-    total_pedidos = Pedido.objects.filter(loja=loja).count()
-
-    pedidos_hoje = Pedido.objects.filter(
-        loja=loja,
-        data__date=timezone.now().date()
-    ).count()
-
-    total_clientes = Comprador.objects.filter(loja=loja).count()
-
-    pedidos_pendentes = Pedido.objects.filter(
-        loja=loja,
-        status="pendente"
-    ).count()
-
-    faturamento_total = Pedido.objects.filter(
-        loja=loja,
-        status_pagamento="pago"
-    ).aggregate(total=Sum("valor_total"))["total"] or 0
-
-    categorias_resumo = Categoria.objects.filter(loja=loja).annotate(
-        total_produtos=Count("produto")
+    # 📦 VALOR TOTAL DO ESTOQUE (CUSTO)
+    valor_total_estoque = sum(
+        (p.preco_custo or 0) * (p.estoque or 0)
+        for p in produtos
     )
 
-    return render(request, "painel_loja.html", {
+    # 💸 LUCRO POTENCIAL (se vender tudo)
+    lucro_total = sum(
+        ((p.preco or 0) - (p.preco_custo or 0)) * (p.estoque or 0)
+        for p in produtos
+    )
+
+    # 📊 PRODUTOS EM DESTAQUE
+    produtos_destaque = produtos.filter(em_destaque=True).count()
+
+    context = {
         "loja": loja,
         "total_produtos": total_produtos,
-        "produtos_ativos": produtos_ativos,
-        "total_estoque": total_estoque,
-        "valor_total_estoque": valor_total_estoque,
-        "total_pedidos": total_pedidos,
-        "pedidos_hoje": pedidos_hoje,
-        "total_clientes": total_clientes,
         "pedidos_pendentes": pedidos_pendentes,
+        "pedidos_entregues": pedidos_entregues,
         "faturamento_total": faturamento_total,
-        "categorias_resumo": categorias_resumo,
-    })
+        "produtos_destaque": produtos_destaque,
+
+        # 🔥 NOVOS
+        "valor_total_estoque": valor_total_estoque,
+        "lucro_total": lucro_total,
+    }
+
+    return render(request, "painel_loja.html", context)
 @login_required
 def financeiro_loja(request):
     loja = get_loja_do_dono(request)
