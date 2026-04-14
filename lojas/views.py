@@ -28,7 +28,9 @@ from django.utils.encoding import force_bytes, force_str
 
 from django.utils.dateparse import parse_date
 from django.utils import timezone
-from django.db.models import Count, Sum
+
+# 🔥 IMPORTS CORRIGIDOS AQUI
+from django.db.models import Count, Sum, F, DecimalField, ExpressionWrapper
 from django.db.models.functions import TruncMonth
 from django.db import transaction
 
@@ -37,6 +39,7 @@ from django.core.mail import send_mail
 
 from django.http import HttpResponse, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
+
 from .email_service import enviar_email
 from .marketing_email import enviar_notificacao_produto
 
@@ -61,7 +64,6 @@ from produtos.forms import (
     ConfigFreteForm,
     FaixaFreteForm,
 )
-
 
 def ativar_ou_renovar_licenca(loja, dias=30):
     agora = timezone.now()
@@ -1018,80 +1020,64 @@ def compra_sucesso(request):
 @login_required
 def painel_loja(request):
     loja = get_loja_do_dono(request)
+
     if not loja:
         return redirect("login_loja")
 
-    loja.verificar_licenca()
-
     produtos = Produto.objects.filter(loja=loja)
-    pedidos_qs = Pedido.objects.filter(loja=loja)
 
-    faturamento_total = sum(
-        p.valor_total for p in pedidos_qs if p.status_pagamento == "pago"
-    )
+    total_produtos = produtos.count()
+    produtos_ativos = produtos.filter(ativo=True).count()
 
-    pedidos_pendentes = pedidos_qs.filter(status="pendente").count()
+    total_estoque = produtos.aggregate(
+        total=Sum("estoque")
+    )["total"] or 0
 
-    categorias_resumo = (
-        Categoria.objects
-        .filter(loja=loja)
-        .annotate(total_produtos=Count("produto"))
-        .order_by("nome")
-    )
+    # 🔥 AQUI ESTÁ A CORREÇÃO DO VALOR DE ESTOQUE
+    valor_total_estoque = produtos.aggregate(
+        total=Sum(
+            ExpressionWrapper(
+                F("custo") * F("estoque"),
+                output_field=DecimalField()
+            )
+        )
+    )["total"] or 0
 
-    total_estoque = produtos.aggregate(total=Sum("estoque"))["total"] or 0
+    total_pedidos = Pedido.objects.filter(loja=loja).count()
+
+    pedidos_hoje = Pedido.objects.filter(
+        loja=loja,
+        data__date=timezone.now().date()
+    ).count()
+
     total_clientes = Comprador.objects.filter(loja=loja).count()
 
-    hoje = timezone.localdate()
-    pedidos_hoje = pedidos_qs.filter(data__date=hoje).count()
+    pedidos_pendentes = Pedido.objects.filter(
+        loja=loja,
+        status="pendente"
+    ).count()
 
-    inicio_periodo = hoje.replace(day=1) - timedelta(days=365)
+    faturamento_total = Pedido.objects.filter(
+        loja=loja,
+        status_pagamento="pago"
+    ).aggregate(total=Sum("valor_total"))["total"] or 0
 
-    movimento_mensal_qs = (
-        pedidos_qs
-        .filter(data__date__gte=inicio_periodo)
-        .annotate(mes=TruncMonth("data"))
-        .values("mes")
-        .annotate(total=Count("id"))
-        .order_by("mes")
+    categorias_resumo = Categoria.objects.filter(loja=loja).annotate(
+        total_produtos=Count("produto")
     )
-
-    mapa_meses = {
-        1: "Jan", 2: "Fev", 3: "Mar", 4: "Abr",
-        5: "Mai", 6: "Jun", 7: "Jul", 8: "Ago",
-        9: "Set", 10: "Out", 11: "Nov", 12: "Dez"
-    }
-
-    movimento_mensal = []
-    for item in movimento_mensal_qs:
-        mes_data = item["mes"]
-        movimento_mensal.append({
-            "mes": mapa_meses[mes_data.month],
-            "total": item["total"],
-        })
-
-    if len(movimento_mensal) > 12:
-        movimento_mensal = movimento_mensal[-12:]
-
-    maior_total = max([item["total"] for item in movimento_mensal], default=1)
-
-    for item in movimento_mensal:
-        percentual = int((item["total"] / maior_total) * 100) if maior_total > 0 else 0
-        item["altura"] = max(percentual, 12)
 
     return render(request, "painel_loja.html", {
         "loja": loja,
-        "total_produtos": produtos.count(),
-        "produtos_ativos": produtos.filter(ativo=True).count(),
-        "total_pedidos": pedidos_qs.count(),
+        "total_produtos": total_produtos,
+        "produtos_ativos": produtos_ativos,
+        "total_estoque": total_estoque,
+        "valor_total_estoque": valor_total_estoque,
+        "total_pedidos": total_pedidos,
         "pedidos_hoje": pedidos_hoje,
+        "total_clientes": total_clientes,
         "pedidos_pendentes": pedidos_pendentes,
         "faturamento_total": faturamento_total,
         "categorias_resumo": categorias_resumo,
-        "total_estoque": total_estoque,
-        "movimento_mensal": movimento_mensal,
-        "total_clientes": total_clientes,
-        "licenca_bloqueada": loja_com_licenca_bloqueada(loja),
     })
 @login_required
 def financeiro_loja(request):

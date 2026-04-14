@@ -22,8 +22,10 @@ class ProdutoForm(forms.ModelForm):
             "percentual_promocao",
         ]
         widgets = {
-            "preco": forms.NumberInput(attrs={"step": "0.01"}),
-            "custo": forms.NumberInput(attrs={"step": "0.01"}),
+            "preco": forms.NumberInput(attrs={"step": "0.01", "min": "0"}),
+            "custo": forms.NumberInput(attrs={"step": "0.01", "min": "0"}),
+            "estoque": forms.NumberInput(attrs={"min": "0"}),
+            "percentual_promocao": forms.NumberInput(attrs={"min": "0"}),
         }
 
     def clean_imagens_extras(self):

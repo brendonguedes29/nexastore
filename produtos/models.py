@@ -61,7 +61,7 @@ class Produto(models.Model):
 
     @property
     def valor_estoque(self):
-        return self.custo * self.estoque
+        return (self.custo or Decimal("0.00")) * (self.estoque or 0)
 
 
 class ProdutoImagem(models.Model):
