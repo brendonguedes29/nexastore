@@ -1021,11 +1021,11 @@ def compra_sucesso(request):
 
 @login_required
 def painel_loja(request):
-try:
-    loja = get_object_or_404(Loja, usuario=request.user)
+    try:
+        loja = get_object_or_404(Loja, usuario=request.user)
 
-    produtos = Produto.objects.filter(loja=loja)
-    pedidos = Pedido.objects.filter(loja=loja)
+        produtos = Produto.objects.filter(loja=loja)
+        pedidos = Pedido.objects.filter(loja=loja)
 
     # 📦 TOTAL DE PRODUTOS
     total_produtos = produtos.count()
