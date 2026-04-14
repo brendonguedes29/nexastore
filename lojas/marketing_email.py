@@ -9,13 +9,13 @@ def enviar_notificacao_produto(produto):
         compradores = Comprador.objects.filter(
             loja=produto.loja,
             ativo=True,
-            usuario__email__isnull=False
+            usuario__email__isnull=False,
         ).select_related("usuario")
 
         emails = []
         for comprador in compradores:
             email = (comprador.usuario.email or "").strip()
-            if email:
+            if email and email not in emails:
                 emails.append(email)
 
         print(f"EMAIL MARKETING: compradores encontrados = {compradores.count()}")
