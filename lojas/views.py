@@ -1408,9 +1408,6 @@ def editar_produto(request, produto_id):
             novo_estoque = produto_editado.estoque
             diferenca = novo_estoque - estoque_anterior
 
-            if request.FILES.get("imagem"):
-                produto_editado.imagem = request.FILES.get("imagem")
-
             produto_editado.save()
 
             imagens_extras = request.FILES.getlist("imagens_extras")
@@ -1443,11 +1440,12 @@ def editar_produto(request, produto_id):
             return redirect("lista_produtos_painel")
         else:
             print("ERROS FORM EDITAR:", form.errors)
+            print("FILES RECEBIDOS:", request.FILES)
     else:
         form = ProdutoForm(instance=produto)
         form.fields["categoria"].queryset = categorias
 
-    return render(request, "editar_produto_manual.html", {
+    return render(request, "editar_produto.html", {
         "form": form,
         "loja": loja,
         "produto": produto,
