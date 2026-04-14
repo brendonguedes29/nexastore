@@ -42,6 +42,8 @@ from django.views.decorators.csrf import csrf_exempt
 
 from .email_service import enviar_email
 from .marketing_email import enviar_notificacao_produto
+import traceback
+from django.http import HttpResponse
 
 from .models import Loja
 from .forms import LojaForm, LojaDadosForm, LojaVitrineForm
@@ -1019,6 +1021,7 @@ def compra_sucesso(request):
 
 @login_required
 def painel_loja(request):
+try:
     loja = get_object_or_404(Loja, usuario=request.user)
 
     produtos = Produto.objects.filter(loja=loja)
@@ -1065,6 +1068,11 @@ def painel_loja(request):
     }
 
     return render(request, "painel_loja.html", context)
+
+except Exception as e:
+        print("ERRO NO PAINEL_LOJA:")
+        print(traceback.format_exc())
+        return HttpResponse(f"Erro no painel_loja: {str(e)}", status=500)
 @login_required
 def financeiro_loja(request):
     loja = get_loja_do_dono(request)
