@@ -18,6 +18,9 @@ def enviar_notificacao_produto(produto):
             if email:
                 emails.append(email)
 
+        print(f"EMAIL MARKETING: compradores encontrados = {compradores.count()}")
+        print(f"EMAIL MARKETING: emails válidos = {emails}")
+
         if not emails:
             print("EMAIL MARKETING: nenhum comprador com e-mail encontrado.")
             return
@@ -32,6 +35,7 @@ def enviar_notificacao_produto(produto):
         enviados = 0
         for email in emails:
             try:
+                print(f"EMAIL MARKETING: enviando para {email}")
                 enviar_email(email, assunto, html_body)
                 enviados += 1
             except Exception as e:
