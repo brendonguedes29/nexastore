@@ -13,7 +13,7 @@ class ProdutoForm(forms.ModelForm):
             "categoria",
             "descricao",
             "preco",
-            "preco_custo", 
+            "custo", 
             "custo",
             "estoque",
             "imagem",

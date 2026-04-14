@@ -1038,13 +1038,13 @@ def painel_loja(request):
 
     # 📦 VALOR TOTAL DO ESTOQUE (CUSTO)
     valor_total_estoque = sum(
-        (p.preco_custo or 0) * (p.estoque or 0)
+        (p.custo or 0) * (p.estoque or 0)
         for p in produtos
     )
 
     # 💸 LUCRO POTENCIAL (se vender tudo)
     lucro_total = sum(
-        ((p.preco or 0) - (p.preco_custo or 0)) * (p.estoque or 0)
+        ((p.preco or 0) - (p.custo or 0)) * (p.estoque or 0)
         for p in produtos
     )
 
