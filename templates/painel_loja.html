@@ -636,18 +636,14 @@
             <div class="menu-titulo">Financeiro</div>
             <a href="{% url 'vendas' %}">Vendas</a>
             <a href="{% url 'entradas_saidas' %}">Entradas e saídas</a>
-            {% if loja.plano_licenca|lower != "plano básico" and loja.plano_licenca|lower != "basico" and loja.plano_licenca|lower != "básico" %}
-                <a href="{% url 'relatorios' %}">Relatórios</a>
-            {% endif %}
+            <a href="{% url 'relatorios' %}">Relatórios</a>
             <a href="{% url 'frete_entrega' %}">Frete e entrega</a>
             <a href="{% url 'pagamentos_painel' %}">Recebimentos</a>
             <a href="{% url 'financeiro_loja' %}">Licença da plataforma</a>
 
             <div class="menu-titulo">Configurações</div>
             <a href="{% url 'minha_loja' %}">Minha loja</a>
-            {% if loja.plano_licenca|lower != "plano básico" and loja.plano_licenca|lower != "basico" and loja.plano_licenca|lower != "básico" %}
-                <a href="{% url 'editar_vitrine' %}">Editar página do consumidor</a>
-            {% endif %}
+            <a href="{% url 'editar_vitrine' %}">Editar página do consumidor</a>
             <a href="{% url 'logout_loja' %}">Sair</a>
         </div>
 
@@ -783,11 +779,6 @@
 
                 <div class="acoes-resumo">
                     <a href="{% url 'compradores_painel' %}" class="botao">Ver compradores</a>
-
-                    {% if loja.plano_licenca|lower != "plano básico" and loja.plano_licenca|lower != "basico" and loja.plano_licenca|lower != "básico" %}
-                        <a href="{% url 'editar_vitrine' %}" class="botao">Editar página do consumidor</a>
-                    {% endif %}
-
                     {% if licenca_bloqueada %}
                         <a href="{% url 'financeiro_loja' %}" class="botao botao-amarelo">Regularizar licença</a>
                     {% else %}
