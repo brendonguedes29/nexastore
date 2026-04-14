@@ -5,62 +5,174 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ titulo }}</title>
     <style>
-        *{box-sizing:border-box;margin:0;padding:0;}
+        *{
+            box-sizing:border-box;
+            margin:0;
+            padding:0;
+        }
+
         body{
-            font-family:Arial,sans-serif;
-            background:linear-gradient(135deg,#111827,#0f172a,#06b6d4);
+            font-family:Arial, sans-serif;
+            background:
+                radial-gradient(circle at top left, rgba(34,211,238,0.16), transparent 30%),
+                linear-gradient(135deg, #071126 0%, #0b1730 45%, #0e7490 100%);
             min-height:100vh;
             display:flex;
             align-items:center;
             justify-content:center;
-            padding:20px;
+            padding:24px;
+            color:#e5eefc;
         }
+
         .card{
             width:100%;
-            max-width:520px;
-            background:#fff;
-            border-radius:22px;
+            max-width:560px;
+            background:rgba(255,255,255,0.08);
+            border:1px solid rgba(255,255,255,0.12);
+            backdrop-filter:blur(10px);
+            border-radius:28px;
             padding:34px 28px;
-            box-shadow:0 20px 50px rgba(0,0,0,.20);
+            box-shadow:0 20px 50px rgba(0,0,0,.24);
             text-align:center;
         }
-        .icone{
-            width:72px;
-            height:72px;
-            border-radius:50%;
-            margin:0 auto 18px;
+
+        .brand{
             display:flex;
             align-items:center;
             justify-content:center;
-            font-size:34px;
+            gap:14px;
+            margin-bottom:26px;
+        }
+
+        .brand-badge{
+            width:52px;
+            height:52px;
+            border-radius:16px;
+            background:linear-gradient(135deg, #38bdf8, #22d3ee);
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            color:#082f49;
+            font-weight:900;
+            font-size:28px;
+        }
+
+        .brand-text{
+            text-align:left;
+        }
+
+        .brand-text h2{
+            font-size:30px;
+            line-height:1;
+            color:#ffffff;
+            margin-bottom:4px;
+        }
+
+        .brand-text span{
+            color:#cbd5e1;
+            font-size:14px;
+        }
+
+        .icone{
+            width:82px;
+            height:82px;
+            border-radius:50%;
+            margin:0 auto 20px;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            font-size:38px;
             font-weight:bold;
             color:#fff;
-            background:{% if sucesso %}#10b981{% else %}#ef4444{% endif %};
+            background:{% if sucesso %}linear-gradient(135deg,#10b981,#22c55e){% else %}linear-gradient(135deg,#ef4444,#dc2626){% endif %};
+            box-shadow:0 14px 30px rgba(0,0,0,.20);
         }
+
         h1{
-            font-size:30px;
-            color:#111827;
-            margin-bottom:12px;
+            font-size:34px;
+            color:#ffffff;
+            margin-bottom:14px;
         }
+
         p{
             font-size:16px;
-            color:#4b5563;
+            color:#dbe7f5;
             line-height:1.7;
-            margin-bottom:24px;
+            margin-bottom:26px;
         }
+
+        .actions{
+            display:flex;
+            flex-direction:column;
+            gap:12px;
+            margin-top:10px;
+        }
+
         .botao{
             display:inline-block;
-            padding:14px 22px;
-            border-radius:12px;
+            width:100%;
+            padding:14px 20px;
+            border-radius:14px;
             text-decoration:none;
-            font-weight:700;
-            background:#06b6d4;
-            color:#fff;
+            font-weight:800;
+            font-size:15px;
+            transition:0.2s ease;
+        }
+
+        .botao-principal{
+            background:linear-gradient(135deg, #22d3ee, #38bdf8);
+            color:#082f49;
+            box-shadow:0 10px 25px rgba(56,189,248,0.26);
+        }
+
+        .botao-principal:hover{
+            transform:translateY(-1px);
+            filter:brightness(1.03);
+        }
+
+        .botao-secundario{
+            background:rgba(255,255,255,0.08);
+            color:#ffffff;
+            border:1px solid rgba(255,255,255,0.14);
+        }
+
+        .botao-secundario:hover{
+            background:rgba(255,255,255,0.12);
+        }
+
+        .rodape{
+            margin-top:18px;
+            font-size:13px;
+            color:#cbd5e1;
+            line-height:1.6;
+        }
+
+        @media (max-width:640px){
+            .card{
+                padding:26px 18px;
+                border-radius:22px;
+            }
+
+            h1{
+                font-size:28px;
+            }
+
+            .brand-text h2{
+                font-size:28px;
+            }
         }
     </style>
 </head>
 <body>
     <div class="card">
+        <div class="brand">
+            <div class="brand-badge">N</div>
+            <div class="brand-text">
+                <h2>NexaStore</h2>
+                <span>Confirmação de conta</span>
+            </div>
+        </div>
+
         <div class="icone">
             {% if sucesso %}✓{% else %}!{% endif %}
         </div>
@@ -68,7 +180,33 @@
         <h1>{{ titulo }}</h1>
         <p>{{ mensagem }}</p>
 
-        <a href="/login/" class="botao">Ir para o login</a>
+        <div class="actions">
+            {% if sucesso and loja_slug %}
+                <a href="{% url 'login_comprador' loja_slug %}" class="botao botao-principal">
+                    Ir para o login da loja
+                </a>
+            {% elif loja_slug %}
+                <a href="{% url 'login_comprador' loja_slug %}" class="botao botao-principal">
+                    Voltar para o login
+                </a>
+            {% else %}
+                <a href="/login/" class="botao botao-principal">
+                    Ir para o login
+                </a>
+            {% endif %}
+
+            <a href="/" class="botao botao-secundario">
+                Voltar para a plataforma
+            </a>
+        </div>
+
+        <div class="rodape">
+            {% if sucesso %}
+                Sua conta foi confirmada com sucesso. Agora você já pode acessar a área de comprador normalmente.
+            {% else %}
+                Se necessário, tente novamente ou solicite um novo cadastro usando o e-mail correto.
+            {% endif %}
+        </div>
     </div>
 </body>
 </html>

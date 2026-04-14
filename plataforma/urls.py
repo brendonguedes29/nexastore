@@ -166,6 +166,11 @@ urlpatterns = [
     path("ativar/<uidb64>/<token>/", ativar_conta, name="ativar_conta"),
     path("remover-logo/", views.remover_logo_ajax, name="remover_logo_ajax"),
     path('painel/financeiro/status/<int:pk>/', views.status_licenca, name='status_licenca'),
+    # 🔥 RECUPERAÇÃO DE SENHA DO COMPRADOR
+    path("comprador/<slug:slug>/recuperar/", views.recuperar_senha_comprador, name="recuperar_senha_comprador"),
+    path("comprador/recuperar/enviado/", views.recuperar_senha_comprador_enviado, name="recuperar_senha_comprador_enviado"),
+    path("comprador/redefinir/<uidb64>/<token>/", views.redefinir_senha_comprador, name="redefinir_senha_comprador"),
+    path("comprador/redefinir/concluido/", views.redefinir_senha_comprador_concluida, name="redefinir_senha_comprador_concluida"),
 ]
 
 # 🔥 CORREÇÃO PRINCIPAL (MEDIA SEM DEBUG)

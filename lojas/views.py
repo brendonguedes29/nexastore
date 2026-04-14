@@ -391,6 +391,9 @@ def cadastro_comprador(request, slug):
     if loja.status_licenca in ["pendente", "vencida"] or not loja.ativa:
         return HttpResponse("Loja temporariamente indisponível.", status=403)
 
+    mensagem = None
+    erro = None
+
     if request.method == "POST":
         form = CadastroCompradorForm(request.POST)
 
@@ -418,37 +421,57 @@ def cadastro_comprador(request, slug):
                     reverse("ativar_conta", kwargs={"uidb64": uid, "token": token})
                 )
 
-                assunto = "Confirme sua conta"
-                mensagem = f"Clique no link para ativar sua conta:\n{link}"
+                assunto = f"Ative sua conta em {loja.nome}"
 
-                send_mail(
+                html_body = f"""
+                <html>
+                    <body style="font-family: Arial, sans-serif; background:#f4f6fb; padding:24px;">
+                        <div style="max-width:600px; margin:0 auto; background:#ffffff; border-radius:18px; padding:32px; border:1px solid #e5e7eb;">
+                            <h2 style="margin-top:0; color:#111827;">Confirme sua conta</h2>
+                            <p>Olá, {user.first_name}.</p>
+                            <p>Sua conta de comprador foi criada com sucesso em <strong>{loja.nome}</strong>.</p>
+                            <p>Para ativar seu acesso, clique no botão abaixo:</p>
+
+                            <p style="margin:28px 0;">
+                                <a href="{link}" style="background:#06b6d4; color:#ffffff; text-decoration:none; padding:14px 22px; border-radius:12px; font-weight:bold;">
+                                    Ativar minha conta
+                                </a>
+                            </p>
+
+                            <p>Se preferir, use este link:</p>
+                            <p><a href="{link}">{link}</a></p>
+
+                            <p style="margin-top:28px; color:#64748b;">
+                                Se você não solicitou este cadastro, ignore esta mensagem.
+                            </p>
+                        </div>
+                    </body>
+                </html>
+                """
+
+                enviar_email(
+                    user.email,
                     assunto,
-                    mensagem,
-                    settings.DEFAULT_FROM_EMAIL,
-                    [user.email],
-                    fail_silently=False,
+                    html_body,
                 )
 
-                return render(request, "cadastro_comprador.html", {
-                    "loja": loja,
-                    "form": CadastroCompradorForm(),
-                    "mensagem": "Conta criada! Verifique seu e-mail para ativar.",
-                })
+                mensagem = "Conta criada com sucesso. Enviamos um link de ativação para o seu e-mail. Após ativar, você poderá entrar normalmente."
+                form = CadastroCompradorForm()
 
             except Exception as e:
                 print("ERRO AO CADASTRAR COMPRADOR:", str(e))
-                return render(request, "cadastro_comprador.html", {
-                    "loja": loja,
-                    "form": form,
-                    "erro": f"Erro ao criar conta: {str(e)}",
-                })
+                erro = f"Erro ao criar conta: {str(e)}"
+
     else:
         form = CadastroCompradorForm()
 
     return render(request, "cadastro_comprador.html", {
         "loja": loja,
         "form": form,
+        "mensagem": mensagem,
+        "erro": erro,
     })
+
 
 def logout_comprador(request):
     slug = request.session.get("ultima_loja_slug")
@@ -457,7 +480,6 @@ def logout_comprador(request):
     if slug:
         return redirect("loja", slug=slug)
     return redirect("home")
-
 
 @login_required
 def excluir_produto(request, produto_id):
@@ -2565,10 +2587,18 @@ def ativar_conta(request, uidb64, token):
     except Exception:
         user = None
 
+    loja_slug = None
+
+    if user:
+        comprador = Comprador.objects.filter(usuario=user).select_related("loja").first()
+        if comprador and comprador.loja:
+            loja_slug = comprador.loja.slug
+
     contexto = {
         "sucesso": False,
-        "titulo": "Link inválido",
-        "mensagem": "Esse link é inválido ou expirou.",
+        "titulo": "Link inválido ou expirado",
+        "mensagem": "Esse link de ativação não é mais válido. Solicite um novo cadastro ou tente novamente.",
+        "loja_slug": loja_slug,
     }
 
     if user and default_token_generator.check_token(user, token):
@@ -2578,11 +2608,11 @@ def ativar_conta(request, uidb64, token):
         contexto = {
             "sucesso": True,
             "titulo": "Conta ativada com sucesso",
-            "mensagem": "Seu e-mail foi confirmado. Agora você já pode entrar na sua conta.",
+            "mensagem": "Seu e-mail foi confirmado. Agora você já pode entrar na sua conta de comprador.",
+            "loja_slug": loja_slug,
         }
 
     return render(request, "ativacao_conta_resultado.html", contexto)
-
 @login_required
 def remover_logo_ajax(request):
     if request.method != "POST":
@@ -2614,6 +2644,95 @@ def status_licenca(request, pk):
         })
     except PagamentoLicenca.DoesNotExist:
         return JsonResponse({"ok": False}, status=404)
+
+def recuperar_senha_comprador(request, slug):
+    loja = get_object_or_404(Loja, slug=slug)
+
+    if request.method == "POST":
+        email = request.POST.get("email", "").strip().lower()
+
+        if not email:
+            return render(request, "senha/recuperar_comprador.html", {
+                "loja": loja,
+                "erro": "Informe o e-mail."
+            })
+
+        user = User.objects.filter(email=email).first()
+
+        if not user:
+            return render(request, "senha/recuperar_comprador.html", {
+                "loja": loja,
+                "erro": "E-mail não encontrado."
+            })
+
+        comprador = Comprador.objects.filter(usuario=user, loja=loja).first()
+
+        if not comprador:
+            return render(request, "senha/recuperar_comprador.html", {
+                "loja": loja,
+                "erro": "Este e-mail não pertence a esta loja."
+            })
+
+        try:
+            uid = urlsafe_base64_encode(force_bytes(user.pk))
+            token = default_token_generator.make_token(user)
+
+            link = request.build_absolute_uri(
+                reverse("redefinir_senha_comprador", kwargs={"uidb64": uid, "token": token})
+            )
+
+            html_body = f"""
+            <h2>Recuperação de senha</h2>
+            <p>Olá, {user.first_name}</p>
+            <p>Clique abaixo para redefinir sua senha:</p>
+            <a href="{link}">{link}</a>
+            """
+
+            enviar_email(
+                user.email,
+                f"Recuperação de senha - {loja.nome}",
+                html_body
+            )
+
+            return redirect("recuperar_senha_comprador_enviado")
+
+        except Exception as e:
+            print("ERRO RECUPERACAO COMPRADOR:", e)
+            return render(request, "senha/recuperar_comprador.html", {
+                "loja": loja,
+                "erro": "Erro ao enviar e-mail."
+            })
+
+    return render(request, "senha/recuperar_comprador.html", {"loja": loja})
+
+
+def recuperar_senha_comprador_enviado(request):
+    return render(request, "senha/enviado.html")
+
+
+def redefinir_senha_comprador(request, uidb64, token):
+    try:
+        uid = force_str(urlsafe_base64_decode(uidb64))
+        user = User.objects.get(pk=uid)
+    except Exception:
+        user = None
+
+    if not user or not default_token_generator.check_token(user, token):
+        return render(request, "senha/invalido.html")
+
+    if request.method == "POST":
+        form = SetPasswordForm(user, request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect("redefinir_senha_comprador_concluida")
+    else:
+        form = SetPasswordForm(user)
+
+    return render(request, "senha/redefinir.html", {"form": form})
+
+
+def redefinir_senha_comprador_concluida(request):
+    return render(request, "senha/concluido.html")
 
 def csrf_erro(request, reason=""):
     return render(request, "csrf_erro.html", status=403)
