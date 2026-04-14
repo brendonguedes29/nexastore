@@ -2694,7 +2694,7 @@ def recuperar_senha_comprador(request, slug):
                 html_body
             )
 
-            return redirect("recuperar_senha_comprador_enviado")
+            return redirect("recuperar_senha_comprador_enviado", slug=loja.slug)
 
         except Exception as e:
             print("ERRO RECUPERACAO COMPRADOR:", e)
@@ -2706,8 +2706,9 @@ def recuperar_senha_comprador(request, slug):
     return render(request, "senha/recuperar_comprador.html", {"loja": loja})
 
 
-def recuperar_senha_comprador_enviado(request):
-    return render(request, "senha/enviado.html")
+def recuperar_senha_comprador_enviado(request, slug):
+    loja = get_object_or_404(Loja, slug=slug)
+    return render(request, "senha/enviado_comprador.html", {"loja": loja})
 
 
 def redefinir_senha_comprador(request, uidb64, token):
