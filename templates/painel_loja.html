@@ -2,12 +2,901 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <title>Painel</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel da Loja | NexaStore</title>
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box;}
+
+        :root{
+            --bg:#f4f7fb;
+            --card:#ffffff;
+            --text:#0f172a;
+            --muted:#64748b;
+            --line:#e5e7eb;
+            --shadow:0 8px 24px rgba(15,23,42,.06);
+            --shadow-soft:0 10px 26px rgba(15,23,42,.05);
+            --sidebar:#0b1220;
+            --sidebar-soft:#162033;
+            --green-bg:#dcfce7;
+            --green-text:#166534;
+            --red-bg:#fee2e2;
+            --red-text:#991b1b;
+            --yellow-bg:#fef3c7;
+            --yellow-text:#92400e;
+            --blue-bg:#dbeafe;
+            --blue-text:#1d4ed8;
+        }
+
+        body{
+            font-family:Arial,sans-serif;
+            background:var(--bg);
+            color:var(--text);
+        }
+
+        .layout{
+            display:flex;
+            min-height:100vh;
+        }
+
+        .sidebar{
+            width:240px;
+            background:linear-gradient(180deg,#0b1220 0%, #10192c 100%);
+            color:#fff;
+            padding:18px 14px;
+            position:sticky;
+            top:0;
+            height:100vh;
+            overflow-y:auto;
+            display:flex;
+            flex-direction:column;
+        }
+
+        .brand-wrap{
+            padding-bottom:14px;
+            border-bottom:1px solid rgba(255,255,255,.08);
+            margin-bottom:14px;
+        }
+
+        .brand-store{
+            display:flex;
+            align-items:center;
+            gap:10px;
+        }
+
+        .brand-store-logo{
+            width:46px;
+            height:46px;
+            border-radius:12px;
+            object-fit:cover;
+            background:#fff;
+            flex-shrink:0;
+        }
+
+        .brand-store-fallback{
+            width:46px;
+            height:46px;
+            border-radius:12px;
+            background:rgba(255,255,255,.08);
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            font-weight:800;
+            color:#fff;
+            flex-shrink:0;
+        }
+
+        .brand-store-text{
+            min-width:0;
+            display:flex;
+            flex-direction:column;
+            line-height:1.1;
+        }
+
+        .brand-store-text strong{
+            font-size:18px;
+            color:#fff;
+            white-space:nowrap;
+            overflow:hidden;
+            text-overflow:ellipsis;
+        }
+
+        .brand-store-text span{
+            font-size:12px;
+            color:#94a3b8;
+            margin-top:4px;
+        }
+
+        .menu{
+            flex:1;
+        }
+
+        .menu-titulo{
+            font-size:10px;
+            color:#7c8aa5;
+            margin:20px 0 8px;
+            text-transform:uppercase;
+            letter-spacing:1.4px;
+            font-weight:700;
+        }
+
+        .menu a{
+            display:flex;
+            align-items:center;
+            color:#e2e8f0;
+            text-decoration:none;
+            padding:11px 12px;
+            border-radius:12px;
+            margin-bottom:6px;
+            transition:.2s ease;
+            font-weight:600;
+            font-size:14px;
+        }
+
+        .menu a:hover,
+        .menu a.ativo{
+            background:var(--sidebar-soft);
+        }
+
+        .sidebar-footer{
+            margin-top:14px;
+            padding-top:14px;
+            border-top:1px solid rgba(255,255,255,.08);
+            display:flex;
+            align-items:center;
+            gap:10px;
+        }
+
+        .sidebar-footer-logo{
+            width:32px;
+            height:32px;
+            border-radius:10px;
+            background:linear-gradient(135deg,#22d3ee,#38bdf8);
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            color:#0f172a;
+            font-size:16px;
+            font-weight:900;
+            flex-shrink:0;
+        }
+
+        .sidebar-footer-text{
+            display:flex;
+            flex-direction:column;
+            line-height:1.1;
+        }
+
+        .sidebar-footer-text strong{
+            color:#e2e8f0;
+            font-size:13px;
+        }
+
+        .sidebar-footer-text span{
+            color:#7c8aa5;
+            font-size:11px;
+            margin-top:3px;
+        }
+
+        .principal{
+            flex:1;
+            padding:26px 28px 26px;
+        }
+
+        .topo{
+            margin-bottom:18px;
+        }
+
+        .topo h1{
+            font-size:38px;
+            line-height:1;
+            margin-bottom:8px;
+            letter-spacing:-1px;
+            color:#111827;
+            text-align:left;
+        }
+
+        .topo p{
+            color:var(--muted);
+            font-size:15px;
+        }
+
+        .alerta-licenca{
+            padding:14px 16px;
+            border-radius:14px;
+            margin-top:16px;
+            font-weight:700;
+            line-height:1.5;
+            border:1px solid transparent;
+            font-size:14px;
+        }
+
+        .alerta-licenca.alerta-vermelho{
+            background:var(--red-bg);
+            color:var(--red-text);
+            border-color:#fecaca;
+        }
+
+        .alerta-licenca.alerta-amarelo{
+            background:var(--yellow-bg);
+            color:var(--yellow-text);
+            border-color:#fde68a;
+        }
+
+        .alerta-licenca.alerta-verde{
+            background:var(--green-bg);
+            color:var(--green-text);
+            border-color:#bbf7d0;
+        }
+
+        .cards{
+            display:grid;
+            grid-template-columns:repeat(4,1fr);
+            gap:12px;
+            margin-bottom:18px;
+        }
+
+        .card{
+            background:var(--card);
+            border-radius:16px;
+            padding:14px;
+            box-shadow:var(--shadow-soft);
+            border:1px solid var(--line);
+            min-height:102px;
+            display:flex;
+            flex-direction:column;
+            justify-content:center;
+            transition:.2s ease;
+        }
+
+        .card:hover{
+            transform:translateY(-1px);
+            box-shadow:0 14px 28px rgba(15,23,42,.07);
+        }
+
+        .card small{
+            display:block;
+            color:var(--muted);
+            margin-bottom:10px;
+            font-size:10px;
+            font-weight:800;
+            text-transform:uppercase;
+            letter-spacing:.7px;
+            text-align:center;
+        }
+
+        .card strong{
+            font-size:22px;
+            line-height:1.1;
+            color:#0f172a;
+            letter-spacing:-.5px;
+            text-align:center;
+        }
+
+        .card .mini{
+            font-size:13px;
+            color:#475569;
+            font-weight:600;
+            margin-top:6px;
+            display:block;
+            line-height:1.45;
+        }
+
+        .card-destaque-azul{
+            background:linear-gradient(180deg,#f0f9ff,#e0f2fe);
+            border:1px solid #bae6fd;
+        }
+
+        .card-destaque-azul small,
+        .card-destaque-azul strong{
+            color:#0369a1;
+        }
+
+        .card-destaque-estoque{
+            background:linear-gradient(180deg,#f8fafc,#eef2ff);
+            border:1px solid #dbe4ff;
+        }
+
+        .card-destaque-estoque small,
+        .card-destaque-estoque strong{
+            color:#3730a3;
+        }
+
+        .divisor-secao{
+            height:1px;
+            background:linear-gradient(90deg,rgba(0,0,0,0),#d9e2ec,rgba(0,0,0,0));
+            margin:2px 0 18px;
+            border-radius:999px;
+        }
+
+        .card-licenca{
+            justify-content:flex-start;
+            min-height:102px;
+        }
+
+        .card-licenca small{
+            text-align:left;
+        }
+
+        .licenca-pill{
+            display:inline-block;
+            padding:7px 11px;
+            border-radius:999px;
+            font-size:11px;
+            font-weight:900;
+            margin-bottom:8px;
+            letter-spacing:.3px;
+        }
+
+        .licenca-ativa{background:var(--green-bg);color:var(--green-text);}
+        .licenca-vencida{background:var(--red-bg);color:var(--red-text);}
+        .licenca-pendente{background:var(--yellow-bg);color:var(--yellow-text);}
+
+        .grid-topo{
+            display:grid;
+            grid-template-columns:1.08fr .92fr;
+            gap:18px;
+            margin-bottom:18px;
+            align-items:stretch;
+        }
+
+        .grid-main{
+            display:grid;
+            grid-template-columns:1.08fr .92fr;
+            gap:18px;
+            margin-bottom:26px;
+            align-items:start;
+        }
+
+        .box{
+            background:var(--card);
+            border-radius:18px;
+            padding:20px;
+            box-shadow:var(--shadow);
+            border:1px solid var(--line);
+        }
+
+        .box h2{
+            font-size:18px;
+            margin-bottom:14px;
+            color:#0f172a;
+            letter-spacing:-.2px;
+        }
+
+        .grafico-head{
+            display:flex;
+            align-items:center;
+            justify-content:space-between;
+            gap:12px;
+            margin-bottom:14px;
+        }
+
+        .grafico-head span{
+            color:var(--muted);
+            font-size:13px;
+            font-weight:700;
+        }
+
+        .grafico-area{
+            display:flex;
+            align-items:flex-end;
+            justify-content:space-between;
+            gap:8px;
+            height:260px;
+            padding:12px 4px 0;
+            border-top:1px solid #eef2f7;
+        }
+
+        .grafico-coluna{
+            flex:1;
+            height:100%;
+            display:flex;
+            flex-direction:column;
+            align-items:center;
+            justify-content:flex-end;
+            gap:8px;
+            min-width:0;
+        }
+
+        .grafico-barra{
+            width:100%;
+            max-width:28px;
+            border-radius:14px 14px 8px 8px;
+            background:linear-gradient(180deg,#22d3ee,#2563eb);
+            box-shadow:0 10px 25px rgba(34,211,238,.12);
+            min-height:18px;
+            transition:.2s ease;
+            cursor:pointer;
+        }
+
+        .grafico-barra:hover{
+            transform:translateY(-4px);
+            filter:brightness(1.05);
+            box-shadow:0 18px 30px rgba(34,211,238,.22);
+        }
+
+        .grafico-mes{
+            font-size:12px;
+            color:var(--muted);
+            font-weight:700;
+        }
+
+        .grafico-total{
+            font-size:11px;
+            color:#94a3b8;
+            font-weight:700;
+            min-height:14px;
+        }
+
+        table{
+            width:100%;
+            border-collapse:collapse;
+        }
+
+        th,td{
+            text-align:left;
+            padding:13px 8px;
+            border-bottom:1px solid #edf1f5;
+        }
+
+        th{
+            font-size:11px;
+            color:var(--muted);
+            text-transform:uppercase;
+            letter-spacing:.6px;
+        }
+
+        td{
+            font-size:14px;
+            color:#334155;
+            font-weight:600;
+        }.resumo{
+            display:flex;
+            flex-direction:column;
+            justify-content:space-between;
+        }
+
+        .resumo-lista{
+            display:grid;
+            gap:10px;
+            margin-bottom:16px;
+        }
+
+        .resumo-item{
+            display:flex;
+            justify-content:space-between;
+            gap:14px;
+            padding:11px 12px;
+            border:1px solid #edf1f5;
+            border-radius:12px;
+            background:#f8fafc;
+        }
+
+        .resumo-item span{
+            color:var(--muted);
+            font-size:13px;
+            font-weight:700;
+        }
+
+        .resumo-item strong{
+            color:#0f172a;
+            font-size:14px;
+        }
+
+        .acoes-resumo{
+            display:flex;
+            flex-wrap:wrap;
+            gap:10px;
+            margin-top:6px;
+        }
+
+        .botao{
+            display:inline-flex;
+            align-items:center;
+            justify-content:center;
+            background:#111827;
+            color:#fff;
+            text-decoration:none;
+            padding:11px 14px;
+            border-radius:11px;
+            font-weight:800;
+            font-size:13px;
+            transition:.2s ease;
+        }
+
+        .botao:hover{
+            transform:translateY(-1px);
+        }
+
+        .botao-verde{
+            background:#16a34a;
+        }
+
+        .botao-amarelo{
+            background:#d97706;
+        }
+
+        .bloco-recebimento{
+            margin-top:22px;
+            background:linear-gradient(135deg,#0b1220,#162a4d 55%, #1d4ed8 140%);
+            color:white;
+            border-radius:22px;
+            padding:24px;
+            box-shadow:0 14px 32px rgba(15,23,42,.16);
+            border:1px solid rgba(255,255,255,.08);
+        }
+
+        .status-pill{
+            display:inline-block;
+            padding:8px 12px;
+            border-radius:999px;
+            font-size:11px;
+            font-weight:900;
+            margin-bottom:12px;
+            letter-spacing:.3px;
+        }
+
+        .status-on{background:#dcfce7;color:#166534;}
+        .status-off{background:#fee2e2;color:#991b1b;}
+
+        .bloco-recebimento h3{
+            font-size:22px;
+            margin-bottom:8px;
+            letter-spacing:-.5px;
+        }
+
+        .bloco-recebimento p{
+            color:#dbeafe;
+            margin-bottom:16px;
+            line-height:1.6;
+            max-width:760px;
+            font-size:14px;
+        }
+
+        .botoes-recebimento{
+            display:flex;
+            gap:12px;
+            flex-wrap:wrap;
+        }
+
+        .botao-claro{
+            display:inline-flex;
+            align-items:center;
+            justify-content:center;
+            background:#fff;
+            color:#0b1220;
+            text-decoration:none;
+            padding:12px 15px;
+            border-radius:11px;
+            font-weight:800;
+            font-size:13px;
+        }
+
+        @media (max-width:1450px){
+            .cards{grid-template-columns:repeat(4,1fr);}
+        }
+
+        @media (max-width:1180px){
+            .grid-topo{grid-template-columns:1fr;}
+            .grid-main{grid-template-columns:1fr;}
+        }
+
+        @media (max-width:1100px){
+            .cards{grid-template-columns:repeat(2,1fr);}
+            .topo h1{font-size:34px;}
+        }
+
+        @media (max-width:760px){
+            .layout{display:block;}
+            .sidebar{
+                width:100%;
+                height:auto;
+                position:relative;
+            }
+            .principal{padding:18px;}
+            .cards{grid-template-columns:1fr;}
+            .topo h1{font-size:30px;}
+            .grafico-area{height:210px;gap:6px;}
+            .grafico-barra{max-width:24px;}
+        }
+    </style>
 </head>
 <body>
-    <h1>Painel OK</h1>
-    <p>Loja: {{ loja.nome }}</p>
-    <p>Total de produtos: {{ total_produtos }}</p>
-    <p>Valor em estoque: R$ {{ valor_total_estoque|floatformat:2 }}</p>
+<div class="layout">
+
+    <aside class="sidebar">
+        <div class="brand-wrap">
+            {% if loja %}
+            <div class="brand-store">
+                {% if loja.logo %}
+                    <img src="{{ loja.logo.url }}" alt="{{ loja.nome }}" class="brand-store-logo">
+                {% else %}
+                    <div class="brand-store-fallback">
+                        {{ loja.nome|slice:":1"|upper }}
+                    </div>
+                {% endif %}
+
+                <div class="brand-store-text">
+                    <strong>{{ loja.nome }}</strong>
+                    <span>Painel da loja</span>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="menu">
+            <div class="menu-titulo">Principal</div>
+            <a href="{% url 'painel_loja' %}" class="ativo">Dashboard</a>
+            <a href="{% url 'cadastrar_produto' %}">Novo produto</a>
+            <a href="{% url 'lista_produtos_painel' %}">Produtos</a>
+            <a href="{% url 'categorias' %}">Categorias</a>
+            <a href="{% url 'pedidos' %}">Pedidos</a>
+            <a href="{% url 'clientes' %}">Clientes</a>
+            <a href="{% url 'compradores_painel' %}">Compradores</a>
+
+            <div class="menu-titulo">Financeiro</div>
+            <a href="{% url 'vendas' %}">Vendas</a>
+            <a href="{% url 'entradas_saidas' %}">Entradas e saídas</a>
+            <a href="{% url 'relatorios' %}">Relatórios</a>
+            <a href="{% url 'frete_entrega' %}">Frete e entrega</a>
+            <a href="{% url 'pagamentos_painel' %}">Recebimentos</a>
+            <a href="{% url 'financeiro_loja' %}">Licença da plataforma</a>
+
+            <div class="menu-titulo">Configurações</div>
+            <a href="{% url 'minha_loja' %}">Minha loja</a>
+            <a href="{% url 'editar_vitrine' %}">Editar página do consumidor</a>
+            <a href="{% url 'logout_loja' %}">Sair</a>
+        </div>
+
+        <div class="sidebar-footer">
+            <div class="sidebar-footer-logo">N</div>
+            <div class="sidebar-footer-text">
+                <strong>NexaStore</strong>
+                <span>Plataforma</span>
+            </div>
+        </div>
+    </aside>
+
+    <main class="principal">
+        <div class="topo">
+            <h1>Dashboard</h1>
+            <p>Resumo geral da operação da loja</p>
+
+            {% if loja.status_licenca == "ativa" %}
+                <div class="alerta-licenca alerta-verde">
+                    Sua licença está ativa e a área administrativa está liberada.
+                </div>
+            {% elif loja.status_licenca == "vencida" %}
+                <div class="alerta-licenca alerta-vermelho">
+                    Sua licença está vencida. Regularize o pagamento para reativar todas as funções da loja.
+                </div>
+            {% else %}
+                <div class="alerta-licenca alerta-amarelo">
+                    Sua licença está pendente. Finalize o pagamento para liberar o acesso completo do sistema.
+                </div>
+            {% endif %}
+        </div>
+
+        <div class="cards">
+            <div class="card">
+                <small>Total de produtos</small>
+                <strong>{{ total_produtos }}</strong>
+            </div>
+
+            <div class="card">
+                <small>Produtos ativos</small>
+                <strong>{{ produtos_ativos }}</strong>
+            </div>
+
+            <div class="card">
+                <small>Total de pedidos</small>
+                <strong>{{ total_pedidos }}</strong>
+            </div>
+
+            <div class="card card-destaque-azul">
+                <small>Pedidos hoje</small>
+                <strong>{{ pedidos_hoje }}</strong>
+            </div>
+
+            <div class="card">
+                <small>Total em estoque</small>
+                <strong>{{ total_estoque }}</strong>
+            </div>
+
+            <div class="card">
+                <small>Clientes / compradores</small>
+                <strong>{{ total_clientes }}</strong>
+            </div>
+
+            <div class="card card-destaque-estoque">
+                <small>Valor em estoque</small>
+                <strong>R$ {{ valor_total_estoque|floatformat:2 }}</strong>
+            </div>
+
+            <div class="card">
+                <small>Status da licença</small>
+                <strong>{{ loja.get_status_licenca_display }}</strong>
+            </div>
+        </div>
+
+        <div class="divisor-secao"></div>
+
+        <div class="grid-topo">
+            <div class="box">
+                <div class="grafico-head">
+                    <h2>Movimento da loja</h2>
+                    <span>Últimos 12 meses</span>
+                </div>
+
+                <div class="grafico-area">
+                    {% for item in movimento_mensal %}
+                        <div class="grafico-coluna">
+                            <div class="grafico-total">{{ item.total }}</div>
+                            <div class="grafico-barra" style="height:{{ item.altura }}%;" title="{{ item.mes }} - {{ item.total }} pedidos"></div>
+                            <div class="grafico-mes">{{ item.mes }}</div>
+                        </div>
+                    {% empty %}
+                        <p style="color:#64748b;">Ainda não há dados suficientes para exibir o gráfico.</p>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="box resumo">
+                <div>
+                    <h2>Resumo rápido</h2>
+
+                    <div class="resumo-lista">
+                        <div class="resumo-item">
+                            <span>Pedidos pendentes</span>
+                            <strong>{{ pedidos_pendentes }}</strong>
+                        </div>
+
+                        <div class="resumo-item">
+                            <span>Pedidos hoje</span>
+                            <strong>{{ pedidos_hoje }}</strong>
+                        </div>
+
+                        <div class="resumo-item">
+                            <span>Faturamento</span>
+                            <strong>R$ {{ faturamento_total|floatformat:2 }}</strong>
+                        </div>
+
+                        <div class="resumo-item">
+                            <span>Estoque total</span>
+                            <strong>{{ total_estoque }}</strong>
+                        </div>
+
+                        <div class="resumo-item">
+                            <span>Valor em estoque</span>
+                            <strong>R$ {{ valor_total_estoque|floatformat:2 }}</strong>
+                        </div>
+
+                        <div class="resumo-item">
+                            <span>Status da licença</span>
+                            <strong>{{ loja.get_status_licenca_display }}</strong>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="acoes-resumo">
+                    <a href="{% url 'compradores_painel' %}" class="botao">Ver compradores</a>
+                    {% if licenca_bloqueada %}
+                        <a href="{% url 'financeiro_loja' %}" class="botao botao-amarelo">Regularizar licença</a>
+                    {% else %}
+                        <a href="{% url 'financeiro_loja' %}" class="botao botao-verde">Ver financeiro da licença</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div><div class="grid-main">
+            <div class="box">
+                <h2>Categorias e quantidades</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Categoria</th>
+                            <th>Quantidade de produtos</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for categoria in categorias_resumo %}
+                        <tr>
+                            <td>{{ categoria.nome }}</td>
+                            <td>{{ categoria.total_produtos }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="2">Nenhuma categoria cadastrada.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <div style="display:flex; flex-direction:column; gap:18px;">
+                <div class="box resumo">
+                    <div>
+                        <h2>Visão operacional</h2>
+
+                        <div class="resumo-lista">
+                            <div class="resumo-item">
+                                <span>Produtos ativos</span>
+                                <strong>{{ produtos_ativos }}</strong>
+                            </div>
+
+                            <div class="resumo-item">
+                                <span>Total de pedidos</span>
+                                <strong>{{ total_pedidos }}</strong>
+                            </div>
+
+                            <div class="resumo-item">
+                                <span>Total de produtos</span>
+                                <strong>{{ total_produtos }}</strong>
+                            </div>
+
+                            <div class="resumo-item">
+                                <span>Clientes / compradores</span>
+                                <strong>{{ total_clientes }}</strong>
+                            </div>
+
+                            <div class="resumo-item">
+                                <span>Valor em estoque</span>
+                                <strong>R$ {{ valor_total_estoque|floatformat:2 }}</strong>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="acoes-resumo">
+                        <a href="{% url 'pedidos' %}" class="botao">Ver pedidos</a>
+                        <a href="{% url 'vendas' %}" class="botao">Ver vendas</a>
+                        <a href="{% url 'entradas_saidas' %}" class="botao">Estoque</a>
+                    </div>
+                </div>
+
+                <div class="card card-licenca">
+                    <small>Licença da plataforma</small>
+
+                    {% if loja.status_licenca == "ativa" %}
+                        <span class="licenca-pill licenca-ativa">ATIVA</span>
+                    {% elif loja.status_licenca == "vencida" %}
+                        <span class="licenca-pill licenca-vencida">VENCIDA</span>
+                    {% else %}
+                        <span class="licenca-pill licenca-pendente">PENDENTE</span>
+                    {% endif %}
+
+                    <span class="mini">Valor: R$ {{ loja.valor_licenca|floatformat:2 }}</span>
+                    <span class="mini">
+                        Vence em:
+                        {% if loja.data_vencimento_licenca %}
+                            {{ loja.data_vencimento_licenca|date:"d/m/Y" }}
+                        {% else %}
+                            Não definido
+                        {% endif %}
+                    </span>
+                    <span class="mini">Dias restantes: {{ loja.dias_restantes_licenca }}</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="bloco-recebimento">
+            {% if mp_connected %}
+                <div class="status-pill status-on">Conta de recebimento conectada</div>
+            {% else %}
+                <div class="status-pill status-off">Conta de recebimento não cadastrada</div>
+            {% endif %}
+
+            <h3>Cadastre sua conta para receber pagamentos</h3>
+            <p>
+                Configure aqui a conta que vai receber os valores dos compradores.
+                Depois disso, sua loja poderá trabalhar com Pix e cartão de forma integrada no checkout.
+            </p>
+
+            <div class="botoes-recebimento">
+                <a href="{% url 'pagamentos_painel' %}" class="botao-claro">Cadastrar conta de recebimento</a>
+                <a href="{% url 'frete_entrega' %}" class="botao-claro">Configurar frete e entrega</a>
+                <a href="{% url 'financeiro_loja' %}" class="botao-claro">Financeiro da licença</a>
+            </div>
+        </div>
+    </main>
+
+</div>
 </body>
 </html>
