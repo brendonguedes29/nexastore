@@ -1085,6 +1085,9 @@ def painel_loja(request):
         for produto in produtos
     )
 
+    config_frete = ConfigFrete.objects.filter(loja=loja).first()
+    mp_connected = config_frete.mp_connected if config_frete else False
+
     return render(request, "painel_loja.html", {
         "loja": loja,
         "total_produtos": produtos.count(),
@@ -1099,6 +1102,7 @@ def painel_loja(request):
         "movimento_mensal": movimento_mensal,
         "total_clientes": total_clientes,
         "licenca_bloqueada": loja_com_licenca_bloqueada(loja),
+        "mp_connected": mp_connected,
     })
 @login_required
 def financeiro_loja(request):
