@@ -607,7 +607,7 @@
         <div class="brand-wrap">
             {% if loja %}
             <div class="brand-store">
-                {% if loja.logo %}
+                {% if loja.logo and loja.logo.url %}
                     <img src="{{ loja.logo.url }}" alt="{{ loja.nome }}" class="brand-store-logo">
                 {% else %}
                     <div class="brand-store-fallback">
@@ -679,42 +679,42 @@
         <div class="cards">
             <div class="card">
                 <small>Total de produtos</small>
-                <strong>{{ total_produtos }}</strong>
+                <strong>{{ total_produtos|default:"0" }}</strong>
             </div>
 
             <div class="card">
                 <small>Produtos ativos</small>
-                <strong>{{ produtos_ativos }}</strong>
+                <strong>{{ produtos_ativos|default:"0" }}</strong>
             </div>
 
             <div class="card">
                 <small>Total de pedidos</small>
-                <strong>{{ total_pedidos }}</strong>
+                <strong>{{ total_pedidos|default:"0" }}</strong>
             </div>
 
             <div class="card card-destaque-azul">
                 <small>Pedidos hoje</small>
-                <strong>{{ pedidos_hoje }}</strong>
+                <strong>{{ pedidos_hoje|default:"0" }}</strong>
             </div>
 
             <div class="card">
                 <small>Total em estoque</small>
-                <strong>{{ total_estoque }}</strong>
+                <strong>{{ total_estoque|default:"0" }}</strong>
             </div>
 
             <div class="card">
                 <small>Clientes / compradores</small>
-                <strong>{{ total_clientes }}</strong>
+                <strong>{{ total_clientes|default:"0" }}</strong>
             </div>
 
             <div class="card card-destaque-estoque">
                 <small>Valor em estoque</small>
-                <strong>R$ {{ valor_total_estoque|floatformat:2 }}</strong>
+                <strong>R$ {{ valor_total_estoque|default:"0"|floatformat:2 }}</strong>
             </div>
 
             <div class="card">
                 <small>Status da licença</small>
-                <strong>{{ loja.get_status_licenca_display }}</strong>
+                <strong>{{ loja.get_status_licenca_display|default:"-" }}</strong>
             </div>
         </div>
 
@@ -730,49 +730,47 @@
                 <div class="grafico-area">
                     {% for item in movimento_mensal %}
                         <div class="grafico-coluna">
-                            <div class="grafico-total">{{ item.total }}</div>
-                            <div class="grafico-barra" style="height:{{ item.altura }}%;" title="{{ item.mes }} - {{ item.total }} pedidos"></div>
+                            <div class="grafico-total">{{ item.total|default:"0" }}</div>
+                            <div class="grafico-barra" style="height:{{ item.altura|default:"12" }}%;" title="{{ item.mes }} - {{ item.total|default:"0" }} pedidos"></div>
                             <div class="grafico-mes">{{ item.mes }}</div>
                         </div>
                     {% empty %}
                         <p style="color:#64748b;">Ainda não há dados suficientes para exibir o gráfico.</p>
                     {% endfor %}
                 </div>
-            </div>
-
-            <div class="box resumo">
+            </div><div class="box resumo">
                 <div>
                     <h2>Resumo rápido</h2>
 
                     <div class="resumo-lista">
                         <div class="resumo-item">
                             <span>Pedidos pendentes</span>
-                            <strong>{{ pedidos_pendentes }}</strong>
+                            <strong>{{ pedidos_pendentes|default:"0" }}</strong>
                         </div>
 
                         <div class="resumo-item">
                             <span>Pedidos hoje</span>
-                            <strong>{{ pedidos_hoje }}</strong>
+                            <strong>{{ pedidos_hoje|default:"0" }}</strong>
                         </div>
 
                         <div class="resumo-item">
                             <span>Faturamento</span>
-                            <strong>R$ {{ faturamento_total|floatformat:2 }}</strong>
+                            <strong>R$ {{ faturamento_total|default:"0"|floatformat:2 }}</strong>
                         </div>
 
                         <div class="resumo-item">
                             <span>Estoque total</span>
-                            <strong>{{ total_estoque }}</strong>
+                            <strong>{{ total_estoque|default:"0" }}</strong>
                         </div>
 
                         <div class="resumo-item">
                             <span>Valor em estoque</span>
-                            <strong>R$ {{ valor_total_estoque|floatformat:2 }}</strong>
+                            <strong>R$ {{ valor_total_estoque|default:"0"|floatformat:2 }}</strong>
                         </div>
 
                         <div class="resumo-item">
                             <span>Status da licença</span>
-                            <strong>{{ loja.get_status_licenca_display }}</strong>
+                            <strong>{{ loja.get_status_licenca_display|default:"-" }}</strong>
                         </div>
                     </div>
                 </div>
@@ -786,7 +784,9 @@
                     {% endif %}
                 </div>
             </div>
-        </div><div class="grid-main">
+        </div>
+
+        <div class="grid-main">
             <div class="box">
                 <h2>Categorias e quantidades</h2>
                 <table>
@@ -800,7 +800,7 @@
                         {% for categoria in categorias_resumo %}
                         <tr>
                             <td>{{ categoria.nome }}</td>
-                            <td>{{ categoria.total_produtos }}</td>
+                            <td>{{ categoria.total_produtos|default:"0" }}</td>
                         </tr>
                         {% empty %}
                         <tr>
@@ -819,27 +819,27 @@
                         <div class="resumo-lista">
                             <div class="resumo-item">
                                 <span>Produtos ativos</span>
-                                <strong>{{ produtos_ativos }}</strong>
+                                <strong>{{ produtos_ativos|default:"0" }}</strong>
                             </div>
 
                             <div class="resumo-item">
                                 <span>Total de pedidos</span>
-                                <strong>{{ total_pedidos }}</strong>
+                                <strong>{{ total_pedidos|default:"0" }}</strong>
                             </div>
 
                             <div class="resumo-item">
                                 <span>Total de produtos</span>
-                                <strong>{{ total_produtos }}</strong>
+                                <strong>{{ total_produtos|default:"0" }}</strong>
                             </div>
 
                             <div class="resumo-item">
                                 <span>Clientes / compradores</span>
-                                <strong>{{ total_clientes }}</strong>
+                                <strong>{{ total_clientes|default:"0" }}</strong>
                             </div>
 
                             <div class="resumo-item">
                                 <span>Valor em estoque</span>
-                                <strong>R$ {{ valor_total_estoque|floatformat:2 }}</strong>
+                                <strong>R$ {{ valor_total_estoque|default:"0"|floatformat:2 }}</strong>
                             </div>
                         </div>
                     </div>
@@ -862,7 +862,7 @@
                         <span class="licenca-pill licenca-pendente">PENDENTE</span>
                     {% endif %}
 
-                    <span class="mini">Valor: R$ {{ loja.valor_licenca|floatformat:2 }}</span>
+                    <span class="mini">Valor: R$ {{ loja.valor_licenca|default:"0"|floatformat:2 }}</span>
                     <span class="mini">
                         Vence em:
                         {% if loja.data_vencimento_licenca %}
@@ -871,7 +871,7 @@
                             Não definido
                         {% endif %}
                     </span>
-                    <span class="mini">Dias restantes: {{ loja.dias_restantes_licenca }}</span>
+                    <span class="mini">Dias restantes: {{ loja.dias_restantes_licenca|default:"0" }}</span>
                 </div>
             </div>
         </div>
