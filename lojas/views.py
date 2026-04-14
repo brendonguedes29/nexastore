@@ -1989,22 +1989,6 @@ def pagamentos_painel(request):
     })
 
 @login_required
-def licenca_bloqueada(request):
-    loja = get_loja_do_dono(request)
-
-    if not loja:
-        return redirect("login_loja")
-
-    loja.verificar_licenca()
-
-    if loja.status_licenca == "ativa" and loja.ativa:
-        return redirect("painel_loja")
-
-    return render(request, "licenca_bloqueada.html", {
-        "loja": loja,
-    })
-
-@login_required
 def conectar_mercadopago(request):
     loja = get_loja_do_dono(request)
     if not loja:
@@ -2746,6 +2730,21 @@ def redefinir_senha_comprador(request, uidb64, token):
 
 def redefinir_senha_comprador_concluida(request):
     return render(request, "senha/concluido.html")
+@login_required
+def licenca_bloqueada(request):
+    loja = get_loja_do_dono(request)
+
+    if not loja:
+        return redirect("login_loja")
+
+    loja.verificar_licenca()
+
+    if loja.status_licenca == "ativa" and loja.ativa:
+        return redirect("painel_loja")
+
+    return render(request, "licenca_bloqueada.html", {
+        "loja": loja,
+    })
 
 def csrf_erro(request, reason=""):
     return render(request, "csrf_erro.html", status=403)
