@@ -67,6 +67,7 @@ from lojas.views import (
     criar_pagamento_pix,
     criar_pagamento_cartao,
     escolher_acesso,
+    licensa_bloqueada,
 
     # LOJISTA
     recuperar_acesso_loja,
@@ -193,6 +194,7 @@ urlpatterns = [
     path("ativar/<uidb64>/<token>/", ativar_conta, name="ativar_conta"),
     path("remover-logo/", views.remover_logo_ajax, name="remover_logo_ajax"),
     path('painel/financeiro/status/<int:pk>/', views.status_licenca, name='status_licenca'),
+    path("painel/licenca-bloqueada/", licenca_bloqueada, name="licenca_bloqueada"),
 ]
 
 # 🔥 MEDIA

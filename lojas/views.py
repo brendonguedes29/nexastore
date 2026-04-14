@@ -169,14 +169,11 @@ def loja_com_licenca_bloqueada(loja):
 
 
 def bloquear_acesso_se_licenca_inativa(request, loja):
-    if loja.status_licenca in ["pendente", "vencida"]:
-        storage = get_messages(request)
-        mensagens_existentes = [m.message for m in storage]
+    loja.verificar_licenca()
 
-        if "Ative sua licença para usar esta função." not in mensagens_existentes:
-            messages.error(request, "Ative sua licença para usar esta função.")
+    if loja.status_licenca in ["pendente", "vencida"] or not loja.ativa:
+        return redirect("licenca_bloqueada")
 
-        return redirect("painel_loja")
     return None
 
 def plano_permite_exportar_excel(loja):
@@ -1991,6 +1988,21 @@ def pagamentos_painel(request):
         "licenca_bloqueada": loja_com_licenca_bloqueada(loja),
     })
 
+@login_required
+def licenca_bloqueada(request):
+    loja = get_loja_do_dono(request)
+
+    if not loja:
+        return redirect("login_loja")
+
+    loja.verificar_licenca()
+
+    if loja.status_licenca == "ativa" and loja.ativa:
+        return redirect("painel_loja")
+
+    return render(request, "licenca_bloqueada.html", {
+        "loja": loja,
+    })
 
 @login_required
 def conectar_mercadopago(request):
