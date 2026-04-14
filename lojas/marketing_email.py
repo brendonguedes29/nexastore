@@ -1,8 +1,7 @@
 from django.template.loader import render_to_string
-from django.conf import settings
-from django.core.mail import send_mail
 
 from produtos.models import Comprador
+from .email_service import enviar_email
 
 
 def enviar_notificacao_produto(produto):
@@ -11,30 +10,34 @@ def enviar_notificacao_produto(produto):
             loja=produto.loja,
             ativo=True,
             usuario_email_isnull=False
-        )
+        ).select_related("usuario")
 
-        emails = [c.usuario.email for c in compradores if c.usuario.email]
+        emails = []
+        for comprador in compradores:
+            email = (comprador.usuario.email or "").strip()
+            if email:
+                emails.append(email)
 
         if not emails:
+            print("EMAIL MARKETING: nenhum comprador com e-mail encontrado.")
             return
 
-        assunto = f"🔥 Novidade na loja {produto.loja.nome}"
+        assunto = f"Novidade na loja {produto.loja.nome}"
 
-        contexto = {
+        html_body = render_to_string("email/email_produto.html", {
             "produto": produto,
             "loja": produto.loja,
-        }
+        })
 
-        mensagem_html = render_to_string("email_produto.html", contexto)
+        enviados = 0
+        for email in emails:
+            try:
+                enviar_email(email, assunto, html_body)
+                enviados += 1
+            except Exception as e:
+                print(f"ERRO EMAIL MARKETING para {email}: {str(e)}")
 
-        send_mail(
-            subject=assunto,
-            message="",
-            from_email=settings.DEFAULT_FROM_EMAIL,
-            recipient_list=emails,
-            html_message=mensagem_html,
-            fail_silently=True,
-        )
+        print(f"EMAIL MARKETING: {enviados} e-mail(s) enviado(s) para o produto {produto.nome}")
 
     except Exception as e:
         print("ERRO EMAIL MARKETING:", str(e))

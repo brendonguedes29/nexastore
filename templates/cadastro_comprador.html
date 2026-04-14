@@ -5,17 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Criar conta | {{ loja.nome }}</title>
     <style>
-        *{
-            margin:0;
-            padding:0;
-            box-sizing:border-box;
-        }
+        *{margin:0;padding:0;box-sizing:border-box;}
 
         body{
-            font-family:Arial, sans-serif;
+            font-family:Arial,sans-serif;
             background:
-                radial-gradient(circle at top left, rgba(34,211,238,0.18), transparent 30%),
-                linear-gradient(135deg, #071126 0%, #0b1730 45%, #0e7490 100%);
+                radial-gradient(circle at top left, rgba(34,211,238,0.16), transparent 30%),
+                linear-gradient(135deg, #071126 0%, #0b1730 50%, #0e7490 100%);
             min-height:100vh;
             color:#e5eefc;
         }
@@ -46,11 +42,31 @@
             margin-bottom:26px;
         }
 
-        .brand-badge{
-            width:52px;
-            height:52px;
+        .brand-logo{
+            width:58px;
+            height:58px;
             border-radius:16px;
-            background:linear-gradient(135deg, #38bdf8, #22d3ee);
+            overflow:hidden;
+            background:rgba(255,255,255,0.10);
+            border:1px solid rgba(255,255,255,0.14);
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            flex-shrink:0;
+        }
+
+        .brand-logo img{
+            width:100%;
+            height:100%;
+            object-fit:cover;
+            display:block;
+        }
+
+        .brand-fallback{
+            width:58px;
+            height:58px;
+            border-radius:16px;
+            background:linear-gradient(135deg,#38bdf8,#22d3ee);
             display:flex;
             align-items:center;
             justify-content:center;
@@ -60,8 +76,8 @@
         }
 
         .brand-text h2{
-            font-size:32px;
-            line-height:1;
+            font-size:30px;
+            line-height:1.1;
             color:#ffffff;
             margin-bottom:4px;
         }
@@ -107,6 +123,38 @@
         .alert-error ul{
             padding-left:18px;
             margin-top:8px;
+        }
+
+        .success-box{
+            text-align:center;
+            padding:8px 0 4px;
+        }
+
+        .success-icon{
+            width:84px;
+            height:84px;
+            border-radius:50%;
+            margin:0 auto 20px;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            font-size:38px;
+            font-weight:bold;
+            color:#ffffff;
+            background:linear-gradient(135deg,#22c55e,#16a34a);
+            box-shadow:0 14px 30px rgba(34,197,94,0.25);
+        }
+
+        .success-box h3{
+            font-size:28px;
+            color:#ffffff;
+            margin-bottom:12px;
+        }
+
+        .success-box p{
+            color:#dbe7f5;
+            line-height:1.7;
+            margin-bottom:18px;
         }
 
         .form-grid{
@@ -177,56 +225,15 @@
         }
 
         .btn-primary{
-            background:linear-gradient(135deg, #22d3ee, #38bdf8);
+            background:linear-gradient(135deg,#22d3ee,#38bdf8);
             color:#082f49;
             box-shadow:0 10px 25px rgba(56,189,248,0.26);
-        }
-
-        .btn-primary:hover{
-            transform:translateY(-1px);
-            filter:brightness(1.03);
         }
 
         .btn-secondary{
             background:rgba(255,255,255,0.08);
             color:#ffffff;
             border:1px solid rgba(255,255,255,0.14);
-        }
-
-        .btn-secondary:hover{
-            background:rgba(255,255,255,0.12);
-        }
-
-        .success-box{
-            text-align:center;
-            padding:8px 0 4px;
-        }
-
-        .success-icon{
-            width:84px;
-            height:84px;
-            border-radius:50%;
-            margin:0 auto 20px;
-            display:flex;
-            align-items:center;
-            justify-content:center;
-            font-size:38px;
-            font-weight:bold;
-            color:#ffffff;
-            background:linear-gradient(135deg, #22c55e, #16a34a);
-            box-shadow:0 14px 30px rgba(34,197,94,0.25);
-        }
-
-        .success-box h3{
-            font-size:28px;
-            color:#ffffff;
-            margin-bottom:12px;
-        }
-
-        .success-box p{
-            color:#dbe7f5;
-            line-height:1.7;
-            margin-bottom:18px;
         }
 
         .footer-text{
@@ -236,33 +243,10 @@
             color:#cbd5e1;
         }
 
-        .footer-text a{
-            color:#67e8f9;
-            font-weight:700;
-            text-decoration:none;
-        }
-
-        .footer-text a:hover{
-            text-decoration:underline;
-        }
-
         @media (max-width:640px){
-            .card{
-                padding:24px 18px;
-                border-radius:22px;
-            }
-
-            .header h1{
-                font-size:28px;
-            }
-
-            .brand-text h2{
-                font-size:28px;
-            }
-
-            .success-box h3{
-                font-size:24px;
-            }
+            .card{padding:24px 18px;border-radius:22px;}
+            .header h1{font-size:28px;}
+            .brand-text h2{font-size:26px;}
         }
     </style>
 </head>
@@ -270,10 +254,17 @@
     <div class="wrap">
         <div class="card">
             <div class="brand">
-                <div class="brand-badge">N</div>
+                {% if loja.logo %}
+                    <div class="brand-logo">
+                        <img src="{{ loja.logo.url }}" alt="{{ loja.nome }}">
+                    </div>
+                {% else %}
+                    <div class="brand-fallback">{{ loja.nome|first|upper }}</div>
+                {% endif %}
+
                 <div class="brand-text">
-                    <h2>NexaStore</h2>
-                    <span>Conta de comprador</span>
+                    <h2>{{ loja.nome }}</h2>
+                    <span>Área do comprador</span>
                 </div>
             </div>
 
@@ -284,12 +275,8 @@
                     <p>{{ mensagem }}</p>
 
                     <div class="actions">
-                        <a href="{% url 'login_comprador' loja.slug %}" class="btn btn-primary">
-                            Ir para o login
-                        </a>
-                        <a href="{% url 'cadastro_comprador' loja.slug %}" class="btn btn-secondary">
-                            Criar outra conta
-                        </a>
+                        <a href="{% url 'login_comprador' loja.slug %}" class="btn btn-primary">Ir para o login</a>
+                        <a href="{% url 'cadastro_comprador' loja.slug %}" class="btn btn-secondary">Criar outra conta</a>
                     </div>
                 </div>
             {% else %}
@@ -299,9 +286,7 @@
                 </div>
 
                 {% if erro %}
-                    <div class="alert alert-error">
-                        {{ erro }}
-                    </div>
+                    <div class="alert alert-error">{{ erro }}</div>
                 {% endif %}
 
                 {% if form.errors %}
@@ -357,7 +342,7 @@
                 </form>
 
                 <div class="footer-text">
-                    Ao continuar, você cria sua conta de comprador vinculada à loja <strong>{{ loja.nome }}</strong>.
+                    Você está criando sua conta diretamente na loja <strong>{{ loja.nome }}</strong>.
                 </div>
             {% endif %}
         </div>
