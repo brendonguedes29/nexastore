@@ -13,7 +13,7 @@ class ProdutoForm(forms.ModelForm):
             "categoria",
             "descricao",
             "preco",
-            "custo", 
+            "custo",
             "estoque",
             "imagem",
             "ativo",
@@ -83,9 +83,6 @@ class ConfigFreteForm(forms.ModelForm):
             "valor_fora_estado",
             "retirada_loja",
             "entrega_ativa",
-            "chave_pix",
-            "nome_recebedor_pix",
-            "banco_pix",
         ]
 
 

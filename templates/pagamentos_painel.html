@@ -61,6 +61,14 @@
             margin-top:8px;
         }
         .linha{margin-bottom:8px;}
+        .info-success{
+            background:#ecfdf5;
+            border:1px solid #bbf7d0;
+            color:#065f46;
+            padding:14px 16px;
+            border-radius:12px;
+            margin-top:12px;
+        }
     </style>
 </head>
 <body>
@@ -69,7 +77,7 @@
     <div class="box">
         <h1>Conta de recebimento da loja</h1>
         <p class="sub">
-            Aqui o dono da loja conecta a conta que receberá os pagamentos dos compradores no Pix e no cartão.
+            Conecte uma conta Mercado Pago para receber pagamentos automaticamente via Pix e cartão.
         </p>
 
         {% if config.mp_connected %}
@@ -80,6 +88,8 @@
     </div>
 
     <div class="grid">
+
+        <!-- STATUS -->
         <div class="card">
             <h3>Status da conta</h3>
             <p class="linha"><strong>Loja:</strong> {{ loja.nome }}</p>
@@ -90,39 +100,49 @@
             {% if config.mp_connected %}
                 <a href="{% url 'conectar_mercadopago' %}" class="botao">Reconectar conta</a>
             {% else %}
-                <a href="{% url 'conectar_mercadopago' %}" class="botao">Cadastrar conta do banco / recebimento</a>
+                <a href="{% url 'conectar_mercadopago' %}" class="botao">Conectar conta do Mercado Pago</a>
             {% endif %}
         </div>
 
+        <!-- PIX AUTOMÁTICO -->
         <div class="card">
             <h3>Pix</h3>
-            <p>
-                Quando a conta estiver conectada, a loja poderá trabalhar com Pix dinâmico no checkout do comprador.
-            </p>
-            <p><strong>Recebedor Pix manual:</strong> {{ config.nome_recebedor_pix|default:"-" }}</p>
-            <p><strong>Chave Pix manual:</strong> {{ config.chave_pix|default:"-" }}</p>
-            <p><strong>Banco:</strong> {{ config.banco_pix|default:"-" }}</p>
-            <a href="{% url 'editar_config_frete' %}" class="botao-sec">Editar dados manuais</a>
+
+            {% if config.mp_connected %}
+                <div class="info-success">
+                    <strong>✔ Pix automático ativo</strong>
+                    <p style="margin-top:6px;">
+                        Os pagamentos via Pix são gerados automaticamente no checkout e enviados diretamente para a conta conectada.
+                    </p>
+                </div>
+            {% else %}
+                <p>
+                    Conecte uma conta Mercado Pago para habilitar pagamentos via Pix automático no checkout.
+                </p>
+            {% endif %}
         </div>
 
+        <!-- CARTÃO -->
         <div class="card">
             <h3>Cartão</h3>
             <p>
-                Depois da conexão, sua loja ficará pronta para usar cartão no processo de compra do cliente.
+                Após conectar sua conta Mercado Pago, sua loja estará pronta para aceitar pagamentos por cartão.
             </p>
             <p>
-                A ideia aqui é que o comprador veja as opções disponíveis e o valor vá direto para a conta cadastrada da loja.
+                O valor será processado automaticamente e enviado para a conta conectada.
             </p>
         </div>
 
+        <!-- FLUXO -->
         <div class="card">
             <h3>Fluxo da loja</h3>
-            <p>1. Cadastrar conta de recebimento</p>
-            <p>2. Habilitar Pix e cartão</p>
-            <p>3. Comprador finaliza a compra</p>
+            <p>1. Conectar conta Mercado Pago</p>
+            <p>2. Cliente escolhe Pix ou cartão</p>
+            <p>3. Pagamento é processado automaticamente</p>
             <p>4. Valor cai na conta conectada</p>
             <p>5. Pedido segue para preparo e envio</p>
         </div>
+
     </div>
 
     <div class="box">

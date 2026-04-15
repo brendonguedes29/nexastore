@@ -51,7 +51,7 @@ label{
 <body>
 
 <div class="box">
-    <h1>Editar configuração de frete e Pix</h1>
+    <h1>Editar configuração de frete</h1>
 
    <div class="info">
     Informe o endereço de origem da loja. Esse endereço será utilizado como ponto de partida para calcular a distância em KM até o cliente e determinar o valor do frete.
@@ -93,17 +93,6 @@ label{
 
         <label>Entrega ativa</label>
         {{ form.entrega_ativa }}
-
-        <hr style="margin:20px 0;">
-
-        <label>Chave Pix</label>
-        {{ form.chave_pix }}
-
-        <label>Nome do recebedor Pix</label>
-        {{ form.nome_recebedor_pix }}
-
-        <label>Banco / instituição Pix</label>
-        {{ form.banco_pix }}
 
         <button type="submit">Salvar</button>
     </form>
