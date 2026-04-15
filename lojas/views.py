@@ -7,6 +7,7 @@ import urllib.parse
 import urllib.request
 import openpyxl
 import requests
+import traceback
 
 from urllib.parse import quote
 from collections import defaultdict
@@ -28,23 +29,17 @@ from django.utils.encoding import force_bytes, force_str
 
 from django.utils.dateparse import parse_date
 from django.utils import timezone
-
-# 🔥 IMPORTS CORRIGIDOS AQUI
 from django.db.models import Count, Sum, F, DecimalField, ExpressionWrapper
 from django.db.models.functions import TruncMonth
 from django.db import transaction
 
 from django.urls import reverse
 from django.core.mail import send_mail
-
 from django.http import HttpResponse, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 
 from .email_service import enviar_email
 from .marketing_email import enviar_notificacao_produto
-import traceback
-from django.http import HttpResponse
-
 from .models import Loja
 from .forms import LojaForm, LojaDadosForm, LojaVitrineForm
 
@@ -1027,49 +1022,106 @@ def painel_loja(request):
         produtos = Produto.objects.filter(loja=loja)
         pedidos = Pedido.objects.filter(loja=loja)
 
-    # 📦 TOTAL DE PRODUTOS
-    total_produtos = produtos.count()
+        # 📦 PRODUTOS
+        total_produtos = produtos.count()
+        produtos_ativos = produtos.filter(ativo=True).count()
+        produtos_destaque = produtos.filter(em_destaque=True).count()
+        total_estoque = sum((p.estoque or 0) for p in produtos)
 
-    # 🧾 PEDIDOS
-    pedidos_pendentes = pedidos.filter(status="pendente").count()
-    pedidos_entregues = pedidos.filter(status="entregue").count()
+        # 💰 ESTOQUE / LUCRO
+        valor_total_estoque = sum(
+            (p.custo or 0) * (p.estoque or 0)
+            for p in produtos
+        )
 
-    # 💰 FATURAMENTO TOTAL (venda)
-    faturamento_total = pedidos.filter(status="entregue").aggregate(
-        total=Sum("valor_total")
-    )["total"] or 0
+        lucro_total = sum(
+            ((p.preco or 0) - (p.custo or 0)) * (p.estoque or 0)
+            for p in produtos
+        )
 
-    # 📦 VALOR TOTAL DO ESTOQUE (CUSTO)
-    valor_total_estoque = sum(
-        (p.custo or 0) * (p.estoque or 0)
-        for p in produtos
-    )
+        # 🧾 PEDIDOS
+        total_pedidos = pedidos.count()
+        pedidos_pendentes = pedidos.filter(status="pendente").count()
+        pedidos_entregues = pedidos.filter(status="entregue").count()
+        pedidos_hoje = pedidos.filter(
+            data__date=timezone.localdate()
+        ).count()
 
-    # 💸 LUCRO POTENCIAL (se vender tudo)
-    lucro_total = sum(
-        ((p.preco or 0) - (p.custo or 0)) * (p.estoque or 0)
-        for p in produtos
-    )
+        # 💵 FATURAMENTO
+        faturamento_total = pedidos.filter(status="entregue").aggregate(
+            total=Sum("valor_total")
+        )["total"] or 0
 
-    # 📊 PRODUTOS EM DESTAQUE
-    produtos_destaque = produtos.filter(em_destaque=True).count()
+        # 👥 CLIENTES / COMPRADORES
+        total_clientes = Comprador.objects.filter(loja=loja).count()
 
-    context = {
-        "loja": loja,
-        "total_produtos": total_produtos,
-        "pedidos_pendentes": pedidos_pendentes,
-        "pedidos_entregues": pedidos_entregues,
-        "faturamento_total": faturamento_total,
-        "produtos_destaque": produtos_destaque,
+        # 📊 MOVIMENTO MENSAL
+        pedidos_por_mes = (
+            pedidos.annotate(mes_ref=TruncMonth("data"))
+            .values("mes_ref")
+            .annotate(total=Count("id"))
+            .order_by("mes_ref")
+        )
 
-        # 🔥 NOVOS
-        "valor_total_estoque": valor_total_estoque,
-        "lucro_total": lucro_total,
-    }
+        movimento_mensal = []
+        maior_total = 0
 
-    return render(request, "painel_loja.html", context)
+        for item in pedidos_por_mes:
+            if item["total"] > maior_total:
+                maior_total = item["total"]
 
-except Exception as e:
+        for item in pedidos_por_mes:
+            total_mes = item["total"] or 0
+            altura = 12
+            if maior_total > 0:
+                altura = max(12, int((total_mes / maior_total) * 100))
+
+            movimento_mensal.append({
+                "mes": item["mes_ref"].strftime("%b/%y") if item["mes_ref"] else "-",
+                "total": total_mes,
+                "altura": altura,
+            })
+
+        # 📂 CATEGORIAS
+        categorias_resumo = (
+            Categoria.objects.filter(loja=loja)
+            .annotate(total_produtos=Count("produto"))
+            .order_by("nome")
+        )
+
+        # 🔐 LICENÇA / RECEBIMENTO
+        licenca_bloqueada = loja.status_licenca in ["vencida", "pendente"]
+
+        mp_connected = False
+        try:
+            if hasattr(loja, "config_frete") and loja.config_frete:
+                mp_connected = bool(loja.config_frete.mp_connected)
+        except Exception:
+            mp_connected = False
+
+        context = {
+            "loja": loja,
+            "total_produtos": total_produtos,
+            "produtos_ativos": produtos_ativos,
+            "total_pedidos": total_pedidos,
+            "pedidos_hoje": pedidos_hoje,
+            "total_estoque": total_estoque,
+            "total_clientes": total_clientes,
+            "pedidos_pendentes": pedidos_pendentes,
+            "pedidos_entregues": pedidos_entregues,
+            "faturamento_total": faturamento_total,
+            "produtos_destaque": produtos_destaque,
+            "valor_total_estoque": valor_total_estoque,
+            "lucro_total": lucro_total,
+            "movimento_mensal": movimento_mensal,
+            "categorias_resumo": categorias_resumo,
+            "licenca_bloqueada": licenca_bloqueada,
+            "mp_connected": mp_connected,
+        }
+
+        return render(request, "painel_loja.html", context)
+
+    except Exception as e:
         print("ERRO NO PAINEL_LOJA:")
         print(traceback.format_exc())
         return HttpResponse(f"Erro no painel_loja: {str(e)}", status=500)
