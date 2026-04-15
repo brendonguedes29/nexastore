@@ -2096,20 +2096,34 @@ def webhook_mercadopago(request):
     print("BODY RAW:", request.body.decode("utf-8", errors="ignore"))
 
     try:
-        payment_id = request.GET.get("data.id") or request.GET.get("id")
+        payment_id = None
 
+        # 🔹 1. Tenta pegar do GET
+        if request.GET:
+            payment_id = request.GET.get("data.id") or request.GET.get("id")
+
+        # 🔹 2. Tenta pegar do BODY (JSON)
         if not payment_id:
             try:
                 data = json.loads(request.body.decode("utf-8") or "{}")
-                payment_id = data.get("data", {}).get("id") or data.get("id")
-            except Exception:
-                payment_id = None
+
+                print("BODY JSON:", data)
+
+                # Mercado Pago padrão webhook
+                payment_id = (
+                    data.get("data", {}).get("id")
+                    or data.get("id")
+                )
+            except Exception as e:
+                print("ERRO AO LER JSON:", str(e))
 
         print("PAYMENT_ID:", payment_id)
 
+        # 🔥 IMPORTANTE: SEM ID = RESPONDE OK PRA SIMULAÇÃO
         if not payment_id:
             return JsonResponse({"ok": True, "msg": "sem payment_id"}, status=200)
 
+        # 🔹 Consulta pagamento na API
         response = requests.get(
             f"https://api.mercadopago.com/v1/payments/{payment_id}",
             headers={"Authorization": f"Bearer {settings.MERCADOPAGO_ACCESS_TOKEN}"},
@@ -2129,6 +2143,7 @@ def webhook_mercadopago(request):
         print("STATUS PAGAMENTO:", status)
         print("REFERENCIA PAGAMENTO:", referencia)
 
+        # 🔹 Atualização do sistema
         if referencia:
             if status == "approved":
                 confirmar_pagamento_por_referencia(referencia)
@@ -2136,7 +2151,7 @@ def webhook_mercadopago(request):
 
             elif status in ["pending", "in_process"]:
                 Pedido.objects.filter(referencia_pagamento=referencia).update(
-                    status_pagamento="confirmação"
+                    status_pagamento="confirmacao"
                 )
 
             elif status in ["rejected", "cancelled"]:
