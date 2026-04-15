@@ -14,7 +14,6 @@ class ProdutoForm(forms.ModelForm):
             "descricao",
             "preco",
             "custo", 
-            "custo",
             "estoque",
             "imagem",
             "ativo",
