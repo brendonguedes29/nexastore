@@ -1017,18 +1017,18 @@ def compra_sucesso(request):
 @login_required
 def painel_loja(request):
     try:
-        loja = get_object_or_404(Loja, usuario=request.user)
+        loja = get_object_or_404(Loja, dono=request.user)
 
         produtos = Produto.objects.filter(loja=loja)
         pedidos = Pedido.objects.filter(loja=loja)
 
-        # 📦 PRODUTOS
+        # PRODUTOS
         total_produtos = produtos.count()
         produtos_ativos = produtos.filter(ativo=True).count()
         produtos_destaque = produtos.filter(em_destaque=True).count()
         total_estoque = sum((p.estoque or 0) for p in produtos)
 
-        # 💰 ESTOQUE / LUCRO
+        # ESTOQUE / LUCRO
         valor_total_estoque = sum(
             (p.custo or 0) * (p.estoque or 0)
             for p in produtos
@@ -1039,7 +1039,7 @@ def painel_loja(request):
             for p in produtos
         )
 
-        # 🧾 PEDIDOS
+        # PEDIDOS
         total_pedidos = pedidos.count()
         pedidos_pendentes = pedidos.filter(status="pendente").count()
         pedidos_entregues = pedidos.filter(status="entregue").count()
@@ -1047,15 +1047,15 @@ def painel_loja(request):
             data__date=timezone.localdate()
         ).count()
 
-        # 💵 FATURAMENTO
+        # FATURAMENTO
         faturamento_total = pedidos.filter(status="entregue").aggregate(
             total=Sum("valor_total")
         )["total"] or 0
 
-        # 👥 CLIENTES / COMPRADORES
+        # CLIENTES / COMPRADORES
         total_clientes = Comprador.objects.filter(loja=loja).count()
 
-        # 📊 MOVIMENTO MENSAL
+        # MOVIMENTO MENSAL
         pedidos_por_mes = (
             pedidos.annotate(mes_ref=TruncMonth("data"))
             .values("mes_ref")
@@ -1082,14 +1082,14 @@ def painel_loja(request):
                 "altura": altura,
             })
 
-        # 📂 CATEGORIAS
+        # CATEGORIAS
         categorias_resumo = (
             Categoria.objects.filter(loja=loja)
             .annotate(total_produtos=Count("produto"))
             .order_by("nome")
         )
 
-        # 🔐 LICENÇA / RECEBIMENTO
+        # LICENÇA / RECEBIMENTO
         licenca_bloqueada = loja.status_licenca in ["vencida", "pendente"]
 
         mp_connected = False
