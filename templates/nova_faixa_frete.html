@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Nova faixa de frete</title>
+<title>Cadastrar faixa de distância</title>
 <style>
 body{
     font-family:Arial,sans-serif;
@@ -11,6 +11,10 @@ body{
     margin:0;
     padding:24px;
     color:#1f2937;
+}
+.container{
+    max-width:900px;
+    margin:0 auto;
 }
 .box{
     background:white;
@@ -22,29 +26,32 @@ input[type="text"],
 input[type="number"],
 select{
     width:100%;
-    padding:10px;
+    padding:12px;
     border:1px solid #d1d5db;
-    border-radius:10px;
+    border-radius:12px;
     margin-top:6px;
-    margin-bottom:14px;
+    margin-bottom:16px;
+    font-size:15px;
 }
 input[type="checkbox"]{
     width:auto;
     margin-top:6px;
-    margin-bottom:14px;
+    margin-bottom:16px;
     transform:scale(1.1);
 }
 button{
     background:#0b1220;
     color:white;
     border:none;
-    padding:12px 16px;
-    border-radius:10px;
+    padding:13px 18px;
+    border-radius:12px;
     cursor:pointer;
+    font-weight:bold;
 }
 label{
     font-weight:bold;
     display:block;
+    margin-top:4px;
 }
 .erro-box{
     background:#fee2e2;
@@ -53,6 +60,7 @@ label{
     padding:12px 14px;
     border-radius:12px;
     margin-bottom:16px;
+    line-height:1.6;
 }
 .link-voltar{
     display:inline-block;
@@ -61,38 +69,111 @@ label{
     color:#0b1220;
     font-weight:bold;
 }
+.sub{
+    color:#64748b;
+    line-height:1.6;
+    margin:10px 0 18px;
+}
+.info{
+    background:#f8fafc;
+    border:1px solid #e5e7eb;
+    border-radius:12px;
+    padding:14px 16px;
+    margin:16px 0 20px;
+    line-height:1.7;
+    color:#475569;
+}
+.alerta{
+    background:#fff7ed;
+    border:1px solid #fdba74;
+    border-radius:12px;
+    padding:14px 16px;
+    margin:16px 0 20px;
+    line-height:1.7;
+    color:#9a3412;
+}
+.exemplo{
+    background:#eff6ff;
+    border:1px solid #bfdbfe;
+    border-radius:12px;
+    padding:14px 16px;
+    margin:16px 0 20px;
+    line-height:1.7;
+    color:#1e3a8a;
+}
+.checkbox-linha{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-top:8px;
+}
+.checkbox-linha label{
+    margin:0;
+}
 </style>
 </head>
 <body>
 
-<div class="box">
-    <a href="{% url 'frete_entrega' %}" class="link-voltar">← Voltar</a>
+<div class="container">
+    <div class="box">
+        <a href="{% url 'frete_entrega' %}" class="link-voltar">← Voltar para frete e entrega</a>
 
-    <h1>Nova faixa de frete</h1>
+        <h1>Cadastrar faixa de distância</h1>
+        <p class="sub">
+            Defina aqui uma faixa de quilômetros e o valor que será cobrado pela entrega dentro dessa distância.
+        </p>
 
-    {% if form.errors %}
-        <div class="erro-box">
-            {{ form.errors }}
+        <div class="info">
+            Use esta tela para cadastrar quanto a loja cobrará em cada faixa de distância.
+            <br><br>
+            Exemplo: clientes que estiverem entre <strong>0 e 5 km</strong> podem pagar um valor,
+            enquanto clientes entre <strong>5 e 10 km</strong> podem pagar outro.
         </div>
-    {% endif %}
 
-    <form method="post">
-        {% csrf_token %}
+        <div class="alerta">
+            Recomendação importante: comece a primeira faixa em <strong>0 km</strong>.
+            <br>
+            Isso ajuda a evitar situações em que o sistema não encontra uma faixa válida para a entrega.
+        </div>
 
-        <label for="{{ form.km_inicial.id_for_label }}">KM inicial</label>
-        {{ form.km_inicial }}
+        <div class="exemplo">
+            <strong>Exemplo de preenchimento:</strong><br>
+            KM inicial: 0<br>
+            KM final: 5<br>
+            Valor: R$ 8,00
+            <br><br>
+            Próxima faixa:<br>
+            KM inicial: 5<br>
+            KM final: 10<br>
+            Valor: R$ 12,00
+        </div>
 
-        <label for="{{ form.km_final.id_for_label }}">KM final</label>
-        {{ form.km_final }}
+        {% if form.errors %}
+            <div class="erro-box">
+                {{ form.errors }}
+            </div>
+        {% endif %}
 
-        <label for="{{ form.valor.id_for_label }}">Valor</label>
-        {{ form.valor }}
+        <form method="post">
+            {% csrf_token %}
 
-        <label for="{{ form.ativo.id_for_label }}">Ativo</label>
-        {{ form.ativo }}
+            <label for="{{ form.km_inicial.id_for_label }}">KM inicial</label>
+            {{ form.km_inicial }}
 
-        <button type="submit">Salvar</button>
-    </form>
+            <label for="{{ form.km_final.id_for_label }}">KM final</label>
+            {{ form.km_final }}
+
+            <label for="{{ form.valor.id_for_label }}">Valor do frete</label>
+            {{ form.valor }}
+
+            <div class="checkbox-linha">
+                {{ form.ativo }}
+                <label for="{{ form.ativo.id_for_label }}">Faixa ativa</label>
+            </div>
+
+            <button type="submit">Salvar faixa</button>
+        </form>
+    </div>
 </div>
 
 </body>

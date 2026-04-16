@@ -12,6 +12,10 @@ body{
     padding:24px;
     color:#1f2937;
 }
+.container{
+    max-width:1200px;
+    margin:0 auto;
+}
 .box{
     background:white;
     padding:24px;
@@ -19,14 +23,72 @@ body{
     box-shadow:0 8px 24px rgba(15,23,42,0.06);
     margin-bottom:20px;
 }
+.topo h1{
+    font-size:32px;
+    margin-bottom:8px;
+}
+.topo p{
+    color:#64748b;
+    line-height:1.6;
+}
+.botoes{
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px;
+    margin-top:18px;
+}
 a.botao{
     display:inline-block;
-    padding:10px 14px;
-    border-radius:10px;
+    padding:12px 16px;
+    border-radius:12px;
     background:#0b1220;
     color:white;
     text-decoration:none;
-    margin-right:8px;
+    font-weight:bold;
+}
+a.botao-sec{
+    display:inline-block;
+    padding:12px 16px;
+    border-radius:12px;
+    background:#e2e8f0;
+    color:#0f172a;
+    text-decoration:none;
+    font-weight:bold;
+}
+.grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(320px,1fr));
+    gap:18px;
+}
+.titulo-bloco{
+    font-size:22px;
+    margin-bottom:10px;
+}
+.texto-apoio{
+    color:#64748b;
+    line-height:1.6;
+    margin-bottom:16px;
+}
+.info{
+    background:#f8fafc;
+    border:1px solid #e5e7eb;
+    border-radius:12px;
+    padding:14px 16px;
+    margin-top:14px;
+    line-height:1.6;
+    color:#475569;
+}
+.alerta{
+    background:#fff7ed;
+    border:1px solid #fdba74;
+    border-radius:12px;
+    padding:14px 16px;
+    margin-top:14px;
+    line-height:1.6;
+    color:#9a3412;
+}
+.lista p{
+    margin-bottom:8px;
 }
 table{
     width:100%;
@@ -38,80 +100,171 @@ th,td{
     border-bottom:1px solid #e5e7eb;
     text-align:left;
 }
-.info{
+th{
     background:#f8fafc;
-    border:1px solid #e5e7eb;
+    font-size:14px;
+}
+td{
+    vertical-align:middle;
+}
+.tag{
+    display:inline-block;
+    padding:6px 10px;
+    border-radius:999px;
+    font-size:12px;
+    font-weight:bold;
+}
+.tag-on{
+    background:#dcfce7;
+    color:#166534;
+}
+.tag-off{
+    background:#fee2e2;
+    color:#991b1b;
+}
+.exemplo{
+    background:#eff6ff;
+    border:1px solid #bfdbfe;
     border-radius:12px;
     padding:14px 16px;
     margin-top:14px;
-    line-height:1.6;
-    color:#475569;
+    line-height:1.7;
+    color:#1e3a8a;
 }
 </style>
 </head>
 <body>
 
-<div class="box">
-    <h1>Frete e Entrega</h1>
-    <p>Gerencie o endereço de origem da loja e as faixas de frete por km.</p>
+<div class="container">
 
-    <a href="{% url 'painel_loja' %}" class="botao">Voltar ao painel</a>
-    <a href="{% url 'editar_config_frete' %}" class="botao">Editar configuração</a>
-    <a href="{% url 'nova_faixa_frete' %}" class="botao">Nova faixa</a>
-</div>
+    <div class="box topo">
+        <h1>Frete e entrega</h1>
+        <p>
+            Configure aqui o endereço de origem da loja, as regras gerais de entrega e as faixas de distância que serão usadas para definir o valor do frete.
+        </p>
 
-<div class="box">
-    <h2>Endereço de origem</h2>
-    <p><strong>CEP:</strong> {{ config.cep_origem|default:"-" }}</p>
-    <p><strong>Rua:</strong> {{ config.rua_origem|default:"-" }}</p>
-    <p><strong>Número:</strong> {{ config.numero_origem|default:"-" }}</p>
-    <p><strong>Complemento:</strong> {{ config.complemento_origem|default:"-" }}</p>
-    <p><strong>Bairro:</strong> {{ config.bairro_origem|default:"-" }}</p>
-    <p><strong>Cidade:</strong> {{ config.cidade_origem|default:"-" }}</p>
-    <p><strong>Estado:</strong> {{ config.estado_origem|default:"-" }}</p>
-</div>
-
-<div class="box">
-    <h2>Configuração geral</h2>
-    <p><strong>Valor fora do estado:</strong> R$ {{ config.valor_fora_estado }}</p>
-    <p><strong>Retirada na loja:</strong> {% if config.retirada_loja %}Sim{% else %}Não{% endif %}</p>
-    <p><strong>Entrega ativa:</strong> {% if config.entrega_ativa %}Sim{% else %}Não{% endif %}</p>
-
-    <div class="info">
-        Para entregas no mesmo estado, o sistema usa as <strong>faixas de frete por KM</strong> cadastradas abaixo.
-        O valor fora do estado continua sendo aplicado como valor fixo quando o estado do cliente for diferente do estado de origem da loja.
+        <div class="botoes">
+            <a href="{% url 'painel_loja' %}" class="botao-sec">Voltar ao painel</a>
+            <a href="{% url 'editar_config_frete' %}" class="botao">Endereço de origem e regras gerais</a>
+            <a href="{% url 'nova_faixa_frete' %}" class="botao">Cadastrar faixa de distância</a>
+        </div>
     </div>
-</div>
 
-<div class="box">
-    <h2>Faixas de frete</h2>
+    <div class="grid">
+        <div class="box">
+            <h2 class="titulo-bloco">Endereço de origem da loja</h2>
+            <p class="texto-apoio">
+                Esse é o ponto de referência da loja para as entregas. Mantenha essas informações corretas para organizar melhor o frete.
+            </p>
 
-    {% if faixas %}
-    <table>
-        <thead>
-            <tr>
-                <th>KM inicial</th>
-                <th>KM final</th>
-                <th>Valor</th>
-                <th>Ativo</th>
-                <th>Ação</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for faixa in faixas %}
-            <tr>
-                <td>{{ faixa.km_inicial }}</td>
-                <td>{{ faixa.km_final }}</td>
-                <td>R$ {{ faixa.valor }}</td>
-                <td>{% if faixa.ativo %}Sim{% else %}Não{% endif %}</td>
-                <td><a href="{% url 'editar_faixa_frete' faixa.id %}">Editar</a></td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-    {% else %}
-        <p>Nenhuma faixa cadastrada ainda.</p>
-    {% endif %}
+            <div class="lista">
+                <p><strong>CEP:</strong> {{ config.cep_origem|default:"-" }}</p>
+                <p><strong>Rua:</strong> {{ config.rua_origem|default:"-" }}</p>
+                <p><strong>Número:</strong> {{ config.numero_origem|default:"-" }}</p>
+                <p><strong>Complemento:</strong> {{ config.complemento_origem|default:"-" }}</p>
+                <p><strong>Bairro:</strong> {{ config.bairro_origem|default:"-" }}</p>
+                <p><strong>Cidade:</strong> {{ config.cidade_origem|default:"-" }}</p>
+                <p><strong>Estado:</strong> {{ config.estado_origem|default:"-" }}</p>
+            </div>
+
+            <div class="info">
+                O endereço acima representa a origem da entrega da loja.
+            </div>
+        </div>
+
+        <div class="box">
+            <h2 class="titulo-bloco">Regras gerais do frete</h2>
+            <p class="texto-apoio">
+                Essas regras valem para o funcionamento geral das entregas da loja.
+            </p>
+
+            <div class="lista">
+                <p><strong>Valor fixo fora do estado:</strong> R$ {{ config.valor_fora_estado|default:"0"|floatformat:2 }}</p>
+                <p>
+                    <strong>Retirada na loja:</strong>
+                    {% if config.retirada_loja %}
+                        <span class="tag tag-on">Ativa</span>
+                    {% else %}
+                        <span class="tag tag-off">Inativa</span>
+                    {% endif %}
+                </p>
+                <p>
+                    <strong>Entrega:</strong>
+                    {% if config.entrega_ativa %}
+                        <span class="tag tag-on">Ativa</span>
+                    {% else %}
+                        <span class="tag tag-off">Inativa</span>
+                    {% endif %}
+                </p>
+            </div>
+
+            <div class="info">
+                Para clientes no mesmo estado da loja, o sistema utiliza as faixas de distância cadastradas abaixo.
+                <br><br>
+                Para clientes em outro estado, o sistema utiliza o valor fixo informado acima.
+            </div>
+        </div>
+    </div>
+
+    <div class="box">
+        <h2 class="titulo-bloco">Faixas de distância e valor de entrega</h2>
+        <p class="texto-apoio">
+            Cadastre aqui as distâncias atendidas pela loja e o valor correspondente de entrega para cada faixa.
+        </p>
+
+        <div class="alerta">
+            Recomendação importante: cadastre a primeira faixa começando em <strong>0 km</strong>.
+            <br>
+            Exemplo: de <strong>0 a 5 km</strong>, depois de <strong>5,01 a 10 km</strong> ou conforme a lógica que você estiver adotando nas suas faixas.
+        </div>
+
+        <div class="exemplo">
+            <strong>Exemplo de preenchimento:</strong><br>
+            0 a 5 km = R$ 8,00<br>
+            5 a 10 km = R$ 12,00<br>
+            10 a 20 km = R$ 18,00
+        </div>
+
+        {% if faixas %}
+        <table>
+            <thead>
+                <tr>
+                    <th>KM inicial</th>
+                    <th>KM final</th>
+                    <th>Valor do frete</th>
+                    <th>Status</th>
+                    <th>Ação</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for faixa in faixas %}
+                <tr>
+                    <td>{{ faixa.km_inicial }}</td>
+                    <td>{{ faixa.km_final }}</td>
+                    <td>R$ {{ faixa.valor|floatformat:2 }}</td>
+                    <td>
+                        {% if faixa.ativo %}
+                            <span class="tag tag-on">Ativa</span>
+                        {% else %}
+                            <span class="tag tag-off">Inativa</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <a href="{% url 'editar_faixa_frete' faixa.id %}" class="botao-sec">Editar faixa</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+            <div class="info">
+                Nenhuma faixa cadastrada ainda.
+                <br><br>
+                Para começar, clique em <strong>“Cadastrar faixa de distância”</strong>.
+            </div>
+        {% endif %}
+    </div>
+
 </div>
 
 </body>

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Editar faixa de frete</title>
+<title>Editar faixa de distância</title>
 
 <style>
 body{
@@ -14,28 +14,60 @@ body{
     color:#1f2937;
 }
 
+.container{
+    max-width:700px;
+    margin:auto;
+}
+
 .box{
     background:white;
     padding:24px;
     border-radius:18px;
     box-shadow:0 8px 24px rgba(15,23,42,0.06);
-    max-width:600px;
-    margin:auto;
+    margin-bottom:20px;
 }
 
 h1{
-    margin-bottom:20px;
+    margin-bottom:10px;
+    font-size:30px;
+}
+
+.sub{
+    color:#64748b;
+    line-height:1.6;
+    margin-bottom:18px;
+}
+
+.info{
+    background:#f8fafc;
+    border:1px solid #e5e7eb;
+    border-radius:12px;
+    padding:14px 16px;
+    margin:16px 0 20px;
+    line-height:1.7;
+    color:#475569;
+}
+
+.exemplo{
+    background:#eff6ff;
+    border:1px solid #bfdbfe;
+    border-radius:12px;
+    padding:14px 16px;
+    margin:16px 0 20px;
+    line-height:1.7;
+    color:#1e3a8a;
 }
 
 input[type="text"],
 input[type="number"],
 select{
     width:100%;
-    padding:10px;
+    padding:12px;
     border:1px solid #d1d5db;
-    border-radius:10px;
+    border-radius:12px;
     margin-top:6px;
-    margin-bottom:14px;
+    margin-bottom:16px;
+    font-size:15px;
 }
 
 .checkbox-linha{
@@ -49,6 +81,16 @@ select{
 .checkbox-linha input{
     width:auto;
     margin:0;
+    transform:scale(1.1);
+}
+
+.checkbox-linha label{
+    margin:0;
+}
+
+label{
+    font-weight:bold;
+    display:block;
 }
 
 button{
@@ -56,8 +98,9 @@ button{
     color:white;
     border:none;
     padding:12px 16px;
-    border-radius:10px;
+    border-radius:12px;
     cursor:pointer;
+    font-weight:bold;
 }
 
 .botao-excluir{
@@ -78,50 +121,90 @@ button{
     color:#0b1220;
     font-weight:bold;
 }
+
+.box-excluir{
+    background:white;
+    padding:20px 24px;
+    border-radius:18px;
+    box-shadow:0 8px 24px rgba(15,23,42,0.06);
+}
+
+.box-excluir h2{
+    font-size:22px;
+    margin-bottom:10px;
+    color:#991b1b;
+}
+
+.box-excluir p{
+    color:#475569;
+    line-height:1.6;
+    margin-bottom:14px;
+}
 </style>
 </head>
 
 <body>
 
-<div class="box">
+<div class="container">
 
-    <!-- VOLTAR -->
-    <a href="{% url 'frete_entrega' %}" class="link-voltar">← Voltar</a>
+    <div class="box">
 
-    <h1>Editar faixa de frete</h1>
+        <a href="{% url 'frete_entrega' %}" class="link-voltar">← Voltar para frete e entrega</a>
 
-    <!-- FORM PRINCIPAL -->
-    <form method="post">
-        {% csrf_token %}
+        <h1>Editar faixa de distância</h1>
+        <p class="sub">
+            Ajuste os quilômetros e o valor de entrega desta faixa conforme a regra da sua loja.
+        </p>
 
-        <label>KM inicial</label>
-        {{ form.km_inicial }}
-
-        <label>KM final</label>
-        {{ form.km_final }}
-
-        <label>Valor</label>
-        {{ form.valor }}
-
-        <!-- CHECKBOX CORRIGIDO -->
-        <div class="checkbox-linha">
-            {{ form.ativo }}
-            <label for="{{ form.ativo.id_for_label }}">Faixa ativa</label>
+        <div class="info">
+            Esta faixa será usada quando a distância do cliente se enquadrar entre o KM inicial e o KM final definidos abaixo.
         </div>
 
-        <div class="acoes">
-            <button type="submit">Salvar</button>
+        <div class="exemplo">
+            <strong>Exemplo:</strong><br>
+            KM inicial: 0<br>
+            KM final: 5<br>
+            Valor do frete: R$ 8,00
         </div>
-    </form>
 
-    <!-- EXCLUIR -->
-    <form method="post" action="{% url 'excluir_faixa_frete' faixa.id %}">
-        {% csrf_token %}
-        <button type="submit" class="botao-excluir"
-            onclick="return confirm('Tem certeza que deseja excluir esta faixa?')">
-            Excluir faixa
-        </button>
-    </form>
+        <form method="post">
+            {% csrf_token %}
+
+            <label>KM inicial</label>
+            {{ form.km_inicial }}
+
+            <label>KM final</label>
+            {{ form.km_final }}
+
+            <label>Valor do frete</label>
+            {{ form.valor }}
+
+            <div class="checkbox-linha">
+                {{ form.ativo }}
+                <label for="{{ form.ativo.id_for_label }}">Faixa ativa</label>
+            </div>
+
+            <div class="acoes">
+                <button type="submit">Salvar alterações</button>
+            </div>
+        </form>
+
+    </div>
+
+    <div class="box-excluir">
+        <h2>Excluir faixa</h2>
+        <p>
+            Use essa opção somente se realmente quiser remover esta faixa de distância do sistema.
+        </p>
+
+        <form method="post" action="{% url 'excluir_faixa_frete' faixa.id %}">
+            {% csrf_token %}
+            <button type="submit" class="botao-excluir"
+                onclick="return confirm('Tem certeza que deseja excluir esta faixa?')">
+                Excluir faixa
+            </button>
+        </form>
+    </div>
 
 </div>
 
