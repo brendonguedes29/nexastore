@@ -1953,13 +1953,39 @@ def nova_faixa_frete(request):
 
     if request.method == "POST":
         form = FaixaFreteForm(request.POST)
+
         if form.is_valid():
-            faixa = form.save(commit=False)
-            faixa.loja = loja
-            faixa.save()
-            return redirect("frete_entrega")
+            km_inicial = form.cleaned_data["km_inicial"]
+            km_final = form.cleaned_data["km_final"]
+
+            if km_inicial > km_final:
+                form.add_error("km_final", "O KM final deve ser maior ou igual ao KM inicial.")
+
+            faixas_existentes = FaixaFrete.objects.filter(loja=loja)
+
+            # Verifica se a nova faixa sobrepõe alguma já existente
+            sobreposicao = faixas_existentes.filter(
+                km_inicial__lte=km_final,
+                km_final__gte=km_inicial,
+            ).exists()
+
+            if sobreposicao:
+                form.add_error(None, "Essa faixa se sobrepõe a uma faixa já cadastrada.")
+
+            # Se for a primeira faixa da loja, recomenda começar em 0
+            if not faixas_existentes.exists() and km_inicial != 0:
+                form.add_error("km_inicial", "A primeira faixa deve começar em 0 km.")
+
+            if not form.errors:
+                faixa = form.save(commit=False)
+                faixa.loja = loja
+                faixa.save()
+                messages.success(request, "Faixa de frete cadastrada com sucesso.")
+                return redirect("frete_entrega")
+
         else:
             print(form.errors)
+
     else:
         form = FaixaFreteForm()
 
@@ -1967,7 +1993,6 @@ def nova_faixa_frete(request):
         "loja": loja,
         "form": form,
     })
-
 
 @login_required
 def editar_faixa_frete(request, faixa_id):
@@ -1983,13 +2008,45 @@ def editar_faixa_frete(request, faixa_id):
 
     if request.method == "POST":
         form = FaixaFreteForm(request.POST, instance=faixa)
+
         if form.is_valid():
-            faixa_editada = form.save(commit=False)
-            faixa_editada.loja = loja
-            faixa_editada.save()
-            return redirect("frete_entrega")
+            km_inicial = form.cleaned_data["km_inicial"]
+            km_final = form.cleaned_data["km_final"]
+
+            if km_inicial > km_final:
+                form.add_error("km_final", "O KM final deve ser maior ou igual ao KM inicial.")
+
+            faixas_existentes = FaixaFrete.objects.filter(loja=loja).exclude(id=faixa.id)
+
+            # Verifica se a faixa editada sobrepõe alguma já existente
+            sobreposicao = faixas_existentes.filter(
+                km_inicial__lte=km_final,
+                km_final__gte=km_inicial,
+            ).exists()
+
+            if sobreposicao:
+                form.add_error(None, "Essa faixa se sobrepõe a outra faixa já cadastrada.")
+
+            # Se essa faixa for a primeira da loja, reforça que deve começar em 0
+            menor_faixa = FaixaFrete.objects.filter(loja=loja).exclude(id=faixa.id).order_by("km_inicial").first()
+
+            if menor_faixa is None:
+                if km_inicial != 0:
+                    form.add_error("km_inicial", "A primeira faixa da loja deve começar em 0 km.")
+            else:
+                if km_inicial < menor_faixa.km_inicial and km_inicial != 0:
+                    form.add_error("km_inicial", "Se esta faixa for a menor da loja, ela deve começar em 0 km.")
+
+            if not form.errors:
+                faixa_editada = form.save(commit=False)
+                faixa_editada.loja = loja
+                faixa_editada.save()
+                messages.success(request, "Faixa de frete atualizada com sucesso.")
+                return redirect("frete_entrega")
+
         else:
             print(form.errors)
+
     else:
         form = FaixaFreteForm(instance=faixa)
 
@@ -1998,7 +2055,6 @@ def editar_faixa_frete(request, faixa_id):
         "form": form,
         "faixa": faixa,
     })
-
 
 @login_required
 def pagamentos_painel(request):
@@ -2792,6 +2848,56 @@ def licenca_bloqueada(request):
     return render(request, "licenca_bloqueada.html", {
         "loja": loja,
     })
+
+def calcular_frete_ajax(request):
+    try:
+        data = json.loads(request.body.decode("utf-8"))
+
+        loja_id = data.get("loja_id")
+        estado_entrega = (data.get("estado") or "").lower()
+
+        loja = Loja.objects.get(id=loja_id)
+        config = ConfigFrete.objects.filter(loja=loja).first()
+
+        if not config:
+            return JsonResponse({"ok": False, "erro": "Configuração não encontrada"})
+
+        estado_loja = (config.estado_origem or "").lower()
+
+        # 🔥 REGRA 1: fora do estado
+        if estado_loja and estado_entrega and estado_loja != estado_entrega:
+            return JsonResponse({
+                "ok": True,
+                "frete": float(config.valor_fora_estado),
+                "tipo": "fora_estado"
+            })
+
+        # 🔥 REGRA 2: pega primeira faixa ativa (fallback inteligente)
+        faixa = (
+            FaixaFrete.objects.filter(loja=loja, ativo=True)
+            .order_by("km_inicial")
+            .first()
+        )
+
+        if faixa:
+            return JsonResponse({
+                "ok": True,
+                "frete": float(faixa.valor),
+                "tipo": "faixa_simples"
+            })
+
+        # 🔥 REGRA 3: fallback final
+        return JsonResponse({
+            "ok": True,
+            "frete": 0,
+            "tipo": "sem_faixa"
+        })
+
+    except Exception as e:
+        return JsonResponse({
+            "ok": False,
+            "erro": str(e)
+        })
 
 def csrf_erro(request, reason=""):
     return render(request, "csrf_erro.html", status=403)

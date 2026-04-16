@@ -135,6 +135,7 @@ urlpatterns = [
     path("pagamento/<str:referencia>/cartao/", pagina_pagamento_cartao, name="pagina_pagamento_cartao"),
     path("pagamento/<str:referencia>/sucesso/", views.pagamento_sucesso, name="pagamento_sucesso"),
     path("api/pagamento/status/<str:referencia>/", views.status_pagamento, name="status_pagamento"),
+    path("api/frete/calcular/", views.calcular_frete_ajax, name="calcular_frete_ajax"),
     path("api/pix/", criar_pagamento_pix, name="api_pix"),
     path("api/cartao/", criar_pagamento_cartao, name="api_cartao"),
 

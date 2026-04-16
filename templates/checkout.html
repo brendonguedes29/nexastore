@@ -2,73 +2,189 @@
 {% block title %}Finalizar compra{% endblock %}
 
 {% block content %}
-<div style="background:white;padding:30px;border-radius:20px;box-shadow:0 8px 24px rgba(0,0,0,0.05);">
+<div style="background:white;padding:30px;border-radius:20px;box-shadow:0 8px 24px rgba(0,0,0,0.05);max-width:900px;margin:0 auto;">
 
-    <h1 style="margin-bottom:20px;">Finalizar pedido</h1>
+    <h1 style="margin-bottom:10px;font-size:34px;">Finalizar pedido</h1>
+    <p style="color:#64748b;line-height:1.6;margin-bottom:20px;">
+        Preencha seus dados, escolha a forma de recebimento e confirme o pedido.
+    </p>
 
-    <form method="post">
+    {% if erro %}
+        <div style="background:#fee2e2;color:#991b1b;padding:12px 14px;border-radius:12px;margin-bottom:18px;border:1px solid #fecaca;line-height:1.6;">
+            {{ erro }}
+        </div>
+    {% endif %}
+
+    <div style="background:#f8fafc;padding:14px 16px;border-radius:12px;margin-bottom:20px;border:1px solid #e5e7eb;color:#475569;line-height:1.7;">
+        <strong style="color:#0f172a;">Importante:</strong>
+        o valor do frete será validado conforme o endereço informado e as regras de entrega cadastradas pela loja.
+    </div>
+
+    <form method="post" id="formCheckout">
         {% csrf_token %}
 
-        <h3>Seus dados</h3>
+        <h3 style="margin-bottom:12px;">Seus dados</h3>
 
-        <input type="text" name="nome_cliente" value="{{ comprador.usuario.first_name }}" required placeholder="Seu nome" style="width:100%;padding:12px;margin:10px 0;border-radius:10px;border:1px solid #ccc;">
-        <input type="text" name="telefone" value="{{ comprador.telefone }}" required placeholder="Telefone" style="width:100%;padding:12px;margin:10px 0;border-radius:10px;border:1px solid #ccc;">
+        <input
+            type="text"
+            name="nome_cliente"
+            value="{{ request.POST.nome_cliente|default:comprador.usuario.first_name }}"
+            required
+            placeholder="Seu nome"
+            style="width:100%;padding:12px;margin:10px 0;border-radius:12px;border:1px solid #ccc;"
+        >
 
-        <h3>Tipo de recebimento</h3>
+        <input
+            type="text"
+            name="telefone"
+            value="{{ request.POST.telefone|default:comprador.telefone }}"
+            required
+            placeholder="Telefone"
+            style="width:100%;padding:12px;margin:10px 0;border-radius:12px;border:1px solid #ccc;"
+        >
 
-        <select name="tipo_entrega" id="tipo_entrega" style="width:100%;padding:12px;margin:10px 0;border-radius:10px;border:1px solid #ccc;">
-            <option value="entrega">Entrega</option>
-            <option value="retirada">Retirar na loja</option>
+        <h3 style="margin-top:22px;margin-bottom:12px;">Tipo de recebimento</h3>
+
+        <select
+            name="tipo_entrega"
+            id="tipo_entrega"
+            style="width:100%;padding:12px;margin:10px 0;border-radius:12px;border:1px solid #ccc;"
+        >
+            <option value="entrega" {% if request.POST.tipo_entrega == "entrega" or not request.POST.tipo_entrega %}selected{% endif %}>Entrega</option>
+            <option value="retirada" {% if request.POST.tipo_entrega == "retirada" %}selected{% endif %}>Retirar na loja</option>
         </select>
 
-        <input type="hidden" name="distancia_km" id="distancia_km" value="0">
+        <input type="hidden" name="distancia_km" id="distancia_km" value="{{ request.POST.distancia_km|default:'0' }}">
+        <input type="hidden" id="loja_id" value="{{ loja.id }}">
 
         <div id="bloco_endereco">
-            <h3>Endereço de entrega</h3>
+            <h3 style="margin-top:22px;margin-bottom:12px;">Endereço de entrega</h3>
 
-            <input type="text" name="cep_entrega" id="cep_entrega" required placeholder="CEP" style="width:100%;padding:12px;margin:10px 0;border-radius:10px;border:1px solid #ccc;">
-            <input type="text" name="rua_entrega" id="rua_entrega" required placeholder="Rua" style="width:100%;padding:12px;margin:10px 0;border-radius:10px;border:1px solid #ccc;">
-            <input type="text" name="numero_entrega" id="numero_entrega" required placeholder="Número" style="width:100%;padding:12px;margin:10px 0;border-radius:10px;border:1px solid #ccc;">
-            <input type="text" name="complemento_entrega" id="complemento_entrega" placeholder="Complemento" style="width:100%;padding:12px;margin:10px 0;border-radius:10px;border:1px solid #ccc;">
-            <input type="text" name="bairro_entrega" id="bairro_entrega" placeholder="Bairro" style="width:100%;padding:12px;margin:10px 0;border-radius:10px;border:1px solid #ccc;">
-            <input type="text" name="cidade_entrega" id="cidade_entrega" required placeholder="Cidade" style="width:100%;padding:12px;margin:10px 0;border-radius:10px;border:1px solid #ccc;">
-            <input type="text" name="estado_entrega" id="estado_entrega" required placeholder="Estado" style="width:100%;padding:12px;margin:10px 0;border-radius:10px;border:1px solid #ccc;">
+            <div style="background:#f8fafc;padding:14px 16px;border-radius:12px;margin-bottom:14px;border:1px solid #e5e7eb;color:#475569;line-height:1.7;">
+                Preencha o endereço de entrega com atenção. O frete será estimado com base nas regras da loja.
+            </div>
+
+            <input
+                type="text"
+                name="cep_entrega"
+                id="cep_entrega"
+                value="{{ request.POST.cep_entrega|default:'' }}"
+                required
+                placeholder="CEP"
+                style="width:100%;padding:12px;margin:10px 0;border-radius:12px;border:1px solid #ccc;"
+            >
+
+            <input
+                type="text"
+                name="rua_entrega"
+                id="rua_entrega"
+                value="{{ request.POST.rua_entrega|default:'' }}"
+                required
+                placeholder="Rua"
+                style="width:100%;padding:12px;margin:10px 0;border-radius:12px;border:1px solid #ccc;"
+            >
+
+            <input
+                type="text"
+                name="numero_entrega"
+                id="numero_entrega"
+                value="{{ request.POST.numero_entrega|default:'' }}"
+                required
+                placeholder="Número"
+                style="width:100%;padding:12px;margin:10px 0;border-radius:12px;border:1px solid #ccc;"
+            >
+
+            <input
+                type="text"
+                name="complemento_entrega"
+                id="complemento_entrega"
+                value="{{ request.POST.complemento_entrega|default:'' }}"
+                placeholder="Complemento"
+                style="width:100%;padding:12px;margin:10px 0;border-radius:12px;border:1px solid #ccc;"
+            >
+
+            <input
+                type="text"
+                name="bairro_entrega"
+                id="bairro_entrega"
+                value="{{ request.POST.bairro_entrega|default:'' }}"
+                placeholder="Bairro"
+                style="width:100%;padding:12px;margin:10px 0;border-radius:12px;border:1px solid #ccc;"
+            >
+
+            <input
+                type="text"
+                name="cidade_entrega"
+                id="cidade_entrega"
+                value="{{ request.POST.cidade_entrega|default:'' }}"
+                required
+                placeholder="Cidade"
+                style="width:100%;padding:12px;margin:10px 0;border-radius:12px;border:1px solid #ccc;"
+            >
+
+            <input
+                type="text"
+                name="estado_entrega"
+                id="estado_entrega"
+                value="{{ request.POST.estado_entrega|default:'' }}"
+                required
+                placeholder="Estado"
+                style="width:100%;padding:12px;margin:10px 0;border-radius:12px;border:1px solid #ccc;"
+            >
         </div>
 
-        <div id="info_entrega" style="display:none;background:#f8fafc;padding:14px;border-radius:12px;margin:12px 0;">
+        <div id="info_entrega" style="display:none;background:#f0fdf4;padding:14px;border-radius:12px;margin:12px 0;border:1px solid #bbf7d0;color:#166534;line-height:1.7;">
             Você escolheu retirar na loja. Não será cobrado frete.
         </div>
 
-        <h3>Pagamento</h3>
+        <div id="status_frete" style="display:none;background:#eff6ff;padding:14px;border-radius:12px;margin:12px 0;border:1px solid #bfdbfe;color:#1d4ed8;line-height:1.7;"></div>
 
-        <select name="forma_pagamento" id="forma_pagamento" style="width:100%;padding:12px;margin:10px 0;border-radius:10px;border:1px solid #ccc;">
-            <option value="pix">Pix</option>
-            <option value="cartao">Cartão</option>
-            <option value="dinheiro">Dinheiro</option>
+        <h3 style="margin-top:22px;margin-bottom:12px;">Pagamento</h3>
+
+        <select
+            name="forma_pagamento"
+            id="forma_pagamento"
+            style="width:100%;padding:12px;margin:10px 0;border-radius:12px;border:1px solid #ccc;"
+        >
+            <option value="pix" {% if request.POST.forma_pagamento == "pix" or not request.POST.forma_pagamento %}selected{% endif %}>Pix</option>
+            <option value="cartao" {% if request.POST.forma_pagamento == "cartao" %}selected{% endif %}>Cartão</option>
+            <option value="dinheiro" {% if request.POST.forma_pagamento == "dinheiro" %}selected{% endif %}>Dinheiro</option>
         </select>
 
         <div id="tipo_cartao_box" style="display:none;">
-            <select name="tipo_cartao" id="tipo_cartao" style="width:100%;padding:12px;margin:10px 0;border-radius:10px;border:1px solid #ccc;">
-                <option value="debito">Débito</option>
-                <option value="credito">Crédito</option>
+            <select
+                name="tipo_cartao"
+                id="tipo_cartao"
+                style="width:100%;padding:12px;margin:10px 0;border-radius:12px;border:1px solid #ccc;"
+            >
+                <option value="debito" {% if request.POST.tipo_cartao == "debito" or not request.POST.tipo_cartao %}selected{% endif %}>Débito</option>
+                <option value="credito" {% if request.POST.tipo_cartao == "credito" %}selected{% endif %}>Crédito</option>
             </select>
         </div>
 
-        <div id="info_pagamento" style="background:#f8fafc;padding:14px;border-radius:12px;margin:12px 0;">
+        <div id="info_pagamento" style="background:#f8fafc;padding:14px;border-radius:12px;margin:12px 0;border:1px solid #e5e7eb;color:#475569;line-height:1.7;">
             Escolha a forma de pagamento.
         </div>
 
-        <h3>Observação</h3>
-        <textarea name="observacao" style="width:100%;padding:12px;margin:10px 0;border-radius:10px;border:1px solid #ccc;"></textarea>
+        <h3 style="margin-top:22px;margin-bottom:12px;">Observação</h3>
+        <textarea
+            name="observacao"
+            style="width:100%;padding:12px;margin:10px 0;border-radius:12px;border:1px solid #ccc;min-height:100px;"
+            placeholder="Se quiser, adicione alguma observação para o pedido."
+        >{{ request.POST.observacao|default:'' }}</textarea>
 
-        <hr style="margin:20px 0;">
+        <hr style="margin:24px 0;">
 
-        <h3>Resumo</h3>
-        <p>Subtotal: R$ {{ subtotal_geral }}</p>
-        <p>Frete: R$ {{ frete }}</p>
-        <h2>Total: R$ {{ total }}</h2>
+        <h3 style="margin-bottom:12px;">Resumo do pedido</h3>
+        <p style="margin-bottom:8px;">Subtotal: <strong>R$ <span id="subtotal_valor">{{ subtotal_geral }}</span></strong></p>
+        <p style="margin-bottom:8px;">Frete estimado: <strong id="frete_valor">A calcular</strong></p>
+        <h2 style="margin-top:12px;">Total estimado: R$ <span id="total_valor">{{ subtotal_geral }}</span></h2>
 
-        <button type="submit" style="background:#0b1220;color:white;padding:14px;width:100%;border:none;border-radius:12px;font-weight:bold;cursor:pointer;">
+        <button
+            type="submit"
+            id="btnConfirmarPedido"
+            style="background:#0b1220;color:white;padding:14px;width:100%;border:none;border-radius:12px;font-weight:bold;cursor:pointer;margin-top:18px;"
+        >
             Confirmar pedido
         </button>
     </form>
@@ -83,6 +199,7 @@ const infoPagamento = document.getElementById("info_pagamento");
 const tipoEntrega = document.getElementById("tipo_entrega");
 const blocoEndereco = document.getElementById("bloco_endereco");
 const infoEntrega = document.getElementById("info_entrega");
+const statusFrete = document.getElementById("status_frete");
 
 const cep = document.getElementById("cep_entrega");
 const rua = document.getElementById("rua_entrega");
@@ -90,19 +207,50 @@ const numero = document.getElementById("numero_entrega");
 const cidade = document.getElementById("cidade_entrega");
 const estado = document.getElementById("estado_entrega");
 const distanciaKm = document.getElementById("distancia_km");
+const lojaId = document.getElementById("loja_id");
+
+const freteValor = document.getElementById("frete_valor");
+const totalValor = document.getElementById("total_valor");
+const subtotalValor = document.getElementById("subtotal_valor");
+const btnConfirmarPedido = document.getElementById("btnConfirmarPedido");
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== "") {
+        const cookies = document.cookie.split(";");
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + "=")) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+function parseValor(texto) {
+    const valor = String(texto).replace("R$", "").replace(/\s/g, "").replace(",", ".");
+    const numero = parseFloat(valor);
+    return isNaN(numero) ? 0 : numero;
+}
+
+function formatarValor(valor) {
+    return Number(valor).toFixed(2).replace(".", ",");
+}
 
 function atualizarPagamento() {
     if (pagamento.value === "pix") {
         tipoCartaoBox.style.display = "none";
         infoPagamento.innerHTML = "Você pagará via Pix após confirmar o pedido.";
-    } 
+    }
     else if (pagamento.value === "cartao") {
         tipoCartaoBox.style.display = "block";
-        infoPagamento.innerHTML = "Pagamento com cartão será feito após confirmar.";
-    } 
+        infoPagamento.innerHTML = "O pagamento com cartão será exibido após a confirmação do pedido.";
+    }
     else {
         tipoCartaoBox.style.display = "none";
-        infoPagamento.innerHTML = "Pagamento em dinheiro na entrega.";
+        infoPagamento.innerHTML = "O pagamento em dinheiro será tratado conforme a configuração da loja.";
     }
 }
 
@@ -110,6 +258,7 @@ function atualizarEntrega() {
     if (tipoEntrega.value === "retirada") {
         blocoEndereco.style.display = "none";
         infoEntrega.style.display = "block";
+        statusFrete.style.display = "none";
 
         cep.required = false;
         rua.required = false;
@@ -118,6 +267,11 @@ function atualizarEntrega() {
         estado.required = false;
 
         distanciaKm.value = "0";
+        freteValor.textContent = "R$ 0,00";
+
+        const subtotal = parseValor(subtotalValor.textContent);
+        totalValor.textContent = formatarValor(subtotal);
+
     } else {
         blocoEndereco.style.display = "block";
         infoEntrega.style.display = "none";
@@ -127,11 +281,85 @@ function atualizarEntrega() {
         numero.required = true;
         cidade.required = true;
         estado.required = true;
+
+        calcularFreteAutomatico();
+    }
+}
+
+async function calcularFreteAutomatico() {
+    if (tipoEntrega.value === "retirada") {
+        return;
+    }
+
+    if (!estado.value.trim()) {
+        freteValor.textContent = "A calcular";
+        statusFrete.style.display = "none";
+        return;
+    }
+
+    statusFrete.style.display = "block";
+    statusFrete.style.background = "#eff6ff";
+    statusFrete.style.border = "1px solid #bfdbfe";
+    statusFrete.style.color = "#1d4ed8";
+    statusFrete.textContent = "Calculando frete estimado...";
+
+    try {
+        const response = await fetch("/api/frete/calcular/", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "X-CSRFToken": getCookie("csrftoken")
+            },
+            body: JSON.stringify({
+                loja_id: lojaId.value,
+                estado: estado.value
+            })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok || data.ok === false) {
+            freteValor.textContent = "Indisponível";
+            statusFrete.style.background = "#fee2e2";
+            statusFrete.style.border = "1px solid #fecaca";
+            statusFrete.style.color = "#991b1b";
+            statusFrete.textContent = data.erro || "Não foi possível calcular o frete.";
+            return;
+        }
+
+        const subtotal = parseValor(subtotalValor.textContent);
+        const frete = parseFloat(data.frete || 0);
+        const total = subtotal + frete;
+
+        freteValor.textContent = "R$ " + formatarValor(frete);
+        totalValor.textContent = formatarValor(total);
+
+        if (data.tipo === "fora_estado") {
+            statusFrete.textContent = "Frete calculado com base no valor fixo para fora do estado.";
+        } else if (data.tipo === "faixa_simples") {
+            statusFrete.textContent = "Frete estimado com base na primeira faixa ativa cadastrada para a loja.";
+        } else {
+            statusFrete.textContent = "Frete estimado calculado.";
+        }
+
+        distanciaKm.value = "0";
+
+    } catch (e) {
+        freteValor.textContent = "Indisponível";
+        statusFrete.style.background = "#fee2e2";
+        statusFrete.style.border = "1px solid #fecaca";
+        statusFrete.style.color = "#991b1b";
+        statusFrete.textContent = "Erro ao calcular frete.";
     }
 }
 
 pagamento.addEventListener("change", atualizarPagamento);
 tipoEntrega.addEventListener("change", atualizarEntrega);
+
+[cep, rua, numero, cidade, estado].forEach((campo) => {
+    campo.addEventListener("change", calcularFreteAutomatico);
+    campo.addEventListener("blur", calcularFreteAutomatico);
+});
 
 atualizarPagamento();
 atualizarEntrega();

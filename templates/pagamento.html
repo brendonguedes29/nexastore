@@ -88,15 +88,38 @@
 
         .referencia{
             color:#4b5563;
-            margin-bottom:8px;
+            margin-bottom:18px;
             font-size:15px;
         }
 
-        .total{
+        .resumo-pedido{
+            background:#f8fafc;
+            border:1px solid #e5e7eb;
+            border-radius:18px;
+            padding:18px 20px;
+            margin-bottom:24px;
+        }
+
+        .resumo-linha{
+            display:flex;
+            justify-content:space-between;
+            gap:16px;
+            margin-bottom:10px;
+            color:#374151;
+        }
+
+        .resumo-linha.muted{
+            color:#64748b;
+        }
+
+        .resumo-total{
+            display:flex;
+            justify-content:space-between;
+            gap:16px;
             font-size:22px;
             font-weight:900;
             color:#111827;
-            margin-bottom:28px;
+            margin-top:12px;
         }
 
         .pagamento-box{
@@ -117,6 +140,7 @@
             text-align:center;
             color:#6b7280;
             margin-bottom:24px;
+            line-height:1.6;
         }
 
         .status-box{
@@ -318,21 +342,38 @@
 
     <div class="container">
         <div class="box">
-            <h1>Pagamento do pedido</h1>
+            <h1>Finalize o pagamento</h1>
 
             <div class="referencia">
-                Referência: {{ referencia }}
+                Referência do pedido: {{ referencia }}
             </div>
 
-            <div class="total">
-                Total: R$ {{ total_pedido|floatformat:2 }}
+            <div class="resumo-pedido">
+                <div class="resumo-linha">
+                    <span>Resumo do pedido</span>
+                    <strong>Pagamento da compra</strong>
+                </div>
+
+                <div class="resumo-linha muted">
+                    <span>Frete</span>
+                    <span>Já validado conforme as regras da loja</span>
+                </div>
+
+                <hr style="margin:12px 0;border:none;border-top:1px solid #e5e7eb;">
+
+                <div class="resumo-total">
+                    <span>Total</span>
+                    <span>R$ {{ total_pedido|floatformat:2 }}</span>
+                </div>
             </div>
 
             <div class="pagamento-box">
                 <h2 id="tituloPagamento">Pagamento</h2>
-                <div class="sub" id="subPagamento"></div>
+                <div class="sub" id="subPagamento">
+                    O valor final já considera a validação do pedido conforme a forma de entrega escolhida.
+                </div>
 
-                <div id="statusBox" class="status-box">Página carregada. Preparando pagamento...</div>
+                <div id="statusBox" class="status-box">Iniciando processo de pagamento...</div>
 
                 <div id="pixArea" class="pix-area">
                     <div class="pix-grid">
@@ -487,7 +528,7 @@
             if (pagamentoConfirmado) return;
 
             try {
-                const response = await fetch(`/api/pagamento/status/${REFERENCIA}/`);
+                const response = await fetch(/api/pagamento/status/${REFERENCIA}/);
                 const data = await response.json();
 
                 if (
@@ -505,7 +546,7 @@
 
         async function iniciarPix() {
             tituloPagamento.textContent = "Pague com Pix";
-            subPagamento.textContent = "Escaneie o QR Code abaixo ou copie o código Pix.";
+            subPagamento.textContent = "Escaneie o QR Code abaixo ou copie o código Pix para concluir o pagamento.";
             pixArea.style.display = "block";
             cartaoArea.style.display = "none";
 
@@ -607,22 +648,21 @@
                         identificationType: { id: "form-checkout__identificationType" },
                         identificationNumber: { id: "form-checkout__identificationNumber" },
                         cardholderEmail: { id: "form-checkout__cardholderEmail" }
-                    },callbacks: {
+                    },
+                    callbacks: {
                         onFormMounted: function (error) {
                             if (error) {
                                 mostrarStatus("Erro ao montar formulário do cartão: " + JSON.stringify(error), "erro");
                             } else {
-                                mostrarStatus("Formulário do cartão carregado.");
+                                mostrarStatus("Formulário do cartão carregado. Preencha os dados para pagar.");
                             }
                         },
                         onSubmit: async function (event) {
                             event.preventDefault();
+                            bloquearBotao(true);
 
                             try {
-                                bloquearBotao(true);
-                                mostrarStatus("Processando pagamento com cartão...");
-
-                                const formData = cardForm.getCardFormData();
+                                const cardFormData = cardForm.getCardFormData();
 
                                 const response = await fetch("/api/cartao/", {
                                     method: "POST",
@@ -632,8 +672,14 @@
                                     },
                                     body: JSON.stringify({
                                         referencia: REFERENCIA,
-                                        transaction_amount: TOTAL,
-                                        payload: formData
+                                        token: cardFormData.token,
+                                        payment_method_id: cardFormData.paymentMethodId,
+                                        issuer_id: cardFormData.issuerId,
+                                        transaction_amount: Number(TOTAL),
+                                        installments: Number(cardFormData.installments),
+                                        payer_email: cardFormData.cardholderEmail,
+                                        identification_type: cardFormData.identificationType,
+                                        identification_number: cardFormData.identificationNumber
                                     })
                                 });
 
@@ -645,59 +691,42 @@
                                     return;
                                 }
 
-                                if (data.ja_pago) {
-                                    mostrarSucesso(data.mensagem || "Pagamento já confirmado.");
-                                    if (data.redirect) {
-                                        window.location.href = data.redirect;
-                                        return;
-                                    }
-                                    bloquearBotao(false);
+                                if (
+                                    data.status === "approved" ||
+                                    data.status_pagamento === "pago" ||
+                                    data.pago === true
+                                ) {
+                                    mostrarSucesso("Pagamento aprovado com sucesso.");
                                     return;
                                 }
 
-                                if (data.redirect) {
-                                    window.location.href = data.redirect;
-                                    return;
-                                }
-
-                                if (data.status === "approved") {
-                                    window.location.href = `/pagamento/${REFERENCIA}/sucesso/`;
-                                    return;
-                                }
-
-                                if (data.status === "pending" || data.status === "in_process") {
-                                    mostrarStatus("Pagamento enviado para análise. Aguarde a confirmação.", "sucesso");
-                                    bloquearBotao(false);
-                                    return;
-                                }
-
-                                mostrarStatus("Pagamento não aprovado.\n" + JSON.stringify(data, null, 2), "erro");
+                                mostrarStatus("Pagamento enviado. Aguardando confirmação...", "sucesso");
                                 bloquearBotao(false);
+                                setInterval(verificarStatus, 5000);
+
                             } catch (e) {
                                 mostrarStatus("Erro ao enviar pagamento com cartão: " + e, "erro");
                                 bloquearBotao(false);
                             }
                         },
-                        onError: function (error) {
-                            mostrarStatus("Erro no formulário do cartão: " + JSON.stringify(error), "erro");
-                            bloquearBotao(false);
+                        onFetching: function () {
+                            bloquearBotao(true);
+                            return function () {
+                                bloquearBotao(false);
+                            };
                         }
                     }
                 });
             } catch (e) {
-                mostrarStatus("Erro ao iniciar Mercado Pago: " + e, "erro");
+                mostrarStatus("Erro ao iniciar cartão: " + e, "erro");
             }
         }
 
-        document.addEventListener("DOMContentLoaded", function () {
-            mostrarStatus("JavaScript iniciado. Forma de pagamento: " + FORMA_PAGAMENTO);
-
-            if (FORMA_PAGAMENTO === "cartao") {
-                iniciarCartao();
-            } else {
-                iniciarPix();
-            }
-        });
+        if (FORMA_PAGAMENTO === "cartao") {
+            iniciarCartao();
+        } else {
+            iniciarPix();
+        }
     </script>
 </body>
 </html>
