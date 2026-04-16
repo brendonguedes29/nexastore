@@ -468,9 +468,7 @@
                 </div>
             </div>
         </div>
-    </div>
-
-    <script>
+    </div><script>
         const FORMA_PAGAMENTO = "{{ forma_pagamento|default:'pix'|escapejs }}".trim().toLowerCase();
         const REFERENCIA = "{{ referencia|escapejs }}";
         const TOTAL = "{{ total_pedido|floatformat:2|escapejs }}".replace(",", ".");
@@ -485,6 +483,8 @@
         const subPagamento = document.getElementById("subPagamento");
 
         let pagamentoConfirmado = false;
+        let monitoramentoPix = null;
+        let monitoramentoCartao = null;
 
         function mostrarStatus(texto, tipo) {
             statusBox.className = "status-box";
@@ -510,6 +510,17 @@
 
         function mostrarSucesso(texto) {
             pagamentoConfirmado = true;
+
+            if (monitoramentoPix) {
+                clearInterval(monitoramentoPix);
+                monitoramentoPix = null;
+            }
+
+            if (monitoramentoCartao) {
+                clearInterval(monitoramentoCartao);
+                monitoramentoCartao = null;
+            }
+
             pixArea.style.display = "none";
             cartaoArea.style.display = "none";
             sucessoArea.style.display = "block";
@@ -550,7 +561,8 @@
             pixArea.style.display = "block";
             cartaoArea.style.display = "none";
 
-            document.getElementById("btnCopiarPix").addEventListener("click", copiarPix);
+            const btnCopiarPix = document.getElementById("btnCopiarPix");
+            btnCopiarPix.onclick = copiarPix;
 
             try {
                 mostrarStatus("Gerando QR Code do Pix...");
@@ -597,7 +609,10 @@
                 }
 
                 mostrarStatus("Pix gerado com sucesso. Aguardando pagamento...", "sucesso");
-                setInterval(verificarStatus, 5000);
+
+                if (!monitoramentoPix) {
+                    monitoramentoPix = setInterval(verificarStatus, 5000);
+                }
             } catch (e) {
                 mostrarStatus("Erro ao gerar QR Code: " + e, "erro");
             }
@@ -702,7 +717,10 @@
 
                                 mostrarStatus("Pagamento enviado. Aguardando confirmação...", "sucesso");
                                 bloquearBotao(false);
-                                setInterval(verificarStatus, 5000);
+
+                                if (!monitoramentoCartao) {
+                                    monitoramentoCartao = setInterval(verificarStatus, 5000);
+                                }
 
                             } catch (e) {
                                 mostrarStatus("Erro ao enviar pagamento com cartão: " + e, "erro");
