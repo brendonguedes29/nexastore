@@ -539,7 +539,7 @@
             if (pagamentoConfirmado) return;
 
             try {
-                const response = await fetch(/api/pagamento/status/${REFERENCIA}/);
+                const response = await fetch(`/api/pagamento/status/${REFERENCIA}/`);
                 const data = await response.json();
 
                 if (
