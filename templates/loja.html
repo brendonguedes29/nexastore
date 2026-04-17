@@ -1021,13 +1021,13 @@
         <div class="secao">
             <div class="secao-titulo">Categorias</div>
             <div class="categorias-retangulos">
-                <a href="{% url 'loja' %}?tipo=promocao" class="categoria-chip chip-promocao">Promoções</a>
-                <a href="{% url 'loja' %}?tipo=destaque" class="categoria-chip chip-destaque">Destaques</a>
-                <a href="{% url 'loja' %}?tipo=novo" class="categoria-chip chip-novo">Novidades</a>
-                <a href="{% url 'loja' %}" class="categoria-chip">Todas as categorias</a>
-                {% for categoria in categorias %}
-                    <a href="{% url 'loja' %}?categoria={{ categoria.id }}" class="categoria-chip">{{ categoria.nome }}</a>
-                {% endfor %}
+               <a href="?tipo=promocao" class="categoria-chip chip-promocao">Promoções</a>
+               <a href="?tipo=destaque" class="categoria-chip chip-destaque">Destaques</a>
+               <a href="?tipo=novo" class="categoria-chip chip-novo">Novidades</a>
+               <a href="." class="categoria-chip">Todas as categorias</a>
+               {% for categoria in categorias %}
+               <a href="?categoria={{ categoria.id }}" class="categoria-chip">{{ categoria.nome }}</a>
+               {% endfor %}
             </div>
         </div>
 
