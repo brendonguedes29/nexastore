@@ -298,35 +298,20 @@ def produto_view(request, produto_id):
     })
 
 
-def loja_view(request):
-    host = request.get_host().split(":")[0].lower()
-
-    # remove www
-    if host.startswith("www."):
-        host = host.replace("www.", "")
-
-    # pega só o subdomínio
-    dominio_base = "nexastoreofficial.com.br"
-
-    if dominio_base in host:
-        subdominio = host.replace(f".{dominio_base}", "")
-    else:
-        return HttpResponse("Domínio inválido", status=400)
-
-    # se acessar o domínio principal
-    if subdominio == dominio_base or subdominio == "":
-        return HttpResponse("Loja não especificada", status=404)
-
-    loja = Loja.objects.filter(slug=subdominio).first()
+def loja_view(request, slug=None):
+    # 🔥 AGORA PEGA A LOJA PELO MIDDLEWARE
+    loja = getattr(request, "loja", None)
 
     if not loja:
         return HttpResponse("Loja não encontrada.", status=404)
 
+    # 🔐 Verifica licença
     loja.verificar_licenca()
 
     if loja.status_licenca in ["pendente", "vencida"] or not loja.ativa:
         return HttpResponse("Loja temporariamente indisponível.", status=403)
 
+    # 🔎 Filtros
     busca = request.GET.get("busca", "").strip()
     categoria = request.GET.get("categoria")
     tipo = request.GET.get("tipo")
@@ -347,7 +332,17 @@ def loja_view(request):
         produtos = produtos.filter(produto_novo=True)
 
     categorias_lista = Categoria.objects.filter(loja=loja).order_by("nome")
-    comprador_logado = get_comprador_logado(request, loja)
+
+    # 👤 Comprador logado (se existir sua função)
+    comprador_logado = None
+    if 'get_comprador_logado' in globals():
+        comprador_logado = get_comprador_logado(request, loja)
+
+    # 🛒 Total carrinho (se existir sua função)
+    total_carrinho = 0
+    if 'total_itens_carrinho' in globals():
+        total_carrinho = total_itens_carrinho(request)
+
     produtos_ordenados = produtos.order_by("-id")
 
     return render(request, "loja.html", {
@@ -358,9 +353,8 @@ def loja_view(request):
         "busca": busca,
         "tipo": tipo,
         "comprador_logado": comprador_logado,
-        "total_itens_carrinho": total_itens_carrinho(request),
+        "total_itens_carrinho": total_carrinho,
     })
-
 def login_comprador(request, slug):
     loja = get_object_or_404(Loja, slug=slug)
 
