@@ -1,334 +1,352 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pagamento do pedido</title>
-    <script src="https://sdk.mercadopago.com/js/v2"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pagamento do pedido</title>
+<script src="https://sdk.mercadopago.com/js/v2"></script>
 
-    <style>
-        *{margin:0;padding:0;box-sizing:border-box;}
+<style>
+    *{margin:0;padding:0;box-sizing:border-box;}
 
-        body{
-            font-family:Arial, sans-serif;
-            background:#f4f6fb;
-            color:#1f2937;
+    body{
+        font-family:Arial, sans-serif;
+        background:#f4f6fb;
+        color:#1f2937;
+    }
+
+    .header{
+        background:#0f172a;
+        color:white;
+        padding:18px 0;
+    }
+
+    .header .wrap{
+        width:94%;
+        max-width:1200px;
+        margin:0 auto;
+        display:flex;
+        align-items:center;
+        justify-content:space-between;
+        gap:20px;
+    }
+
+    .marca{
+        display:flex;
+        align-items:center;
+        gap:12px;
+    }
+
+    .marca-bola{
+        width:42px;
+        height:42px;
+        border-radius:50%;
+        background:#22c55e;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        font-weight:900;
+        color:white;
+        flex-shrink:0;
+    }
+
+    .marca-logo{
+        width:42px;
+        height:42px;
+        border-radius:50%;
+        object-fit:cover;
+        border:1px solid rgba(255,255,255,0.18);
+        background:white;
+        flex-shrink:0;
+    }
+
+    .marca-texto strong{
+        display:block;
+        font-size:22px;
+    }
+
+    .marca-texto span{
+        color:#cbd5e1;
+        font-size:13px;
+    }
+
+    .nav a{
+        color:white;
+        text-decoration:none;
+        font-weight:700;
+        margin-left:20px;
+    }
+
+    .container{
+        width:94%;
+        max-width:1000px;
+        margin:36px auto;
+    }
+
+    .box{
+        background:white;
+        border-radius:24px;
+        padding:32px;
+        box-shadow:0 8px 24px rgba(15,23,42,0.08);
+        border:1px solid #e5e7eb;
+    }
+
+    h1{
+        font-size:28px;
+        margin-bottom:10px;
+        color:#111827;
+    }
+
+    .referencia{
+        color:#4b5563;
+        margin-bottom:18px;
+        font-size:15px;
+    }
+
+    .resumo-pedido{
+        background:#f8fafc;
+        border:1px solid #e5e7eb;
+        border-radius:18px;
+        padding:18px 20px;
+        margin-bottom:24px;
+    }
+
+    .resumo-linha{
+        display:flex;
+        justify-content:space-between;
+        gap:16px;
+        margin-bottom:10px;
+        color:#374151;
+    }
+
+    .resumo-linha.muted{
+        color:#64748b;
+    }
+
+    .resumo-total{
+        display:flex;
+        justify-content:space-between;
+        gap:16px;
+        font-size:22px;
+        font-weight:900;
+        color:#111827;
+        margin-top:12px;
+    }
+
+    .pagamento-box{
+        border:1px solid #e5e7eb;
+        border-radius:20px;
+        padding:24px;
+        background:#fafafa;
+    }
+
+    .pagamento-box h2{
+        font-size:28px;
+        margin-bottom:8px;
+        text-align:center;
+        color:#111827;
+    }
+
+    .sub{
+        text-align:center;
+        color:#6b7280;
+        margin-bottom:24px;
+        line-height:1.6;
+    }
+
+    .status-box{
+        display:block;
+        margin-bottom:20px;
+        padding:16px;
+        border-radius:14px;
+        line-height:1.6;
+        font-weight:700;
+        white-space:pre-wrap;
+        background:#eff6ff;
+        border:1px solid #bfdbfe;
+        color:#1d4ed8;
+    }
+
+    .status-erro{
+        background:#fee2e2 !important;
+        border:1px solid #fecaca !important;
+        color:#991b1b !important;
+    }
+
+    .status-sucesso{
+        background:#dcfce7 !important;
+        border:1px solid #bbf7d0 !important;
+        color:#166534 !important;
+    }
+
+    .pix-area,.cartao-area,.sucesso-area{
+        display:none;
+    }
+
+    .pix-grid{
+        display:grid;
+        grid-template-columns:280px 1fr;
+        gap:24px;
+        align-items:start;
+    }
+
+    .pix-grid img{
+        width:100%;
+        max-width:280px;
+        border-radius:16px;
+        background:white;
+        border:1px solid #d1d5db;
+        padding:12px;
+        display:none;
+    }
+
+    .codigo-pix{
+        width:100%;
+        min-height:160px;
+        resize:vertical;
+        border:1px solid #cbd5e1;
+        border-radius:14px;
+        padding:14px;
+        font-size:14px;
+        background:white;
+        color:#111827;
+    }
+
+    .linha{
+        margin-bottom:14px;
+    }
+
+    .linha label{
+        display:block;
+        font-weight:700;
+        margin-bottom:6px;
+        color:#374151;
+    }
+
+    .linha input,.linha select{
+        width:100%;
+        padding:12px 14px;
+        border:1px solid #d1d5db;
+        border-radius:12px;
+        font-size:14px;
+        background:white;
+    }
+
+    .grid-2{
+        display:grid;
+        grid-template-columns:1fr 1fr;
+        gap:14px;
+    }
+
+    .acoes{
+        display:flex;
+        gap:12px;
+        flex-wrap:wrap;
+        margin-top:14px;
+    }
+
+    .botao{
+        display:inline-flex;
+        align-items:center;
+        justify-content:center;
+        padding:13px 18px;
+        border-radius:12px;
+        text-decoration:none;
+        font-weight:800;
+        border:none;
+        cursor:pointer;
+        font-size:14px;
+    }
+
+    .botao-escuro{
+        background:#111827;
+        color:white;
+    }
+
+    .botao-cinza{
+        background:#e5e7eb;
+        color:#111827;
+    }
+
+    .botao-verde{
+        background:#16a34a;
+        color:white;
+    }
+
+    .botao-azul{
+        background:#2563eb;
+        color:white;
+    }
+
+    .botao:disabled{
+        opacity:.6;
+        cursor:not-allowed;
+    }
+
+    .sucesso-area{
+        text-align:center;
+        padding:12px 0 4px;
+    }
+
+    .sucesso-icone{
+        width:72px;
+        height:72px;
+        border-radius:50%;
+        background:#dcfce7;
+        color:#166534;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        font-size:36px;
+        font-weight:900;
+        margin:0 auto 18px;
+    }
+
+    .sucesso-area h3{
+        font-size:26px;
+        margin-bottom:10px;
+        color:#166534;
+    }
+
+    .sucesso-area p{
+        color:#4b5563;
+        margin-bottom:18px;
+        line-height:1.6;
+    }
+
+    @media (max-width:800px){
+        .pix-grid,.grid-2{
+            grid-template-columns:1fr;
         }
 
-        .header{
-            background:#0f172a;
-            color:white;
-            padding:18px 0;
+        .nav{
+            display:none;
         }
 
         .header .wrap{
-            width:94%;
-            max-width:1200px;
-            margin:0 auto;
-            display:flex;
-            align-items:center;
-            justify-content:space-between;
-            gap:20px;
-        }
-
-        .marca{
-            display:flex;
-            align-items:center;
-            gap:12px;
-        }
-
-        .marca-bola{
-            width:42px;
-            height:42px;
-            border-radius:50%;
-            background:#22c55e;
-            display:flex;
-            align-items:center;
             justify-content:center;
-            font-weight:900;
-            color:white;
-        }
-
-        .marca-texto strong{
-            display:block;
-            font-size:22px;
-        }
-
-        .marca-texto span{
-            color:#cbd5e1;
-            font-size:13px;
-        }
-
-        .nav a{
-            color:white;
-            text-decoration:none;
-            font-weight:700;
-            margin-left:20px;
-        }
-
-        .container{
-            width:94%;
-            max-width:1000px;
-            margin:36px auto;
         }
 
         .box{
-            background:white;
-            border-radius:24px;
-            padding:32px;
-            box-shadow:0 8px 24px rgba(15,23,42,0.08);
-            border:1px solid #e5e7eb;
-        }
-
-        h1{
-            font-size:28px;
-            margin-bottom:10px;
-            color:#111827;
-        }
-
-        .referencia{
-            color:#4b5563;
-            margin-bottom:18px;
-            font-size:15px;
-        }
-
-        .resumo-pedido{
-            background:#f8fafc;
-            border:1px solid #e5e7eb;
-            border-radius:18px;
-            padding:18px 20px;
-            margin-bottom:24px;
-        }
-
-        .resumo-linha{
-            display:flex;
-            justify-content:space-between;
-            gap:16px;
-            margin-bottom:10px;
-            color:#374151;
-        }
-
-        .resumo-linha.muted{
-            color:#64748b;
-        }
-
-        .resumo-total{
-            display:flex;
-            justify-content:space-between;
-            gap:16px;
-            font-size:22px;
-            font-weight:900;
-            color:#111827;
-            margin-top:12px;
-        }
-
-        .pagamento-box{
-            border:1px solid #e5e7eb;
-            border-radius:20px;
             padding:24px;
-            background:#fafafa;
         }
-
-        .pagamento-box h2{
-            font-size:28px;
-            margin-bottom:8px;
-            text-align:center;
-            color:#111827;
-        }
-
-        .sub{
-            text-align:center;
-            color:#6b7280;
-            margin-bottom:24px;
-            line-height:1.6;
-        }
-
-        .status-box{
-            display:block;
-            margin-bottom:20px;
-            padding:16px;
-            border-radius:14px;
-            line-height:1.6;
-            font-weight:700;
-            white-space:pre-wrap;
-            background:#eff6ff;
-            border:1px solid #bfdbfe;
-            color:#1d4ed8;
-        }
-
-        .status-erro{
-            background:#fee2e2 !important;
-            border:1px solid #fecaca !important;
-            color:#991b1b !important;
-        }
-
-        .status-sucesso{
-            background:#dcfce7 !important;
-            border:1px solid #bbf7d0 !important;
-            color:#166534 !important;
-        }
-
-        .pix-area,.cartao-area,.sucesso-area{
-            display:none;
-        }
-
-        .pix-grid{
-            display:grid;
-            grid-template-columns:280px 1fr;
-            gap:24px;
-            align-items:start;
-        }
-
-        .pix-grid img{
-            width:100%;
-            max-width:280px;
-            border-radius:16px;
-            background:white;
-            border:1px solid #d1d5db;
-            padding:12px;
-            display:none;
-        }
-
-        .codigo-pix{
-            width:100%;
-            min-height:160px;
-            resize:vertical;
-            border:1px solid #cbd5e1;
-            border-radius:14px;
-            padding:14px;
-            font-size:14px;
-            background:white;
-            color:#111827;
-        }
-
-        .linha{
-            margin-bottom:14px;
-        }
-
-        .linha label{
-            display:block;
-            font-weight:700;
-            margin-bottom:6px;
-            color:#374151;
-        }
-
-        .linha input,.linha select{
-            width:100%;
-            padding:12px 14px;
-            border:1px solid #d1d5db;
-            border-radius:12px;
-            font-size:14px;
-            background:white;
-        }
-
-        .grid-2{
-            display:grid;
-            grid-template-columns:1fr 1fr;
-            gap:14px;
-        }
-
-        .acoes{
-            display:flex;
-            gap:12px;
-            flex-wrap:wrap;
-            margin-top:14px;
-        }
-
-        .botao{
-            display:inline-flex;
-            align-items:center;
-            justify-content:center;
-            padding:13px 18px;
-            border-radius:12px;
-            text-decoration:none;
-            font-weight:800;
-            border:none;
-            cursor:pointer;
-            font-size:14px;
-        }
-
-        .botao-escuro{
-            background:#111827;
-            color:white;
-        }
-
-        .botao-cinza{
-            background:#e5e7eb;
-            color:#111827;
-        }
-
-        .botao-verde{
-            background:#16a34a;
-            color:white;
-        }
-
-        .botao-azul{
-            background:#2563eb;
-            color:white;
-        }
-
-        .botao:disabled{
-            opacity:.6;
-            cursor:not-allowed;
-        }
-
-        .sucesso-area{
-            text-align:center;
-            padding:12px 0 4px;
-        }
-
-        .sucesso-icone{
-            width:72px;
-            height:72px;
-            border-radius:50%;
-            background:#dcfce7;
-            color:#166534;
-            display:flex;
-            align-items:center;
-            justify-content:center;
-            font-size:36px;
-            font-weight:900;
-            margin:0 auto 18px;
-        }
-
-        .sucesso-area h3{
-            font-size:26px;
-            margin-bottom:10px;
-            color:#166534;
-        }
-
-        .sucesso-area p{
-            color:#4b5563;
-            margin-bottom:18px;
-            line-height:1.6;
-        }
-
-        @media (max-width:800px){
-            .pix-grid,.grid-2{
-                grid-template-columns:1fr;
-            }
-
-            .nav{
-                display:none;
-            }
-
-            .header .wrap{
-                justify-content:center;
-            }
-
-            .box{
-                padding:24px;
-            }
-        }
-    </style>
+    }
+</style>
 </head>
 <body>
     <div class="header">
         <div class="wrap">
             <div class="marca">
-                <div class="marca-bola">L</div>
+                {% if pedido.loja.logo %}
+                    <img src="{{ pedido.loja.logo.url }}" alt="Logo da loja" class="marca-logo">
+                {% else %}
+                    <div class="marca-bola">
+                        {{ pedido.loja.nome|slice:":1"|upper }}
+                    </div>
+                {% endif %}
+
                 <div class="marca-texto">
-                    <strong>Loja</strong>
+                    <strong>{{ pedido.loja.nome }}</strong>
                     <span>Área do comprador</span>
                 </div>
             </div>
@@ -465,10 +483,11 @@
                     <div class="acoes" style="justify-content:center;">
                         <a href="{% url 'meus_pedidos' %}" class="botao botao-verde">Ver meus pedidos</a>
                     </div>
-                </div>
-            </div>
+                </div></div>
         </div>
-    </div><script>
+    </div>
+
+    <script>
         const FORMA_PAGAMENTO = "{{ forma_pagamento|default:'pix'|escapejs }}".trim().toLowerCase();
         const REFERENCIA = "{{ referencia|escapejs }}";
         const TOTAL = "{{ total_pedido|floatformat:2|escapejs }}".replace(",", ".");
@@ -561,8 +580,7 @@
             pixArea.style.display = "block";
             cartaoArea.style.display = "none";
 
-            const btnCopiarPix = document.getElementById("btnCopiarPix");
-            btnCopiarPix.onclick = copiarPix;
+            document.getElementById("btnCopiarPix").onclick = copiarPix;
 
             try {
                 mostrarStatus("Gerando QR Code do Pix...");
@@ -610,9 +628,9 @@
 
                 mostrarStatus("Pix gerado com sucesso. Aguardando pagamento...", "sucesso");
 
-                if (!monitoramentoPix) {
-                    monitoramentoPix = setInterval(verificarStatus, 5000);
-                }
+                if (monitoramentoPix) clearInterval(monitoramentoPix);
+                monitoramentoPix = setInterval(verificarStatus, 5000);
+
             } catch (e) {
                 mostrarStatus("Erro ao gerar QR Code: " + e, "erro");
             }
@@ -718,9 +736,8 @@
                                 mostrarStatus("Pagamento enviado. Aguardando confirmação...", "sucesso");
                                 bloquearBotao(false);
 
-                                if (!monitoramentoCartao) {
-                                    monitoramentoCartao = setInterval(verificarStatus, 5000);
-                                }
+                                if (monitoramentoCartao) clearInterval(monitoramentoCartao);
+                                monitoramentoCartao = setInterval(verificarStatus, 5000);
 
                             } catch (e) {
                                 mostrarStatus("Erro ao enviar pagamento com cartão: " + e, "erro");
