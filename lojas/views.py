@@ -1024,11 +1024,20 @@ def painel_loja(request):
         licenca_bloqueada = loja.status_licenca in ["pendente", "vencida"] or not loja.ativa
 
         produtos = Produto.objects.filter(loja=loja)
-        total_produtos = produtos.count()
-        produtos_ativos = produtos.filter(ativo=True).count()
-        total_estoque = sum(produto.estoque for produto in produtos)
-        valor_total_estoque = sum((produto.preco * produto.estoque) for produto in produtos)
-        produtos_destaque = produtos.filter(em_destaque=True).count()
+
+total_produtos = produtos.count()
+produtos_ativos = produtos.filter(ativo=True).count()
+produtos_destaque = produtos.filter(em_destaque=True).count()
+
+# Estoque total (quantidade)
+total_estoque = produtos.aggregate(
+    total=Sum("estoque")
+)["total"] or 0
+
+# Valor total do estoque (preço * quantidade)
+valor_total_estoque = produtos.aggregate(
+    total=Sum(F("preco") * F("estoque"))
+)["total"] or 0
 
         pedidos_lista = Pedido.objects.filter(loja=loja)
         total_pedidos = pedidos_lista.count()
