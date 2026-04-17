@@ -106,7 +106,7 @@ urlpatterns = [
     path("login/redefinir/concluido/", redefinir_senha_concluida, name="redefinir_senha_concluida"),
 
     # 🔹 LOJA
-    path("loja/<slug:slug>/", loja_view, name="loja"),
+    path("", views.loja_view, name="loja"),
     path("produto/<int:produto_id>/", produto_view, name="produto"),
 
     # 🔹 COMPRADOR

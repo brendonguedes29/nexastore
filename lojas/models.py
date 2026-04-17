@@ -70,6 +70,8 @@ class Loja(models.Model):
         default="pendente"
     )
 
+    dominio = models.CharField(max_length=255, blank=True, null=True)
+
     link_pagamento = models.URLField(blank=True, null=True)
     chave_pix = models.CharField(max_length=255, blank=True, null=True)
     pix_copia_cola = models.TextField(blank=True, null=True)
