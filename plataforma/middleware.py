@@ -3,13 +3,13 @@ class SubdominioMiddleware:
         self.get_response = get_response
 
     def __call__(self, request):
-        host = request.get_host().split(':')[0]
+        host = request.get_host().split(":")[0].lower()
 
-        # ignora domínio principal
         if host == "nexastoreofficial.com.br" or host.startswith("www."):
             request.loja = None
         else:
             from lojas.models import Loja
-            request.loja = Loja.objects.filter(dominio=host).first()
+            request.loja = Loja.objects.filter(slug=host.split(".")[0]).first()
 
-        return self.get_response(request)
+        response = self.get_response(request)
+        return response

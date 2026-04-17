@@ -643,7 +643,10 @@
 
             <div class="menu-titulo">Configurações</div>
             <a href="{% url 'minha_loja' %}">Minha loja</a>
-            <a href="{% url 'editar_vitrine' %}">Editar página do consumidor</a>
+            <a href="{% url 'editar_vitrine' %}">Editar vitrine</a>
+            <a href="https://{{ loja.slug }}.nexastoreofficial.com.br" target="_blank" rel="noopener noreferrer">
+            Abrir página do consumidor</a>
+
             <a href="{% url 'logout_loja' %}">Sair</a>
         </div>
 

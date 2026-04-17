@@ -299,19 +299,19 @@ def produto_view(request, produto_id):
 
 
 def loja_view(request, slug=None):
-    # 🔥 AGORA PEGA A LOJA PELO MIDDLEWARE
     loja = getattr(request, "loja", None)
+
+    if not loja and slug:
+        loja = get_object_or_404(Loja, slug=slug)
 
     if not loja:
         return HttpResponse("Loja não encontrada.", status=404)
 
-    # 🔐 Verifica licença
     loja.verificar_licenca()
 
     if loja.status_licenca in ["pendente", "vencida"] or not loja.ativa:
         return HttpResponse("Loja temporariamente indisponível.", status=403)
 
-    # 🔎 Filtros
     busca = request.GET.get("busca", "").strip()
     categoria = request.GET.get("categoria")
     tipo = request.GET.get("tipo")
@@ -332,17 +332,7 @@ def loja_view(request, slug=None):
         produtos = produtos.filter(produto_novo=True)
 
     categorias_lista = Categoria.objects.filter(loja=loja).order_by("nome")
-
-    # 👤 Comprador logado (se existir sua função)
-    comprador_logado = None
-    if 'get_comprador_logado' in globals():
-        comprador_logado = get_comprador_logado(request, loja)
-
-    # 🛒 Total carrinho (se existir sua função)
-    total_carrinho = 0
-    if 'total_itens_carrinho' in globals():
-        total_carrinho = total_itens_carrinho(request)
-
+    comprador_logado = get_comprador_logado(request, loja)
     produtos_ordenados = produtos.order_by("-id")
 
     return render(request, "loja.html", {
@@ -353,7 +343,7 @@ def loja_view(request, slug=None):
         "busca": busca,
         "tipo": tipo,
         "comprador_logado": comprador_logado,
-        "total_itens_carrinho": total_carrinho,
+        "total_itens_carrinho": total_itens_carrinho(request),
     })
 def login_comprador(request, slug):
     loja = get_object_or_404(Loja, slug=slug)

@@ -18,6 +18,7 @@ ALLOWED_HOSTS = [
     "nexastore-xw5y.onrender.com",
     "nexastoreofficial.com.br",
     "www.nexastoreofficial.com.br",
+    ".nexastoreofficial.com.br",
     "127.0.0.1",
     "localhost",
 ]
