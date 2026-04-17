@@ -219,48 +219,48 @@ def total_itens_carrinho(request):
     return sum(carrinho.values())
 
 
-def calcular_frete_checkout(loja, estado_entrega, distancia_km=None, retirada_na_loja=False):
+def calcular_frete_checkout(
+    loja,
+    estado_entrega,
+    cidade_entrega=None,
+    distancia_km=None,
+    retirada_na_loja=False
+):
     config = ConfigFrete.objects.filter(loja=loja).first()
 
     if not config:
         return Decimal("0.00")
 
-    if retirada_na_loja and config.retirada_loja:
-        return Decimal("0.00")
+    if retirada_na_loja:
+        if config.retirada_loja:
+            return Decimal("0.00")
+        return None
 
-    if not retirada_na_loja and not config.entrega_ativa:
+    if not config.entrega_ativa:
         return None
 
     estado_loja = (config.estado_origem or "").strip().lower()
-    estado_cliente = (estado_entrega or "").strip().lower()
+    cidade_loja = (config.cidade_origem or "").strip().lower()
 
-    if estado_cliente and estado_loja and estado_cliente != estado_loja:
+    estado_cliente = (estado_entrega or "").strip().lower()
+    cidade_cliente = (cidade_entrega or "").strip().lower()
+
+    # Outro estado
+    if estado_loja and estado_cliente and estado_loja != estado_cliente:
         return config.valor_fora_estado or Decimal("0.00")
 
-    if distancia_km is None or distancia_km == "":
-        return None
+    # Mesma cidade
+    if (
+        estado_loja and estado_cliente and estado_loja == estado_cliente
+        and cidade_loja and cidade_cliente and cidade_loja == cidade_cliente
+    ):
+        return config.valor_mesma_cidade or Decimal("0.00")
 
-    try:
-        distancia_km = Decimal(str(distancia_km))
-    except Exception:
-        return None
-
-    faixa = (
-        FaixaFrete.objects.filter(
-            loja=loja,
-            ativo=True,
-            km_inicial__lte=distancia_km,
-            km_final__gte=distancia_km,
-        )
-        .order_by("km_inicial")
-        .first()
-    )
-
-    if faixa:
-        return faixa.valor
+    # Mesmo estado, cidade diferente
+    if estado_loja and estado_cliente and estado_loja == estado_cliente:
+        return config.valor_mesmo_estado or Decimal("0.00")
 
     return None
-
 @transaction.atomic
 def confirmar_pagamento_por_referencia(referencia):
     pedidos = Pedido.objects.filter(referencia_pagamento=referencia)
@@ -693,25 +693,8 @@ def checkout(request):
         tipo_entrega = request.POST.get("tipo_entrega", "entrega").strip().lower()
         retirada_na_loja = tipo_entrega == "retirada"
 
-        distancia_km_raw = request.POST.get("distancia_km", "").strip()
+        # Mantido por compatibilidade com o model atual
         distancia_km = Decimal("0.00")
-
-        if distancia_km_raw:
-            try:
-                distancia_km = Decimal(distancia_km_raw.replace(",", "."))
-            except Exception:
-                return render(request, "checkout.html", {
-                    "erro": "Distância inválida para cálculo do frete.",
-                    "itens": itens,
-                    "subtotal_geral": subtotal_geral,
-                    "frete": frete,
-                    "total": total_geral,
-                    "loja": loja,
-                    "comprador": comprador,
-                    "config_frete": config_frete,
-                })
-
-        endereco = f"{rua_entrega}, {numero_entrega}, {bairro_entrega}, {cidade_entrega} - {estado_entrega}, CEP: {cep_entrega}"
 
         if forma_pagamento != "cartao":
             tipo_cartao = ""
@@ -726,6 +709,8 @@ def checkout(request):
                 "loja": loja,
                 "comprador": comprador,
                 "config_frete": config_frete,
+                "comprador_logado": comprador,
+                "total_itens_carrinho": total_itens_carrinho(request),
             })
 
         if not retirada_na_loja:
@@ -739,18 +724,22 @@ def checkout(request):
                     "loja": loja,
                     "comprador": comprador,
                     "config_frete": config_frete,
+                    "comprador_logado": comprador,
+                    "total_itens_carrinho": total_itens_carrinho(request),
                 })
+
+            endereco = f"{rua_entrega}, {numero_entrega}, {bairro_entrega}, {cidade_entrega} - {estado_entrega}, CEP: {cep_entrega}"
 
             frete_calculado = calcular_frete_checkout(
                 loja=loja,
                 estado_entrega=estado_entrega,
-                distancia_km=distancia_km,
+                cidade_entrega=cidade_entrega,
                 retirada_na_loja=False,
             )
 
             if frete_calculado is None:
                 return render(request, "checkout.html", {
-                    "erro": "Não foi encontrada uma faixa de frete para essa distância.",
+                    "erro": "Não foi possível calcular o frete para essa localização.",
                     "itens": itens,
                     "subtotal_geral": subtotal_geral,
                     "frete": frete,
@@ -758,14 +747,17 @@ def checkout(request):
                     "loja": loja,
                     "comprador": comprador,
                     "config_frete": config_frete,
+                    "comprador_logado": comprador,
+                    "total_itens_carrinho": total_itens_carrinho(request),
                 })
 
             frete = frete_calculado
+
         else:
             frete = calcular_frete_checkout(
                 loja=loja,
                 estado_entrega=estado_entrega,
-                distancia_km=Decimal("0.00"),
+                cidade_entrega=cidade_entrega,
                 retirada_na_loja=True,
             )
 
@@ -779,6 +771,8 @@ def checkout(request):
                     "loja": loja,
                     "comprador": comprador,
                     "config_frete": config_frete,
+                    "comprador_logado": comprador,
+                    "total_itens_carrinho": total_itens_carrinho(request),
                 })
 
             cep_entrega = ""
@@ -1911,11 +1905,16 @@ def editar_config_frete(request):
 
     if request.method == "POST":
         form = ConfigFreteForm(request.POST, instance=config)
+
         if form.is_valid():
             config_editada = form.save(commit=False)
             config_editada.loja = loja
             config_editada.save()
+
+            messages.success(request, "Configuração de frete salva com sucesso.")
             return redirect("frete_entrega")
+        else:
+            messages.error(request, "Não foi possível salvar. Verifique os campos informados.")
     else:
         form = ConfigFreteForm(instance=config)
 

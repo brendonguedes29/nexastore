@@ -80,10 +80,17 @@ class ConfigFreteForm(forms.ModelForm):
             "bairro_origem",
             "cidade_origem",
             "estado_origem",
+            "valor_mesma_cidade",
+            "valor_mesmo_estado",
             "valor_fora_estado",
             "retirada_loja",
             "entrega_ativa",
         ]
+        widgets = {
+            "valor_mesma_cidade": forms.NumberInput(attrs={"step": "0.01", "min": "0"}),
+            "valor_mesmo_estado": forms.NumberInput(attrs={"step": "0.01", "min": "0"}),
+            "valor_fora_estado": forms.NumberInput(attrs={"step": "0.01", "min": "0"}),
+        }
 
 
 class FaixaFreteForm(forms.ModelForm):
@@ -95,3 +102,8 @@ class FaixaFreteForm(forms.ModelForm):
             "valor",
             "ativo",
         ]
+        widgets = {
+            "km_inicial": forms.NumberInput(attrs={"step": "0.01", "min": "0"}),
+            "km_final": forms.NumberInput(attrs={"step": "0.01", "min": "0"}),
+            "valor": forms.NumberInput(attrs={"step": "0.01", "min": "0"}),
+        }

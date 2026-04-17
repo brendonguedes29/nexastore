@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Editar configuração de frete</title>
+<title>Configuração de frete da loja</title>
 <style>
 body{
     font-family:Arial,sans-serif;
@@ -12,30 +12,48 @@ body{
     padding:24px;
     color:#1f2937;
 }
+.container{
+    max-width:980px;
+    margin:0 auto;
+}
 .box{
     background:white;
     padding:24px;
     border-radius:18px;
     box-shadow:0 8px 24px rgba(15,23,42,0.06);
 }
+.topo{
+    margin-bottom:20px;
+}
+.topo h1{
+    margin:0 0 10px;
+    font-size:32px;
+}
+.topo p{
+    color:#64748b;
+    line-height:1.6;
+}
 input,select,textarea{
     width:100%;
-    padding:10px;
+    padding:12px;
     border:1px solid #d1d5db;
     border-radius:10px;
     margin-top:6px;
     margin-bottom:14px;
+    font-size:15px;
 }
 button{
     background:#0b1220;
     color:white;
     border:none;
-    padding:12px 16px;
+    padding:12px 18px;
     border-radius:10px;
     cursor:pointer;
+    font-weight:bold;
 }
 label{
     font-weight:bold;
+    display:block;
 }
 .info{
     background:#f8fafc;
@@ -43,59 +61,195 @@ label{
     border-radius:12px;
     padding:14px 16px;
     margin:16px 0 20px;
-    line-height:1.6;
+    line-height:1.7;
     color:#475569;
+}
+.alerta{
+    background:#eff6ff;
+    border:1px solid #bfdbfe;
+    border-radius:12px;
+    padding:14px 16px;
+    margin:16px 0 20px;
+    line-height:1.7;
+    color:#1d4ed8;
+}
+.secao{
+    border:1px solid #e5e7eb;
+    border-radius:16px;
+    padding:20px;
+    margin-bottom:18px;
+    background:#fff;
+}
+.secao h2{
+    margin:0 0 8px;
+    font-size:22px;
+}
+.secao p{
+    color:#64748b;
+    line-height:1.6;
+    margin-bottom:16px;
+}
+.grid-2{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:16px;
+}
+.grid-3{
+    display:grid;
+    grid-template-columns:1fr 1fr 1fr;
+    gap:16px;
+}
+.acoes{
+    display:flex;
+    gap:12px;
+    flex-wrap:wrap;
+    margin-top:8px;
+}
+.botao-sec{
+    display:inline-block;
+    background:#e2e8f0;
+    color:#0f172a;
+    text-decoration:none;
+    padding:12px 18px;
+    border-radius:10px;
+    font-weight:bold;
+}
+@media (max-width:800px){
+    .grid-2,.grid-3{
+        grid-template-columns:1fr;
+    }
 }
 </style>
 </head>
 <body>
 
-<div class="box">
-    <h1>Editar configuração de frete</h1>
+<div class="container">
+    <div class="box">
 
-   <div class="info">
-    Informe o endereço de origem da loja. Esse endereço será utilizado como ponto de partida para calcular a distância em KM até o cliente e determinar o valor do frete.
-    <br><br>
-    As faixas de frete por KM cadastradas serão aplicadas nas entregas dentro do mesmo estado. Para entregas fora do estado, será utilizado o valor fixo configurado abaixo.
-    <br><br>
-    Você também pode definir se a loja permite retirada no local e se as entregas estão ativas.
-</div>
+        <div class="topo">
+            <h1>Configuração de frete da loja</h1>
+            <p>
+                Defina aqui o endereço de origem da loja e as regras de entrega que serão usadas no checkout do cliente.
+            </p>
+        </div>
 
-    <form method="post">
-        {% csrf_token %}
+        <div class="info">
+            O sistema vai considerar o endereço de origem da loja para identificar se a entrega é na <strong>mesma cidade</strong>,
+            no <strong>mesmo estado</strong> ou em <strong>outro estado</strong>.
+        </div>
 
-        <label>CEP origem</label>
-        {{ form.cep_origem }}
+        <div class="alerta">
+            Nova lógica de frete:
+            <br><br>
+            <strong>Mesma cidade:</strong> valor específico para pedidos dentro da cidade da loja.
+            <br>
+            <strong>Mesmo estado:</strong> valor para pedidos em outra cidade, mas ainda no mesmo estado.
+            <br>
+            <strong>Outro estado:</strong> valor para pedidos fora do estado da loja.
+            <br>
+            <strong>Retirada na loja:</strong> sem frete.
+        </div>
 
-        <label>Rua origem</label>
-        {{ form.rua_origem }}
+        <form method="post">
+            {% csrf_token %}
 
-        <label>Número origem</label>
-        {{ form.numero_origem }}
+            <div class="secao">
+                <h2>Endereço de origem da loja</h2>
+                <p>
+                    Preencha o endereço principal da loja. Esse endereço será usado como referência para comparar cidade e estado do cliente.
+                </p>
 
-        <label>Complemento origem</label>
-        {{ form.complemento_origem }}
+                <div class="grid-2">
+                    <div>
+                        <label>CEP de origem</label>
+                        {{ form.cep_origem }}
+                    </div>
 
-        <label>Bairro origem</label>
-        {{ form.bairro_origem }}
+                    <div>
+                        <label>Rua de origem</label>
+                        {{ form.rua_origem }}
+                    </div>
+                </div>
 
-        <label>Cidade origem</label>
-        {{ form.cidade_origem }}
+                <div class="grid-3">
+                    <div>
+                        <label>Número</label>
+                        {{ form.numero_origem }}
+                    </div>
 
-        <label>Estado origem</label>
-        {{ form.estado_origem }}
+                    <div>
+                        <label>Complemento</label>
+                        {{ form.complemento_origem }}
+                    </div>
 
-        <label>Valor fora do estado</label>
-        {{ form.valor_fora_estado }}
+                    <div>
+                        <label>Bairro</label>
+                        {{ form.bairro_origem }}
+                    </div>
+                </div>
 
-        <label>Retirada na loja</label>
-        {{ form.retirada_loja }}
+                <div class="grid-2">
+                    <div>
+                        <label>Cidade</label>
+                        {{ form.cidade_origem }}
+                    </div>
 
-        <label>Entrega ativa</label>
-        {{ form.entrega_ativa }}
+                    <div>
+                        <label>Estado</label>
+                        {{ form.estado_origem }}
+                    </div>
+                </div>
+            </div>
 
-        <button type="submit">Salvar</button>
-    </form>
+            <div class="secao">
+                <h2>Valores de frete</h2>
+                <p>
+                    Defina abaixo quanto a loja vai cobrar em cada situação de entrega.
+                </p>
+
+                <div class="grid-3">
+                    <div>
+                        <label>Valor para mesma cidade</label>
+                        {{ form.valor_mesma_cidade }}
+                    </div>
+
+                    <div>
+                        <label>Valor para mesmo estado</label>
+                        {{ form.valor_mesmo_estado }}
+                    </div>
+
+                    <div>
+                        <label>Valor para outro estado</label>
+                        {{ form.valor_fora_estado }}
+                    </div>
+                </div>
+            </div>
+
+            <div class="secao">
+                <h2>Opções de entrega</h2>
+                <p>
+                    Ative ou desative as opções abaixo conforme a operação da loja.
+                </p>
+
+                <div class="grid-2">
+                    <div>
+                        <label>Retirada na loja</label>
+                        {{ form.retirada_loja }}
+                    </div>
+
+                    <div>
+                        <label>Entrega ativa</label>
+                        {{ form.entrega_ativa }}
+                    </div>
+                </div>
+            </div>
+
+            <div class="acoes">
+                <button type="submit">Salvar configuração</button>
+                <a href="{% url 'frete_entrega' %}" class="botao-sec">Voltar</a>
+            </div>
+        </form>
+    </div>
 </div>
 
 </body>

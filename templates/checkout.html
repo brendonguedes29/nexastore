@@ -1,4 +1,22 @@
-{% extends 'base_publico.html' %}
+[21:41, 16/04/2026] brendon guedes: {% extends 'base_publico.html' %}
+{% block title %}Finalizar compra{% endblock %}
+
+{% block content %}
+<div style="background:white;padding:30px;border-radius:20px;box-shadow:0 8px 24px rgba(0,0,0,0.05);max-width:900px;margin:0 auto;">
+
+    <h1 style="margin-bottom:10px;font-size:34px;">Finalizar pedido</h1>
+    <p style="color:#64748b;line-height:1.6;margin-bottom:20px;">
+        Preencha seus dados, escolha a forma de recebimento e confirme o pedido.
+    </p>
+
+    {% if erro %}
+        <div style="background:#fee2e2;color:#991b1b;padding:12px 14px;border-radius:12px;margin-bottom:18px;border:1px solid #fecaca;line-height:1.6;">
+            {{ erro }}
+        </div>
+    {% endif %}
+
+    <div style="background:#f8fafc;padding:14px 16px;border-radius:12px;mar…
+[21:45, 16/04/2026] brendon guedes: {% extends 'base_publico.html' %}
 {% block title %}Finalizar compra{% endblock %}
 
 {% block content %}
@@ -17,7 +35,8 @@
 
     <div style="background:#f8fafc;padding:14px 16px;border-radius:12px;margin-bottom:20px;border:1px solid #e5e7eb;color:#475569;line-height:1.7;">
         <strong style="color:#0f172a;">Importante:</strong>
-        o valor do frete será validado conforme o endereço informado e as regras de entrega cadastradas pela loja.
+        o frete será definido conforme a localização da entrega em relação à loja:
+        mesma cidade, mesmo estado ou outro estado. Se escolher retirada na loja, não haverá cobrança de frete.
     </div>
 
     <form method="post" id="formCheckout">
@@ -54,14 +73,19 @@
             <option value="retirada" {% if request.POST.tipo_entrega == "retirada" %}selected{% endif %}>Retirar na loja</option>
         </select>
 
-        <input type="hidden" name="distancia_km" id="distancia_km" value="{{ request.POST.distancia_km|default:'0' }}">
+        <input type="hidden" name="distancia_km" id="distancia_km" value="0">
         <input type="hidden" id="loja_id" value="{{ loja.id }}">
+        <input type="hidden" id="cidade_loja" value="{{ config_frete.cidade_origem|default:'' }}">
+        <input type="hidden" id="estado_loja" value="{{ config_frete.estado_origem|default:'' }}">
+        <input type="hidden" id="valor_mesma_cidade" value="{{ config_frete.valor_mesma_cidade|default:0 }}">
+        <input type="hidden" id="valor_mesmo_estado" value="{{ config_frete.valor_mesmo_estado|default:0 }}">
+        <input type="hidden" id="valor_fora_estado" value="{{ config_frete.valor_fora_estado|default:0 }}">
 
         <div id="bloco_endereco">
             <h3 style="margin-top:22px;margin-bottom:12px;">Endereço de entrega</h3>
 
             <div style="background:#f8fafc;padding:14px 16px;border-radius:12px;margin-bottom:14px;border:1px solid #e5e7eb;color:#475569;line-height:1.7;">
-                Preencha o endereço de entrega com atenção. O frete será estimado com base nas regras da loja.
+                Preencha o endereço de entrega com atenção. O sistema vai comparar a cidade e o estado da entrega com o endereço cadastrado da loja para definir o frete.
             </div>
 
             <input
@@ -207,27 +231,16 @@ const numero = document.getElementById("numero_entrega");
 const cidade = document.getElementById("cidade_entrega");
 const estado = document.getElementById("estado_entrega");
 const distanciaKm = document.getElementById("distancia_km");
-const lojaId = document.getElementById("loja_id");
+
+const cidadeLoja = document.getElementById("cidade_loja");
+const estadoLoja = document.getElementById("estado_loja");
+const valorMesmaCidade = document.getElementById("valor_mesma_cidade");
+const valorMesmoEstado = document.getElementById("valor_mesmo_estado");
+const valorForaEstado = document.getElementById("valor_fora_estado");
 
 const freteValor = document.getElementById("frete_valor");
 const totalValor = document.getElementById("total_valor");
 const subtotalValor = document.getElementById("subtotal_valor");
-const btnConfirmarPedido = document.getElementById("btnConfirmarPedido");
-
-function getCookie(name) {
-    let cookieValue = null;
-    if (document.cookie && document.cookie !== "") {
-        const cookies = document.cookie.split(";");
-        for (let i = 0; i < cookies.length; i++) {
-            const cookie = cookies[i].trim();
-            if (cookie.substring(0, name.length + 1) === (name + "=")) {
-                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                break;
-            }
-        }
-    }
-    return cookieValue;
-}
 
 function parseValor(texto) {
     const valor = String(texto).replace("R$", "").replace(/\s/g, "").replace(",", ".");
@@ -237,6 +250,14 @@ function parseValor(texto) {
 
 function formatarValor(valor) {
     return Number(valor).toFixed(2).replace(".", ",");
+}
+
+function normalizarTexto(texto) {
+    return String(texto || "")
+        .trim()
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "");
 }
 
 function atualizarPagamento() {
@@ -254,6 +275,56 @@ function atualizarPagamento() {
     }
 }
 
+function atualizarResumoComFrete(frete) {
+    const subtotal = parseValor(subtotalValor.textContent);
+    const total = subtotal + Number(frete || 0);
+
+    freteValor.textContent = "R$ " + formatarValor(frete || 0);
+    totalValor.textContent = formatarValor(total);
+}
+
+function calcularFreteAutomatico() {
+    if (tipoEntrega.value === "retirada") {
+        return;
+    }
+
+    const cidadeCliente = normalizarTexto(cidade.value);
+    const estadoCliente = normalizarTexto(estado.value);
+
+    const cidadeOrigem = normalizarTexto(cidadeLoja.value);
+    const estadoOrigem = normalizarTexto(estadoLoja.value);
+
+    if (!estadoCliente) {
+        freteValor.textContent = "A calcular";
+        statusFrete.style.display = "none";
+        return;
+    }
+
+    statusFrete.style.display = "block";
+    statusFrete.style.background = "#eff6ff";
+    statusFrete.style.border = "1px solid #bfdbfe";
+    statusFrete.style.color = "#1d4ed8";
+
+    let frete = 0;
+    let mensagem = "";
+
+    if (estadoCliente !== estadoOrigem) {
+        frete = parseValor(valorForaEstado.value);
+        mensagem = "Frete calculado como entrega para outro estado.";
+    } else if (cidadeCliente && cidadeOrigem && cidadeCliente === cidadeOrigem) {
+        frete = parseValor(valorMesmaCidade.value);
+        mensagem = "Frete calculado como entrega na mesma cidade da loja.";
+    } else {
+        frete = parseValor(valorMesmoEstado.value);
+        mensagem = "Frete calculado como entrega no mesmo estado, mas em cidade diferente.";
+    }
+
+    atualizarResumoComFrete(frete);
+    statusFrete.textContent = mensagem;
+
+    distanciaKm.value = "0";
+}
+
 function atualizarEntrega() {
     if (tipoEntrega.value === "retirada") {
         blocoEndereco.style.display = "none";
@@ -267,10 +338,7 @@ function atualizarEntrega() {
         estado.required = false;
 
         distanciaKm.value = "0";
-        freteValor.textContent = "R$ 0,00";
-
-        const subtotal = parseValor(subtotalValor.textContent);
-        totalValor.textContent = formatarValor(subtotal);
+        atualizarResumoComFrete(0);
 
     } else {
         blocoEndereco.style.display = "block";
@@ -286,79 +354,13 @@ function atualizarEntrega() {
     }
 }
 
-async function calcularFreteAutomatico() {
-    if (tipoEntrega.value === "retirada") {
-        return;
-    }
-
-    if (!estado.value.trim()) {
-        freteValor.textContent = "A calcular";
-        statusFrete.style.display = "none";
-        return;
-    }
-
-    statusFrete.style.display = "block";
-    statusFrete.style.background = "#eff6ff";
-    statusFrete.style.border = "1px solid #bfdbfe";
-    statusFrete.style.color = "#1d4ed8";
-    statusFrete.textContent = "Calculando frete estimado...";
-
-    try {
-        const response = await fetch("/api/frete/calcular/", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "X-CSRFToken": getCookie("csrftoken")
-            },
-            body: JSON.stringify({
-                loja_id: lojaId.value,
-                estado: estado.value
-            })
-        });
-
-        const data = await response.json();
-
-        if (!response.ok || data.ok === false) {
-            freteValor.textContent = "Indisponível";
-            statusFrete.style.background = "#fee2e2";
-            statusFrete.style.border = "1px solid #fecaca";
-            statusFrete.style.color = "#991b1b";
-            statusFrete.textContent = data.erro || "Não foi possível calcular o frete.";
-            return;
-        }
-
-        const subtotal = parseValor(subtotalValor.textContent);
-        const frete = parseFloat(data.frete || 0);
-        const total = subtotal + frete;
-
-        freteValor.textContent = "R$ " + formatarValor(frete);
-        totalValor.textContent = formatarValor(total);
-
-        if (data.tipo === "fora_estado") {
-            statusFrete.textContent = "Frete calculado com base no valor fixo para fora do estado.";
-        } else if (data.tipo === "faixa_simples") {
-            statusFrete.textContent = "Frete estimado com base na primeira faixa ativa cadastrada para a loja.";
-        } else {
-            statusFrete.textContent = "Frete estimado calculado.";
-        }
-
-        distanciaKm.value = "0";
-
-    } catch (e) {
-        freteValor.textContent = "Indisponível";
-        statusFrete.style.background = "#fee2e2";
-        statusFrete.style.border = "1px solid #fecaca";
-        statusFrete.style.color = "#991b1b";
-        statusFrete.textContent = "Erro ao calcular frete.";
-    }
-}
-
 pagamento.addEventListener("change", atualizarPagamento);
 tipoEntrega.addEventListener("change", atualizarEntrega);
 
 [cep, rua, numero, cidade, estado].forEach((campo) => {
     campo.addEventListener("change", calcularFreteAutomatico);
     campo.addEventListener("blur", calcularFreteAutomatico);
+    campo.addEventListener("input", calcularFreteAutomatico);
 });
 
 atualizarPagamento();

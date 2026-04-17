@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Cadastrar faixa de distância</title>
+<title>Cadastrar faixa antiga de distância</title>
 <style>
 body{
     font-family:Arial,sans-serif;
@@ -110,6 +110,20 @@ label{
 .checkbox-linha label{
     margin:0;
 }
+.bloco-secundario{
+    margin-top:22px;
+    padding-top:22px;
+    border-top:1px dashed #d1d5db;
+}
+.bloco-secundario h2{
+    font-size:22px;
+    margin-bottom:8px;
+}
+.bloco-secundario p{
+    color:#64748b;
+    line-height:1.6;
+    margin-bottom:16px;
+}
 </style>
 </head>
 <body>
@@ -118,61 +132,75 @@ label{
     <div class="box">
         <a href="{% url 'frete_entrega' %}" class="link-voltar">← Voltar para frete e entrega</a>
 
-        <h1>Cadastrar faixa de distância</h1>
+        <h1>Faixa antiga de distância</h1>
         <p class="sub">
-            Defina aqui uma faixa de quilômetros e o valor que será cobrado pela entrega dentro dessa distância.
+            Esta tela foi mantida apenas como recurso secundário. A lógica principal de frete da loja agora usa:
+            <strong>mesma cidade</strong>, <strong>mesmo estado</strong> e <strong>outro estado</strong>.
         </p>
 
-        <div class="info">
-            Use esta tela para cadastrar quanto a loja cobrará em cada faixa de distância.
-            <br><br>
-            Exemplo: clientes que estiverem entre <strong>0 e 5 km</strong> podem pagar um valor,
-            enquanto clientes entre <strong>5 e 10 km</strong> podem pagar outro.
-        </div>
-
         <div class="alerta">
-            Recomendação importante: comece a primeira faixa em <strong>0 km</strong>.
-            <br>
-            Isso ajuda a evitar situações em que o sistema não encontra uma faixa válida para a entrega.
-        </div>
-
-        <div class="exemplo">
-            <strong>Exemplo de preenchimento:</strong><br>
-            KM inicial: 0<br>
-            KM final: 5<br>
-            Valor: R$ 8,00
+            Importante: a configuração principal de frete agora fica em
+            <strong>“Editar configuração do frete”</strong>.
             <br><br>
-            Próxima faixa:<br>
-            KM inicial: 5<br>
-            KM final: 10<br>
-            Valor: R$ 12,00
+            Use esta tela apenas se você quiser manter registros antigos de faixas por distância ou trabalhar com uma regra complementar no futuro.
         </div>
 
-        {% if form.errors %}
-            <div class="erro-box">
-                {{ form.errors }}
+        <div class="info">
+            Regra principal atual:
+            <br><br>
+            <strong>Mesma cidade</strong> → valor específico
+            <br>
+            <strong>Mesmo estado, cidade diferente</strong> → valor específico
+            <br>
+            <strong>Outro estado</strong> → valor específico
+            <br>
+            <strong>Retirada na loja</strong> → sem frete
+        </div>
+
+        <div class="bloco-secundario">
+            <h2>Cadastrar faixa de distância</h2>
+            <p>
+                Se ainda assim você quiser manter uma faixa antiga por quilometragem, preencha abaixo.
+            </p>
+
+            <div class="exemplo">
+                <strong>Exemplo de preenchimento:</strong><br>
+                KM inicial: 0<br>
+                KM final: 5<br>
+                Valor: R$ 8,00
+                <br><br>
+                Próxima faixa:<br>
+                KM inicial: 5<br>
+                KM final: 10<br>
+                Valor: R$ 12,00
             </div>
-        {% endif %}
 
-        <form method="post">
-            {% csrf_token %}
+            {% if form.errors %}
+                <div class="erro-box">
+                    {{ form.errors }}
+                </div>
+            {% endif %}
 
-            <label for="{{ form.km_inicial.id_for_label }}">KM inicial</label>
-            {{ form.km_inicial }}
+            <form method="post">
+                {% csrf_token %}
 
-            <label for="{{ form.km_final.id_for_label }}">KM final</label>
-            {{ form.km_final }}
+                <label for="{{ form.km_inicial.id_for_label }}">KM inicial</label>
+                {{ form.km_inicial }}
 
-            <label for="{{ form.valor.id_for_label }}">Valor do frete</label>
-            {{ form.valor }}
+                <label for="{{ form.km_final.id_for_label }}">KM final</label>
+                {{ form.km_final }}
 
-            <div class="checkbox-linha">
-                {{ form.ativo }}
-                <label for="{{ form.ativo.id_for_label }}">Faixa ativa</label>
-            </div>
+                <label for="{{ form.valor.id_for_label }}">Valor do frete</label>
+                {{ form.valor }}
 
-            <button type="submit">Salvar faixa</button>
-        </form>
+                <div class="checkbox-linha">
+                    {{ form.ativo }}
+                    <label for="{{ form.ativo.id_for_label }}">Faixa ativa</label>
+                </div>
+
+                <button type="submit">Salvar faixa antiga</button>
+            </form>
+        </div>
     </div>
 </div>
 

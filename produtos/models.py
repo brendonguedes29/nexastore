@@ -94,13 +94,19 @@ class ConfigFrete(models.Model):
     cidade_origem = models.CharField(max_length=100, blank=True, null=True)
     estado_origem = models.CharField(max_length=50, blank=True, null=True)
 
+    # CAMPOS ANTIGOS (mantidos para não quebrar estrutura)
     km_max_local = models.DecimalField(max_digits=6, decimal_places=2, default=15)
     valor_excedente = models.DecimalField(max_digits=10, decimal_places=2, default=30)
+
+    # NOVA LÓGICA DE FRETE
+    valor_mesma_cidade = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    valor_mesmo_estado = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     valor_fora_estado = models.DecimalField(max_digits=10, decimal_places=2, default=50)
 
     retirada_loja = models.BooleanField(default=True)
     entrega_ativa = models.BooleanField(default=True)
 
+    # CAMPOS ANTIGOS DE PIX MANUAL (mantidos para não quebrar estrutura)
     chave_pix = models.CharField(max_length=150, blank=True, null=True)
     nome_recebedor_pix = models.CharField(max_length=150, blank=True, null=True)
     banco_pix = models.CharField(max_length=100, blank=True, null=True)

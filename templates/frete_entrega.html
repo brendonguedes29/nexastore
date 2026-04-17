@@ -90,23 +90,6 @@ a.botao-sec{
 .lista p{
     margin-bottom:8px;
 }
-table{
-    width:100%;
-    border-collapse:collapse;
-    margin-top:16px;
-}
-th,td{
-    padding:12px;
-    border-bottom:1px solid #e5e7eb;
-    text-align:left;
-}
-th{
-    background:#f8fafc;
-    font-size:14px;
-}
-td{
-    vertical-align:middle;
-}
 .tag{
     display:inline-block;
     padding:6px 10px;
@@ -131,6 +114,74 @@ td{
     line-height:1.7;
     color:#1e3a8a;
 }
+.cards-valores{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+    gap:16px;
+    margin-top:18px;
+}
+.card-valor{
+    background:#f8fafc;
+    border:1px solid #e5e7eb;
+    border-radius:16px;
+    padding:18px;
+}
+.card-valor small{
+    display:block;
+    color:#64748b;
+    margin-bottom:8px;
+    text-transform:uppercase;
+    letter-spacing:.4px;
+    font-weight:bold;
+}
+.card-valor strong{
+    display:block;
+    font-size:24px;
+    color:#111827;
+    margin-bottom:6px;
+}
+.card-valor span{
+    color:#475569;
+    line-height:1.6;
+    font-size:14px;
+}
+.bloco-antigo{
+    margin-top:20px;
+    padding-top:20px;
+    border-top:1px dashed #d1d5db;
+}
+.bloco-antigo summary{
+    cursor:pointer;
+    font-weight:bold;
+    color:#334155;
+}
+.bloco-antigo p{
+    color:#64748b;
+    margin-top:10px;
+    line-height:1.6;
+}
+table{
+    width:100%;
+    border-collapse:collapse;
+    margin-top:16px;
+}
+th,td{
+    padding:12px;
+    border-bottom:1px solid #e5e7eb;
+    text-align:left;
+}
+th{
+    background:#f8fafc;
+    font-size:14px;
+}
+td{
+    vertical-align:middle;
+}
+@media (max-width:800px){
+    .cards-valores{
+        grid-template-columns:1fr;
+    }
+}
 </style>
 </head>
 <body>
@@ -140,13 +191,12 @@ td{
     <div class="box topo">
         <h1>Frete e entrega</h1>
         <p>
-            Configure aqui o endereço de origem da loja, as regras gerais de entrega e as faixas de distância que serão usadas para definir o valor do frete.
+            Configure aqui o endereço de origem da loja e os valores de frete que serão usados no checkout do cliente.
         </p>
 
         <div class="botoes">
             <a href="{% url 'painel_loja' %}" class="botao-sec">Voltar ao painel</a>
-            <a href="{% url 'editar_config_frete' %}" class="botao">Endereço de origem e regras gerais</a>
-            <a href="{% url 'nova_faixa_frete' %}" class="botao">Cadastrar faixa de distância</a>
+            <a href="{% url 'editar_config_frete' %}" class="botao">Editar configuração do frete</a>
         </div>
     </div>
 
@@ -154,7 +204,7 @@ td{
         <div class="box">
             <h2 class="titulo-bloco">Endereço de origem da loja</h2>
             <p class="texto-apoio">
-                Esse é o ponto de referência da loja para as entregas. Mantenha essas informações corretas para organizar melhor o frete.
+                Esse é o endereço principal da loja e será usado como referência para comparar a localização do cliente no checkout.
             </p>
 
             <div class="lista">
@@ -168,18 +218,17 @@ td{
             </div>
 
             <div class="info">
-                O endereço acima representa a origem da entrega da loja.
+                O checkout vai comparar a cidade e o estado do cliente com este endereço para definir o frete automaticamente.
             </div>
         </div>
 
         <div class="box">
-            <h2 class="titulo-bloco">Regras gerais do frete</h2>
+            <h2 class="titulo-bloco">Situação da entrega</h2>
             <p class="texto-apoio">
-                Essas regras valem para o funcionamento geral das entregas da loja.
+                Aqui está o status geral das opções de entrega da loja.
             </p>
 
             <div class="lista">
-                <p><strong>Valor fixo fora do estado:</strong> R$ {{ config.valor_fora_estado|default:"0"|floatformat:2 }}</p>
                 <p>
                     <strong>Retirada na loja:</strong>
                     {% if config.retirada_loja %}
@@ -199,70 +248,94 @@ td{
             </div>
 
             <div class="info">
-                Para clientes no mesmo estado da loja, o sistema utiliza as faixas de distância cadastradas abaixo.
-                <br><br>
-                Para clientes em outro estado, o sistema utiliza o valor fixo informado acima.
+                Se o cliente escolher <strong>retirada na loja</strong>, o frete será <strong>R$ 0,00</strong>.
             </div>
         </div>
     </div>
 
     <div class="box">
-        <h2 class="titulo-bloco">Faixas de distância e valor de entrega</h2>
+        <h2 class="titulo-bloco">Valores de frete usados no checkout</h2>
         <p class="texto-apoio">
-            Cadastre aqui as distâncias atendidas pela loja e o valor correspondente de entrega para cada faixa.
+            O sistema agora trabalha com a comparação entre a localização da loja e a localização do cliente.
         </p>
 
         <div class="alerta">
-            Recomendação importante: cadastre a primeira faixa começando em <strong>0 km</strong>.
+            Nova regra de cálculo:
+            <br><br>
+            <strong>Mesma cidade:</strong> quando a cidade e o estado do cliente forem iguais aos da loja.
             <br>
-            Exemplo: de <strong>0 a 5 km</strong>, depois de <strong>5,01 a 10 km</strong> ou conforme a lógica que você estiver adotando nas suas faixas.
+            <strong>Mesmo estado:</strong> quando o estado for o mesmo, mas a cidade for diferente.
+            <br>
+            <strong>Outro estado:</strong> quando o estado do cliente for diferente do estado da loja.
+        </div>
+
+        <div class="cards-valores">
+            <div class="card-valor">
+                <small>Mesma cidade</small>
+                <strong>R$ {{ config.valor_mesma_cidade|default:"0"|floatformat:2 }}</strong>
+                <span>Aplicado quando o cliente está na mesma cidade da loja.</span>
+            </div>
+
+            <div class="card-valor">
+                <small>Mesmo estado</small>
+                <strong>R$ {{ config.valor_mesmo_estado|default:"0"|floatformat:2 }}</strong>
+                <span>Aplicado quando o cliente está em outra cidade, mas ainda no mesmo estado.</span>
+            </div>
+
+            <div class="card-valor">
+                <small>Outro estado</small>
+                <strong>R$ {{ config.valor_fora_estado|default:"0"|floatformat:2 }}</strong>
+                <span>Aplicado quando o cliente está em um estado diferente do endereço da loja.</span>
+            </div>
         </div>
 
         <div class="exemplo">
-            <strong>Exemplo de preenchimento:</strong><br>
-            0 a 5 km = R$ 8,00<br>
-            5 a 10 km = R$ 12,00<br>
-            10 a 20 km = R$ 18,00
+            <strong>Exemplo prático:</strong><br>
+            Loja em <strong>Salvador / BA</strong><br>
+            Cliente em <strong>Salvador / BA</strong> → cobra <strong>mesma cidade</strong><br>
+            Cliente em <strong>Feira de Santana / BA</strong> → cobra <strong>mesmo estado</strong><br>
+            Cliente em <strong>Aracaju / SE</strong> → cobra <strong>outro estado</strong>
         </div>
 
-        {% if faixas %}
-        <table>
-            <thead>
-                <tr>
-                    <th>KM inicial</th>
-                    <th>KM final</th>
-                    <th>Valor do frete</th>
-                    <th>Status</th>
-                    <th>Ação</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for faixa in faixas %}
-                <tr>
-                    <td>{{ faixa.km_inicial }}</td>
-                    <td>{{ faixa.km_final }}</td>
-                    <td>R$ {{ faixa.valor|floatformat:2 }}</td>
-                    <td>
-                        {% if faixa.ativo %}
-                            <span class="tag tag-on">Ativa</span>
-                        {% else %}
-                            <span class="tag tag-off">Inativa</span>
-                        {% endif %}
-                    </td>
-                    <td>
-                        <a href="{% url 'editar_faixa_frete' faixa.id %}" class="botao-sec">Editar faixa</a>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-        {% else %}
-            <div class="info">
-                Nenhuma faixa cadastrada ainda.
-                <br><br>
-                Para começar, clique em <strong>“Cadastrar faixa de distância”</strong>.
-            </div>
-        {% endif %}
+        <details class="bloco-antigo">
+            <summary>Ver faixas antigas cadastradas</summary>
+            <p>
+                As faixas antigas por quilometragem foram mantidas no sistema para não quebrar a estrutura anterior, mas a lógica principal de frete agora usa cidade e estado.
+            </p>
+
+            {% if faixas %}
+            <table>
+                <thead>
+                    <tr>
+                        <th>KM inicial</th>
+                        <th>KM final</th>
+                        <th>Valor</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for faixa in faixas %}
+                    <tr>
+                        <td>{{ faixa.km_inicial }}</td>
+                        <td>{{ faixa.km_final }}</td>
+                        <td>R$ {{ faixa.valor|floatformat:2 }}</td>
+                        <td>
+                            {% if faixa.ativo %}
+                                <span class="tag tag-on">Ativa</span>
+                            {% else %}
+                                <span class="tag tag-off">Inativa</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+                <div class="info">
+                    Nenhuma faixa antiga cadastrada.
+                </div>
+            {% endif %}
+        </details>
     </div>
 
 </div>

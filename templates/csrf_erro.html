@@ -16,15 +16,17 @@
             min-height:100vh;
             padding:24px;
         }
+
         .box{
             background:white;
-            max-width:520px;
+            max-width:560px;
             width:100%;
             border-radius:22px;
             padding:32px;
             box-shadow:0 12px 30px rgba(15,23,42,0.08);
             text-align:center;
         }
+
         .icone{
             width:72px;
             height:72px;
@@ -38,21 +40,36 @@
             font-size:34px;
             font-weight:bold;
         }
+
         h1{
             margin:0 0 12px;
             font-size:32px;
         }
+
         p{
             color:#64748b;
-            line-height:1.6;
-            margin-bottom:24px;
+            line-height:1.7;
+            margin-bottom:16px;
         }
+
+        .info{
+            background:#f8fafc;
+            border:1px solid #e5e7eb;
+            border-radius:14px;
+            padding:14px 16px;
+            margin:22px 0 24px;
+            color:#475569;
+            line-height:1.7;
+            text-align:left;
+        }
+
         .acoes{
             display:flex;
             gap:12px;
             justify-content:center;
             flex-wrap:wrap;
         }
+
         .botao{
             text-decoration:none;
             border:none;
@@ -63,29 +80,67 @@
             font-size:14px;
             display:inline-block;
         }
+
         .botao-escuro{
             background:#0b1220;
             color:white;
         }
+
         .botao-claro{
             background:#e2e8f0;
             color:#0f172a;
+        }
+
+        .botao-branco{
+            background:white;
+            color:#0f172a;
+            border:1px solid #cbd5e1;
         }
     </style>
 </head>
 <body>
     <div class="box">
         <div class="icone">!</div>
+
         <h1>Sessão expirada</h1>
+
         <p>
             Sua solicitação não pôde ser concluída porque a página ficou desatualizada ou a sessão expirou.
-            Atualize a página e tente novamente. Se necessário, volte ao carrinho e refaça a confirmação.
         </p>
 
+        <div class="info">
+            Tente uma destas opções:
+            <br><br>
+            <strong>Voltar para a página anterior</strong> para retornar à loja ou tela que você estava usando.
+            <br>
+            <strong>Atualizar página</strong> para carregar novamente o conteúdo.
+            <br>
+            <strong>Ir para o início</strong> se preferir recomeçar a navegação.
+        </div>
+
         <div class="acoes">
-            <a href="/carrinho/" class="botao botao-escuro">Voltar ao carrinho</a>
-            <a href="javascript:location.reload();" class="botao botao-claro">Atualizar página</a>
+            <button type="button" class="botao botao-escuro" onclick="voltarPagina()">
+                Voltar para a página anterior
+            </button>
+
+            <button type="button" class="botao botao-claro" onclick="location.reload()">
+                Atualizar página
+            </button>
+
+            <a href="/home/" class="botao botao-branco">
+                Ir para o início
+            </a>
         </div>
     </div>
+
+    <script>
+        function voltarPagina() {
+            if (document.referrer && document.referrer !== window.location.href) {
+                window.history.back();
+            } else {
+                window.location.href = "/home/";
+            }
+        }
+    </script>
 </body>
 </html>

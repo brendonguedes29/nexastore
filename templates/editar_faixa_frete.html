@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Editar faixa de distância</title>
+<title>Editar faixa antiga de distância</title>
 
 <style>
 body{
@@ -46,6 +46,16 @@ h1{
     margin:16px 0 20px;
     line-height:1.7;
     color:#475569;
+}
+
+.alerta{
+    background:#fff7ed;
+    border:1px solid #fdba74;
+    border-radius:12px;
+    padding:14px 16px;
+    margin:16px 0 20px;
+    line-height:1.7;
+    color:#9a3412;
 }
 
 .exemplo{
@@ -151,17 +161,33 @@ button{
 
         <a href="{% url 'frete_entrega' %}" class="link-voltar">← Voltar para frete e entrega</a>
 
-        <h1>Editar faixa de distância</h1>
+        <h1>Editar faixa antiga de distância</h1>
         <p class="sub">
-            Ajuste os quilômetros e o valor de entrega desta faixa conforme a regra da sua loja.
+            Esta tela foi mantida apenas para edição de faixas antigas por quilometragem. A lógica principal de frete da loja agora usa:
+            <strong>mesma cidade</strong>, <strong>mesmo estado</strong> e <strong>outro estado</strong>.
         </p>
 
+        <div class="alerta">
+            Importante: a configuração principal de frete agora é feita em
+            <strong>“Editar configuração do frete”</strong>.
+            <br><br>
+            Use esta tela apenas se você realmente quiser manter ou ajustar uma faixa antiga cadastrada anteriormente.
+        </div>
+
         <div class="info">
-            Esta faixa será usada quando a distância do cliente se enquadrar entre o KM inicial e o KM final definidos abaixo.
+            Regra principal atual:
+            <br><br>
+            <strong>Mesma cidade</strong> → valor específico
+            <br>
+            <strong>Mesmo estado, cidade diferente</strong> → valor específico
+            <br>
+            <strong>Outro estado</strong> → valor específico
+            <br>
+            <strong>Retirada na loja</strong> → sem frete
         </div>
 
         <div class="exemplo">
-            <strong>Exemplo:</strong><br>
+            <strong>Exemplo de faixa antiga:</strong><br>
             KM inicial: 0<br>
             KM final: 5<br>
             Valor do frete: R$ 8,00
@@ -192,9 +218,9 @@ button{
     </div>
 
     <div class="box-excluir">
-        <h2>Excluir faixa</h2>
+        <h2>Excluir faixa antiga</h2>
         <p>
-            Use essa opção somente se realmente quiser remover esta faixa de distância do sistema.
+            Use essa opção somente se realmente quiser remover esta faixa antiga do sistema.
         </p>
 
         <form method="post" action="{% url 'excluir_faixa_frete' faixa.id %}">

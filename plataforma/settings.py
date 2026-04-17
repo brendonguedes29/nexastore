@@ -49,6 +49,7 @@ MERCADOPAGO_ACCESS_TOKEN = os.environ.get("MERCADOPAGO_ACCESS_TOKEN", "")
 MERCADOPAGO_CLIENT_ID = os.environ.get("MERCADOPAGO_CLIENT_ID", "")
 MERCADOPAGO_CLIENT_SECRET = os.environ.get("MERCADOPAGO_CLIENT_SECRET", "")
 
+
 # =========================================
 # LOGIN
 # =========================================
