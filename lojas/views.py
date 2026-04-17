@@ -109,7 +109,7 @@ def escolher_acesso(request):
                     "lojas_por_tipo": dict(lojas_por_tipo),
                 })
 
-            return redirect(f"/loja/{slug_loja}/")
+            return redirect(f"https://{slug_loja}.nexastoreofficial.com.br")
 
     return render(request, "escolher_acesso.html", {
         "next_url": next_url,
@@ -2519,21 +2519,28 @@ def criar_pagamento_pix(request):
 def login_loja(request):
     erro = None
 
-    if request.method == "POST":
-        username = request.POST.get("username", "").strip()
-        password = request.POST.get("password", "")
+    try:
+        if request.method == "POST":
+            username = request.POST.get("username", "").strip()
+            password = request.POST.get("password", "")
 
-        user = authenticate(request, username=username, password=password)
+            user = authenticate(request, username=username, password=password)
 
-        if user is not None:
-            loja = Loja.objects.filter(dono=user).first()
+            if user is not None:
+                loja = Loja.objects.filter(dono=user).first()
 
-            if loja:
-                login(request, user)
-                loja.verificar_licenca()
-                return redirect("painel_loja")
+                if loja:
+                    login(request, user)
+                    loja.verificar_licenca()
+                    return redirect("painel_loja")
 
-        erro = "Usuário ou senha inválidos."
+            erro = "Usuário ou senha inválidos."
+
+    except Exception as e:
+        print("ERRO LOGIN_LOJA:", str(e))
+        import traceback
+        print(traceback.format_exc())
+        erro = "Erro interno. Tente novamente."
 
     return render(request, "login_loja.html", {
         "erro": erro,

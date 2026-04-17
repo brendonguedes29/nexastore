@@ -8,12 +8,14 @@ class SubdominioMiddleware:
 
         from lojas.models import Loja
 
-        # 🔥 Ignora domínios principais (evita conflito com landing)
-        if host in [
-            "nexastoreofficial.com.br",
-            "www.nexastoreofficial.com.br",
-            "nexastore-xw5y.onrender.com"
-        ]:
+        # 🔥 IGNORA rotas administrativas e login
+        if request.path.startswith((
+            "/admin",
+            "/login",
+            "/painel",
+            "/entrar",
+            "/criar-loja",
+        )):
             return self.get_response(request)
 
         # 1. Domínio próprio
