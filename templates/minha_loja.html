@@ -407,7 +407,7 @@
             <div class="botoes">
                 <a href="{% url 'editar_dados_loja' %}" class="botao">Editar dados da loja</a>
                 <a href="{% url 'editar_vitrine' %}" class="botao">Editar página do consumidor</a>
-                <a href="{% url 'loja' loja.slug %}" target="_blank" class="botao">Ver página do consumidor</a>
+                <a href="{{ loja_url_publica }}" target="_blank" class="botao">Ver página do consumidor</a>
 
                 {% if licenca_bloqueada %}
                     <a href="{% url 'financeiro_loja' %}" class="botao botao-amarelo">Regularizar licença</a>
