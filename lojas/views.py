@@ -30,6 +30,7 @@ from django.utils.encoding import force_bytes, force_str
 from django.utils.dateparse import parse_date
 from django.utils import timezone
 from django.db.models import Count, Sum, F, DecimalField, ExpressionWrapper
+from dateutil.relativedelta import relativedelta
 from django.db.models.functions import TruncMonth
 from django.db import transaction
 
@@ -1022,6 +1023,7 @@ def painel_loja(request):
 
         licenca_bloqueada = loja.status_licenca in ["pendente", "vencida"] or not loja.ativa
 
+        # PRODUTOS
         produtos = Produto.objects.filter(loja=loja)
         total_produtos = produtos.count()
         produtos_ativos = produtos.filter(ativo=True).count()
@@ -1029,35 +1031,41 @@ def painel_loja(request):
         valor_total_estoque = sum((produto.preco * produto.estoque) for produto in produtos)
         produtos_destaque = produtos.filter(em_destaque=True).count()
 
+        # PEDIDOS
         pedidos_lista = Pedido.objects.filter(loja=loja)
         total_pedidos = pedidos_lista.count()
         pedidos_pendentes = pedidos_lista.filter(status="pendente").count()
         pedidos_entregues = pedidos_lista.filter(status="entregue").count()
 
         hoje = timezone.localdate()
-        pedidos_hoje = pedidos_lista.filter(criado_em__date=hoje).count()
+        pedidos_hoje = pedidos_lista.filter(data=hoje).count()
 
         faturamento_total = pedidos_lista.filter(status="entregue").aggregate(
-            total=Sum("total")
+            total=Sum("valor_total")
         )["total"] or 0
 
         lucro_total = faturamento_total
 
+        # CLIENTES
         total_clientes = Comprador.objects.filter(loja=loja).count()
 
+        # CATEGORIAS
         categorias_resumo = Categoria.objects.filter(loja=loja).annotate(
             total_produtos=Count("produto")
         ).order_by("nome")
 
+        # GRÁFICO (12 meses)
         meses_labels = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"]
         movimento_mensal = []
 
         hoje_datetime = timezone.now()
+
         for i in range(11, -1, -1):
             referencia = hoje_datetime - relativedelta(months=i)
+
             total_mes = pedidos_lista.filter(
-                criado_em__year=referencia.year,
-                criado_em__month=referencia.month
+                data__year=referencia.year,
+                data__month=referencia.month
             ).count()
 
             movimento_mensal.append({
@@ -1066,8 +1074,10 @@ def painel_loja(request):
                 "altura": max(total_mes * 10, 12) if total_mes > 0 else 12
             })
 
+        # PAGAMENTO CONFIGURADO
         mp_connected = bool(loja.chave_pix or loja.link_pagamento)
 
+        # 🔥 URL PÚBLICA DA LOJA (CORRETO)
         if loja.dominio:
             loja_url_publica = f"https://{loja.dominio}"
         else:
