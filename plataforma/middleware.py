@@ -1,10 +1,10 @@
 from lojas.models import Loja
 
 class LojaMiddleware:
-    def _init_(self, get_response):
+    def __init__(self, get_response):
         self.get_response = get_response
 
-    def _call_(self, request):
+    def __call__(self, request):
         host = request.get_host().split(":")[0]
 
         loja = Loja.objects.filter(dominio=host).first()
