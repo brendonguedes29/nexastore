@@ -4,12 +4,28 @@ class SubdominioMiddleware:
 
     def __call__(self, request):
         host = request.get_host().split(":")[0].lower()
+        request.loja = None
 
-        if host == "nexastoreofficial.com.br" or host.startswith("www."):
-            request.loja = None
-        else:
-            from lojas.models import Loja
-            request.loja = Loja.objects.filter(slug=host.split(".")[0]).first()
+        from lojas.models import Loja
 
-        response = self.get_response(request)
-        return response
+        # 🔥 Ignora domínios principais (evita conflito com landing)
+        if host in [
+            "nexastoreofficial.com.br",
+            "www.nexastoreofficial.com.br",
+            "nexastore-xw5y.onrender.com"
+        ]:
+            return self.get_response(request)
+
+        # 1. Domínio próprio
+        loja = Loja.objects.filter(dominio=host).first()
+
+        # 2. Subdomínio
+        if not loja and host.endswith(".nexastoreofficial.com.br"):
+            subdominio = host.replace(".nexastoreofficial.com.br", "")
+
+            if subdominio and subdominio != "www":
+                loja = Loja.objects.filter(slug=subdominio).first()
+
+        request.loja = loja
+
+        return self.get_response(request)

@@ -27,6 +27,7 @@ CSRF_TRUSTED_ORIGINS = [
     "https://nexastore-xw5y.onrender.com",
     "https://nexastoreofficial.com.br",
     "https://www.nexastoreofficial.com.br",
+    "https://*.nexastoreofficial.com.br",
 ]
 
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")

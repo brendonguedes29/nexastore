@@ -5,7 +5,7 @@ from django.conf.urls.static import static
 import lojas.views as views
 
 from lojas.admin import custom_admin_site
-from lojas.public_views import landing_page, criar_loja_publica
+from lojas.public_views import criar_loja_publica
 from lojas.licenca_views import (
     financeiro_loja,
     renovar_licenca_manual,
@@ -21,6 +21,7 @@ from lojas.views import (
     logout_loja,
     ativar_conta,
     loja_view,
+    root_view,
     produto_view,
     login_comprador,
     cadastro_comprador,
@@ -75,7 +76,7 @@ from lojas.views import (
     redefinir_senha_loja,
     redefinir_senha_concluida,
 
-    # COMPRADOR (NOVO)
+    # COMPRADOR
     recuperar_senha_comprador,
     recuperar_senha_comprador_enviado,
     redefinir_senha_comprador,
@@ -86,35 +87,34 @@ from lojas.views import (
 
 urlpatterns = [
 
-    # 🔹 PÚBLICO
-    path("", landing_page, name="landing_page"),
+    # PÚBLICO
+    path("", root_view, name="root_view"),
     path("entrar/", escolher_acesso, name="escolher_acesso"),
     path("criar-loja/", criar_loja_publica, name="criar_loja_publica"),
     path("home/", home, name="home"),
 
-    # 🔹 ADMIN
+    # ADMIN
     path("admin/", custom_admin_site.urls),
 
-    # 🔹 LOGIN LOJISTA
+    # LOGIN LOJISTA
     path("login/", login_loja, name="login_loja"),
     path("logout/", logout_loja, name="logout_loja"),
 
-    # 🔹 RECUPERAÇÃO LOJISTA
+    # RECUPERAÇÃO LOJISTA
     path("login/recuperar/", recuperar_acesso_loja, name="recuperar_acesso_loja"),
     path("login/recuperar/enviado/", recuperar_acesso_enviado, name="recuperar_acesso_enviado"),
     path("login/redefinir/<uidb64>/<token>/", redefinir_senha_loja, name="redefinir_senha_loja"),
     path("login/redefinir/concluido/", redefinir_senha_concluida, name="redefinir_senha_concluida"),
 
-    # 🔹 LOJA
-    path("", views.loja_view, name="loja"),
+    # LOJA
     path("produto/<int:produto_id>/", produto_view, name="produto"),
 
-    # 🔹 COMPRADOR
+    # COMPRADOR
     path("comprador/<slug:slug>/login/", login_comprador, name="login_comprador"),
     path("comprador/<slug:slug>/cadastro/", cadastro_comprador, name="cadastro_comprador"),
     path("comprador/logout/", logout_comprador, name="logout_comprador"),
 
-    # 🔥 RECUPERAÇÃO DE SENHA DO COMPRADOR (CORRIGIDO)
+    # RECUPERAÇÃO DE SENHA DO COMPRADOR
     path("comprador/<slug:slug>/recuperar/", recuperar_senha_comprador, name="recuperar_senha_comprador"),
     path("comprador/<slug:slug>/recuperar/enviado/", recuperar_senha_comprador_enviado, name="recuperar_senha_comprador_enviado"),
     path("comprador/redefinir/<uidb64>/<token>/", redefinir_senha_comprador, name="redefinir_senha_comprador"),
@@ -122,7 +122,7 @@ urlpatterns = [
 
     path("meus-pedidos/", meus_pedidos, name="meus_pedidos"),
 
-    # 🔹 CARRINHO
+    # CARRINHO
     path("carrinho/", ver_carrinho, name="ver_carrinho"),
     path("carrinho/adicionar/<int:produto_id>/", adicionar_carrinho, name="adicionar_carrinho"),
     path("carrinho/remover/<int:produto_id>/", remover_carrinho, name="remover_carrinho"),
@@ -130,7 +130,7 @@ urlpatterns = [
     path("checkout/", checkout, name="checkout"),
     path("sucesso/", compra_sucesso, name="compra_sucesso"),
 
-    # 🔹 PAGAMENTO
+    # PAGAMENTO
     path("pagamento/<str:referencia>/", pagina_pagamento, name="pagina_pagamento"),
     path("pagamento/<str:referencia>/cartao/", pagina_pagamento_cartao, name="pagina_pagamento_cartao"),
     path("pagamento/<str:referencia>/sucesso/", views.pagamento_sucesso, name="pagamento_sucesso"),
@@ -139,7 +139,7 @@ urlpatterns = [
     path("api/pix/", criar_pagamento_pix, name="api_pix"),
     path("api/cartao/", criar_pagamento_cartao, name="api_cartao"),
 
-    # 🔹 PAINEL LOJISTA
+    # PAINEL LOJISTA
     path("painel/", painel_loja, name="painel_loja"),
     path("painel/produtos/", lista_produtos_painel, name="lista_produtos_painel"),
     path("painel/produtos/novo/", cadastrar_produto, name="cadastrar_produto"),
@@ -184,7 +184,7 @@ urlpatterns = [
     path("painel/financeiro/gerar-checkout/", gerar_checkout_licenca, name="gerar_checkout_licenca"),
     path("painel/financeiro/status/<int:pagamento_id>/", status_pagamento_licenca, name="status_pagamento_licenca"),
 
-    # 🔹 WEBHOOK
+    # WEBHOOK
     path("webhooks/mercadopago/", webhook_mercadopago, name="webhook_mercadopago"),
     path("webhooks/mercadopago/licenca/", webhook_mercadopago_licenca, name="webhook_mercadopago_licenca"),
 
@@ -194,9 +194,8 @@ urlpatterns = [
 
     path("ativar/<uidb64>/<token>/", ativar_conta, name="ativar_conta"),
     path("remover-logo/", views.remover_logo_ajax, name="remover_logo_ajax"),
-    path('painel/financeiro/status/<int:pk>/', views.status_licenca, name='status_licenca'),
+    path("painel/financeiro/status/<int:pk>/", views.status_licenca, name="status_licenca"),
     path("painel/licenca-bloqueada/", licenca_bloqueada, name="licenca_bloqueada"),
 ]
 
-# 🔥 MEDIA
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

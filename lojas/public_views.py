@@ -75,7 +75,7 @@ def criar_loja_publica(request):
             is_active=False,
         )
 
-        Loja.objects.create(
+        loja = Loja.objects.create(
             dono=user,
             nome=nome_loja,
             email_comercial=email,
@@ -91,6 +91,10 @@ def criar_loja_publica(request):
             banner_cor_fim="#2563eb",
             texto_busca="O que você procura?",
         )
+
+        # domínio padrão automático da loja
+        loja.dominio = f"{loja.slug}.nexastoreofficial.com.br"
+        loja.save(update_fields=["dominio", "atualizado_em"])
 
         uid = urlsafe_base64_encode(force_bytes(user.pk))
         token = default_token_generator.make_token(user)

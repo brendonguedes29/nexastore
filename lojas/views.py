@@ -42,6 +42,7 @@ from .email_service import enviar_email
 from .marketing_email import enviar_notificacao_produto
 from .models import Loja
 from .forms import LojaForm, LojaDadosForm, LojaVitrineForm
+from lojas.public_views import landing_page
 
 from produtos.models import (
     Produto,
@@ -297,12 +298,14 @@ def produto_view(request, produto_id):
         "total_itens_carrinho": total_itens_carrinho(request),
     })
 
+def root_view(request):
+    if getattr(request, "loja", None):
+        return loja_view(request)
 
-def loja_view(request, slug=None):
+    return landing_page(request)
+
+def loja_view(request):
     loja = getattr(request, "loja", None)
-
-    if not loja and slug:
-        loja = get_object_or_404(Loja, slug=slug)
 
     if not loja:
         return HttpResponse("Loja não encontrada.", status=404)
@@ -333,11 +336,10 @@ def loja_view(request, slug=None):
 
     categorias_lista = Categoria.objects.filter(loja=loja).order_by("nome")
     comprador_logado = get_comprador_logado(request, loja)
-    produtos_ordenados = produtos.order_by("-id")
 
     return render(request, "loja.html", {
         "loja": loja,
-        "produtos": produtos_ordenados,
+        "produtos": produtos.order_by("-id"),
         "categorias": categorias_lista,
         "categoria_selecionada": categoria,
         "busca": busca,
@@ -1015,87 +1017,61 @@ def compra_sucesso(request):
 @login_required
 def painel_loja(request):
     try:
-        loja = get_object_or_404(Loja, dono=request.user)
+        loja = request.user.loja
+        loja.verificar_licenca()
+
+        licenca_bloqueada = loja.status_licenca in ["pendente", "vencida"] or not loja.ativa
 
         produtos = Produto.objects.filter(loja=loja)
-        pedidos = Pedido.objects.filter(loja=loja)
-
-        # PRODUTOS
         total_produtos = produtos.count()
         produtos_ativos = produtos.filter(ativo=True).count()
+        total_estoque = sum(produto.estoque for produto in produtos)
+        valor_total_estoque = sum((produto.preco * produto.estoque) for produto in produtos)
         produtos_destaque = produtos.filter(em_destaque=True).count()
-        total_estoque = sum((p.estoque or 0) for p in produtos)
 
-        # ESTOQUE / LUCRO
-        valor_total_estoque = sum(
-            (p.custo or 0) * (p.estoque or 0)
-            for p in produtos
-        )
+        pedidos_lista = Pedido.objects.filter(loja=loja)
+        total_pedidos = pedidos_lista.count()
+        pedidos_pendentes = pedidos_lista.filter(status="pendente").count()
+        pedidos_entregues = pedidos_lista.filter(status="entregue").count()
 
-        lucro_total = sum(
-            ((p.preco or 0) - (p.custo or 0)) * (p.estoque or 0)
-            for p in produtos
-        )
+        hoje = timezone.localdate()
+        pedidos_hoje = pedidos_lista.filter(criado_em__date=hoje).count()
 
-        # PEDIDOS
-        total_pedidos = pedidos.count()
-        pedidos_pendentes = pedidos.filter(status="pendente").count()
-        pedidos_entregues = pedidos.filter(status="entregue").count()
-        pedidos_hoje = pedidos.filter(
-            data__date=timezone.localdate()
-        ).count()
-
-        # FATURAMENTO
-        faturamento_total = pedidos.filter(status="entregue").aggregate(
-            total=Sum("valor_total")
+        faturamento_total = pedidos_lista.filter(status="entregue").aggregate(
+            total=Sum("total")
         )["total"] or 0
 
-        # CLIENTES / COMPRADORES
+        lucro_total = faturamento_total
+
         total_clientes = Comprador.objects.filter(loja=loja).count()
 
-        # MOVIMENTO MENSAL
-        pedidos_por_mes = (
-            pedidos.annotate(mes_ref=TruncMonth("data"))
-            .values("mes_ref")
-            .annotate(total=Count("id"))
-            .order_by("mes_ref")
-        )
+        categorias_resumo = Categoria.objects.filter(loja=loja).annotate(
+            total_produtos=Count("produto")
+        ).order_by("nome")
 
+        meses_labels = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"]
         movimento_mensal = []
-        maior_total = 0
 
-        for item in pedidos_por_mes:
-            if item["total"] > maior_total:
-                maior_total = item["total"]
-
-        for item in pedidos_por_mes:
-            total_mes = item["total"] or 0
-            altura = 12
-            if maior_total > 0:
-                altura = max(12, int((total_mes / maior_total) * 100))
+        hoje_datetime = timezone.now()
+        for i in range(11, -1, -1):
+            referencia = hoje_datetime - relativedelta(months=i)
+            total_mes = pedidos_lista.filter(
+                criado_em__year=referencia.year,
+                criado_em__month=referencia.month
+            ).count()
 
             movimento_mensal.append({
-                "mes": item["mes_ref"].strftime("%b/%y") if item["mes_ref"] else "-",
+                "mes": meses_labels[referencia.month - 1],
                 "total": total_mes,
-                "altura": altura,
+                "altura": max(total_mes * 10, 12) if total_mes > 0 else 12
             })
 
-        # CATEGORIAS
-        categorias_resumo = (
-            Categoria.objects.filter(loja=loja)
-            .annotate(total_produtos=Count("produto"))
-            .order_by("nome")
-        )
+        mp_connected = bool(loja.chave_pix or loja.link_pagamento)
 
-        # LICENÇA / RECEBIMENTO
-        licenca_bloqueada = loja.status_licenca in ["vencida", "pendente"]
-
-        mp_connected = False
-        try:
-            if hasattr(loja, "config_frete") and loja.config_frete:
-                mp_connected = bool(loja.config_frete.mp_connected)
-        except Exception:
-            mp_connected = False
+        if loja.dominio:
+            loja_url_publica = f"https://{loja.dominio}"
+        else:
+            loja_url_publica = f"https://{loja.slug}.nexastoreofficial.com.br"
 
         context = {
             "loja": loja,
@@ -1115,6 +1091,7 @@ def painel_loja(request):
             "categorias_resumo": categorias_resumo,
             "licenca_bloqueada": licenca_bloqueada,
             "mp_connected": mp_connected,
+            "loja_url_publica": loja_url_publica,
         }
 
         return render(request, "painel_loja.html", context)
@@ -1122,7 +1099,7 @@ def painel_loja(request):
     except Exception as e:
         print("ERRO NO PAINEL_LOJA:")
         print(traceback.format_exc())
-        return HttpResponse(f"Erro no painel_loja: {str(e)}", status=500)
+        return HttpResponse(f"Erro interno no painel da loja: {e}", status=500)
 @login_required
 def financeiro_loja(request):
     loja = get_loja_do_dono(request)
