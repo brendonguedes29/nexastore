@@ -1023,7 +1023,6 @@ def painel_loja(request):
 
         licenca_bloqueada = loja.status_licenca in ["pendente", "vencida"] or not loja.ativa
 
-        # PRODUTOS
         produtos = Produto.objects.filter(loja=loja)
         total_produtos = produtos.count()
         produtos_ativos = produtos.filter(ativo=True).count()
@@ -1031,7 +1030,6 @@ def painel_loja(request):
         valor_total_estoque = sum((produto.preco * produto.estoque) for produto in produtos)
         produtos_destaque = produtos.filter(em_destaque=True).count()
 
-        # PEDIDOS
         pedidos_lista = Pedido.objects.filter(loja=loja)
         total_pedidos = pedidos_lista.count()
         pedidos_pendentes = pedidos_lista.filter(status="pendente").count()
@@ -1046,15 +1044,12 @@ def painel_loja(request):
 
         lucro_total = faturamento_total
 
-        # CLIENTES
         total_clientes = Comprador.objects.filter(loja=loja).count()
 
-        # CATEGORIAS
         categorias_resumo = Categoria.objects.filter(loja=loja).annotate(
             total_produtos=Count("produto")
         ).order_by("nome")
 
-        # GRÁFICO (12 meses)
         meses_labels = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"]
         movimento_mensal = []
 
@@ -1074,11 +1069,12 @@ def painel_loja(request):
                 "altura": max(total_mes * 10, 12) if total_mes > 0 else 12
             })
 
-        # PAGAMENTO CONFIGURADO
         mp_connected = bool(loja.chave_pix or loja.link_pagamento)
 
-        # 🔥 URL PÚBLICA DA LOJA (CORRETO)
-        if loja.dominio:
+        if loja.dominio and loja.dominio not in [
+            "nexastoreofficial.com.br",
+            "www.nexastoreofficial.com.br",
+        ]:
             loja_url_publica = f"https://{loja.dominio}"
         else:
             loja_url_publica = f"https://{loja.slug}.nexastoreofficial.com.br"
@@ -1467,9 +1463,18 @@ def minha_loja(request):
 
     loja.verificar_licenca()
 
+    if loja.dominio and loja.dominio not in [
+        "nexastoreofficial.com.br",
+        "www.nexastoreofficial.com.br",
+    ]:
+        loja_url_publica = f"https://{loja.dominio}"
+    else:
+        loja_url_publica = f"https://{loja.slug}.nexastoreofficial.com.br"
+
     return render(request, "minha_loja.html", {
         "loja": loja,
         "licenca_bloqueada": loja_com_licenca_bloqueada(loja),
+        "loja_url_publica": loja_url_publica,
     })
 
 
@@ -1514,8 +1519,10 @@ def editar_vitrine(request):
     else:
         form = LojaVitrineForm(instance=loja)
 
-    # 🔥 URL pública da loja (corrigido)
-    if loja.dominio:
+    if loja.dominio and loja.dominio not in [
+        "nexastoreofficial.com.br",
+        "www.nexastoreofficial.com.br",
+    ]:
         loja_url_publica = f"https://{loja.dominio}"
     else:
         loja_url_publica = f"https://{loja.slug}.nexastoreofficial.com.br"
@@ -2554,14 +2561,12 @@ def login_loja(request):
 
     except Exception as e:
         print("ERRO LOGIN_LOJA:", str(e))
-        import traceback
         print(traceback.format_exc())
         erro = "Erro interno. Tente novamente."
 
     return render(request, "login_loja.html", {
         "erro": erro,
     })
-
 
 @login_required
 def categorias(request):
