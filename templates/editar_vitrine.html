@@ -368,7 +368,7 @@ button{
 
             <div class="botoes">
                 <button type="submit">Salvar alterações</button>
-                <a href="{% url 'loja' loja.slug %}" target="_blank" class="botao-link">Ver página do consumidor</a>
+               <a href="{{ loja_url_publica }}" target="_blank" class="botao-link">Ver página do consumidor</a>
                 <a href="{% url 'minha_loja' %}" class="botao-link">Voltar</a>
             </div>
         </form>

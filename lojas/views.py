@@ -1514,12 +1514,18 @@ def editar_vitrine(request):
     else:
         form = LojaVitrineForm(instance=loja)
 
+    # 🔥 URL pública da loja (corrigido)
+    if loja.dominio:
+        loja_url_publica = f"https://{loja.dominio}"
+    else:
+        loja_url_publica = f"https://{loja.slug}.nexastoreofficial.com.br"
+
     return render(request, "editar_vitrine.html", {
         "loja": loja,
         "form": form,
         "licenca_bloqueada": loja_com_licenca_bloqueada(loja),
+        "loja_url_publica": loja_url_publica,
     })
-
 
 @login_required
 def resetar_vitrine(request):
