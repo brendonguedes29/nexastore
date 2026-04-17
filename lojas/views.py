@@ -669,8 +669,7 @@ def checkout(request):
 
     if not comprador:
         return redirect("login_comprador", slug=loja.slug)
-
-    config_frete = ConfigFrete.objects.filter(loja=loja).first()
+config_frete, _ = ConfigFrete.objects.get_or_create(loja=loja)
 
     frete = Decimal("0.00")
     total_geral = subtotal_geral

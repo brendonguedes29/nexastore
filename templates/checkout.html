@@ -1,22 +1,4 @@
-[21:41, 16/04/2026] brendon guedes: {% extends 'base_publico.html' %}
-{% block title %}Finalizar compra{% endblock %}
-
-{% block content %}
-<div style="background:white;padding:30px;border-radius:20px;box-shadow:0 8px 24px rgba(0,0,0,0.05);max-width:900px;margin:0 auto;">
-
-    <h1 style="margin-bottom:10px;font-size:34px;">Finalizar pedido</h1>
-    <p style="color:#64748b;line-height:1.6;margin-bottom:20px;">
-        Preencha seus dados, escolha a forma de recebimento e confirme o pedido.
-    </p>
-
-    {% if erro %}
-        <div style="background:#fee2e2;color:#991b1b;padding:12px 14px;border-radius:12px;margin-bottom:18px;border:1px solid #fecaca;line-height:1.6;">
-            {{ erro }}
-        </div>
-    {% endif %}
-
-    <div style="background:#f8fafc;padding:14px 16px;border-radius:12px;mar…
-[21:45, 16/04/2026] brendon guedes: {% extends 'base_publico.html' %}
+{% extends 'base_publico.html' %}
 {% block title %}Finalizar compra{% endblock %}
 
 {% block content %}
@@ -75,11 +57,11 @@
 
         <input type="hidden" name="distancia_km" id="distancia_km" value="0">
         <input type="hidden" id="loja_id" value="{{ loja.id }}">
-        <input type="hidden" id="cidade_loja" value="{{ config_frete.cidade_origem|default:'' }}">
-        <input type="hidden" id="estado_loja" value="{{ config_frete.estado_origem|default:'' }}">
-        <input type="hidden" id="valor_mesma_cidade" value="{{ config_frete.valor_mesma_cidade|default:0 }}">
-        <input type="hidden" id="valor_mesmo_estado" value="{{ config_frete.valor_mesmo_estado|default:0 }}">
-        <input type="hidden" id="valor_fora_estado" value="{{ config_frete.valor_fora_estado|default:0 }}">
+        <input type="hidden" id="cidade_loja" value="{% if config_frete %}{{ config_frete.cidade_origem|default:'' }}{% else %}{% endif %}">
+        <input type="hidden" id="estado_loja" value="{% if config_frete %}{{ config_frete.estado_origem|default:'' }}{% else %}{% endif %}">
+        <input type="hidden" id="valor_mesma_cidade" value="{% if config_frete %}{{ config_frete.valor_mesma_cidade|default:'0' }}{% else %}0{% endif %}">
+        <input type="hidden" id="valor_mesmo_estado" value="{% if config_frete %}{{ config_frete.valor_mesmo_estado|default:'0' }}{% else %}0{% endif %}">
+        <input type="hidden" id="valor_fora_estado" value="{% if config_frete %}{{ config_frete.valor_fora_estado|default:'0' }}{% else %}0{% endif %}">
 
         <div id="bloco_endereco">
             <h3 style="margin-top:22px;margin-bottom:12px;">Endereço de entrega</h3>
@@ -264,12 +246,10 @@ function atualizarPagamento() {
     if (pagamento.value === "pix") {
         tipoCartaoBox.style.display = "none";
         infoPagamento.innerHTML = "Você pagará via Pix após confirmar o pedido.";
-    }
-    else if (pagamento.value === "cartao") {
+    } else if (pagamento.value === "cartao") {
         tipoCartaoBox.style.display = "block";
         infoPagamento.innerHTML = "O pagamento com cartão será exibido após a confirmação do pedido.";
-    }
-    else {
+    } else {
         tipoCartaoBox.style.display = "none";
         infoPagamento.innerHTML = "O pagamento em dinheiro será tratado conforme a configuração da loja.";
     }
@@ -321,7 +301,6 @@ function calcularFreteAutomatico() {
 
     atualizarResumoComFrete(frete);
     statusFrete.textContent = mensagem;
-
     distanciaKm.value = "0";
 }
 
@@ -339,7 +318,6 @@ function atualizarEntrega() {
 
         distanciaKm.value = "0";
         atualizarResumoComFrete(0);
-
     } else {
         blocoEndereco.style.display = "block";
         infoEntrega.style.display = "none";
