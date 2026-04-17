@@ -131,27 +131,28 @@
         <form method="post">
             {% csrf_token %}
             <input type="hidden" name="next" value="{{ next_url }}">
-<button type="submit" name="tipo_acesso" value="lojista" formnovalidate class="btn btn-azul">
-    Sou dono da loja
-</button>
+
+            <button type="submit" name="tipo_acesso" value="lojista" formnovalidate class="btn btn-lojista">
+                Sou dono da loja
+            </button>
 
             <div class="divisor"></div>
 
             <div class="label">Selecione a loja para entrar como consumidor</div>
 
-           <select name="slug_loja" required>
-    <option value="">Selecione uma loja</option>
+            <select name="slug_loja" required>
+                <option value="">Selecione uma loja</option>
 
-    {% for tipo, lojas in lojas_por_tipo.items %}
-        <optgroup label="{{ tipo }}">
-            {% for loja in lojas %}
-                <option value="{{ loja.slug }}">
-                    {{ loja.nome }}
-                </option>
-            {% endfor %}
-        </optgroup>
-    {% endfor %}
-</select>
+                {% for tipo, lojas in lojas_por_tipo.items %}
+                    <optgroup label="{{ tipo }}">
+                        {% for loja in lojas %}
+                            <option value="{{ loja.slug }}">
+                                {{ loja.nome }}
+                            </option>
+                        {% endfor %}
+                    </optgroup>
+                {% endfor %}
+            </select>
 
             <button type="submit" name="tipo_acesso" value="consumidor" class="btn btn-consumidor">
                 Entrar como consumidor
@@ -163,7 +164,7 @@
             Consumidor escolhe a loja e acessa a vitrine para comprar.
         </div>
 
-        <a href="{% url 'landing_page' %}" class="voltar">Voltar para a plataforma</a>
+        <a href="{% url 'root_view' %}" class="voltar">Voltar para a plataforma</a>
     </div>
 </body>
 </html>
