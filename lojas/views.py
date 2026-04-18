@@ -308,26 +308,26 @@ def confirmar_pagamento_por_referencia(referencia):
             continue
 
         pedido.status_pagamento = "pago"
-            pedido.status = "aguardando_envio"
-            pedido.data_pagamento = timezone.now()
-            pedido.save()
-            print("CONFIRMACAO PRODUTO PIX: pedido confirmado", pedido.id)
+        pedido.status = "aguardando_envio"
+        pedido.data_pagamento = timezone.now()
+        pedido.save()
 
-            try:
-                baixar_estoque_do_pedido(pedido)
-            except Exception as e:
-                print(f"ERRO AO BAIXAR ESTOQUE DO PEDIDO {pedido.id}: {e}")
+        print("CONFIRMACAO PRODUTO PIX: pedido confirmado", pedido.id)
 
-            try:
-                enviar_email_status_pedido(pedido)
-            except Exception as e:
-                print(f"ERRO AO ENVIAR EMAIL DO PEDIDO {pedido.id}: {e}")
-
+        try:
+            baixar_estoque_do_pedido(pedido)
         except Exception as e:
-            print(f"ERRO AO CONFIRMAR PEDIDO {pedido.id}: {e}")
+            print(f"ERRO AO BAIXAR ESTOQUE DO PEDIDO {pedido.id}: {e}")
 
-    return True
+        try:
+            enviar_email_status_pedido(pedido)
+        except Exception as e:
+            print(f"ERRO AO ENVIAR EMAIL DO PEDIDO {pedido.id}: {e}")
 
+    except Exception as e:
+        print(f"ERRO AO CONFIRMAR PEDIDO {pedido.id}: {e}")
+
+return True
 
 @login_required
 def logout_loja(request):
