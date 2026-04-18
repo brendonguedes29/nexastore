@@ -300,34 +300,34 @@ def confirmar_pagamento_por_referencia(referencia):
         print("CONFIRMACAO PRODUTO PIX: nenhum pedido encontrado para", referencia)
         return False
 
-   for pedido in pedidos:
-    try:
-        # 🚨 EVITA BAIXAR DUAS VEZES
-        if pedido.status_pagamento == "pago":
-            print(f"PEDIDO {pedido.id} já estava pago - ignorando")
-            continue
-
-        pedido.status_pagamento = "pago"
-        pedido.status = "aguardando_envio"
-        pedido.data_pagamento = timezone.now()
-        pedido.save()
-
-        print("CONFIRMACAO PRODUTO PIX: pedido confirmado", pedido.id)
-
+    for pedido in pedidos:
         try:
-            baixar_estoque_do_pedido(pedido)
+            # 🚨 EVITA BAIXAR DUAS VEZES
+            if pedido.status_pagamento == "pago":
+                print(f"PEDIDO {pedido.id} já estava pago - ignorando")
+                continue
+
+            pedido.status_pagamento = "pago"
+            pedido.status = "aguardando_envio"
+            pedido.data_pagamento = timezone.now()
+            pedido.save()
+
+            print("CONFIRMACAO PRODUTO PIX: pedido confirmado", pedido.id)
+
+            try:
+                baixar_estoque_do_pedido(pedido)
+            except Exception as e:
+                print(f"ERRO AO BAIXAR ESTOQUE DO PEDIDO {pedido.id}: {e}")
+
+            try:
+                enviar_email_status_pedido(pedido)
+            except Exception as e:
+                print(f"ERRO AO ENVIAR EMAIL DO PEDIDO {pedido.id}: {e}")
+
         except Exception as e:
-            print(f"ERRO AO BAIXAR ESTOQUE DO PEDIDO {pedido.id}: {e}")
+            print(f"ERRO AO CONFIRMAR PEDIDO {pedido.id}: {e}")
 
-        try:
-            enviar_email_status_pedido(pedido)
-        except Exception as e:
-            print(f"ERRO AO ENVIAR EMAIL DO PEDIDO {pedido.id}: {e}")
-
-    except Exception as e:
-        print(f"ERRO AO CONFIRMAR PEDIDO {pedido.id}: {e}")
-
-return True
+    return True
 
 @login_required
 def logout_loja(request):
