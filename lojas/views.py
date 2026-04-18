@@ -198,7 +198,7 @@ def plano_permite_cartao(loja):
 def home(request):
     primeira_loja = Loja.objects.order_by("id").first()
     if primeira_loja:
-        return redirect("loja", slug=primeira_loja.slug)
+        return redirect(f"https://{primeira_loja.slug}.nexastoreofficial.com.br")
     return redirect("login_loja")
 
 
@@ -490,7 +490,7 @@ def logout_comprador(request):
     logout(request)
 
     if slug:
-        return redirect("loja", slug=slug)
+        return redirect(f"https://{slug}.nexastoreofficial.com.br")
     return redirect("home")
 
 @login_required
@@ -515,10 +515,11 @@ def excluir_produto(request, produto_id):
 
 
 @login_required
-def meus_pedidos(request, slug=None):
+def meus_pedidos(request):
     comprador = get_comprador_logado(request)
 
     if not comprador:
+        slug = request.session.get("ultima_loja_slug")
         if slug:
             return redirect("login_comprador", slug=slug)
         return redirect("/")
@@ -554,16 +555,13 @@ def adicionar_carrinho(request, produto_id):
     request.session["carrinho"] = carrinho
     request.session["ultima_loja_slug"] = produto.loja.slug
 
-    return redirect("ver_carrinho", slug=produto.loja.slug)
+    return redirect("ver_carrinho")
 
-def ver_carrinho(request, slug=None):
+def ver_carrinho(request):
     carrinho = request.session.get("carrinho", {})
     itens = []
     total = Decimal("0.00")
-    loja = None
-
-    if slug:
-        loja = Loja.objects.filter(slug=slug).first()
+    loja = getattr(request, "loja", None)
 
     for produto_id, quantidade in carrinho.items():
         produto = get_object_or_404(Produto, id=produto_id, ativo=True)
@@ -581,9 +579,9 @@ def ver_carrinho(request, slug=None):
         })
 
     if loja is None:
-        slug_sessao = request.session.get("ultima_loja_slug")
-        if slug_sessao:
-            loja = Loja.objects.filter(slug=slug_sessao).first()
+        slug = request.session.get("ultima_loja_slug")
+        if slug:
+            loja = Loja.objects.filter(slug=slug).first()
 
     comprador_logado = get_comprador_logado(request, loja) if loja else None
 
