@@ -265,6 +265,33 @@ def calcular_frete_checkout(
 
     return None
 
+def baixar_estoque_do_pedido(pedido):
+    if not pedido or not pedido.produto:
+        return
+
+    produto = pedido.produto
+    quantidade = pedido.quantidade or 0
+
+    if quantidade <= 0:
+        return
+
+    estoque_anterior = produto.estoque or 0
+    novo_estoque = estoque_anterior - quantidade
+
+    if novo_estoque < 0:
+        novo_estoque = 0
+
+    produto.estoque = novo_estoque
+    produto.save()
+
+    MovimentacaoEstoque.objects.create(
+        loja=pedido.loja,
+        produto=produto,
+        tipo="saida",
+        quantidade=quantidade,
+        motivo=f"Baixa automática do pedido {pedido.id}",
+    )
+
 @transaction.atomic
 def confirmar_pagamento_por_referencia(referencia):
     pedidos = Pedido.objects.filter(referencia_pagamento=referencia)
