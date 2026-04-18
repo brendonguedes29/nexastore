@@ -197,10 +197,11 @@ def plano_permite_cartao(loja):
 
 def home(request):
     primeira_loja = Loja.objects.order_by("id").first()
-    if primeira_loja:
-        return redirect(f"https://{primeira_loja.slug}.nexastoreofficial.com.br")
-    return redirect("login_loja")
 
+    if primeira_loja:
+        return redirect("loja_view", slug=primeira_loja.slug)
+
+    return redirect("login_loja")
 
 def aplicar_filtro_data(queryset, data_inicio, data_fim):
     if data_inicio:
@@ -353,6 +354,7 @@ def loja_view(request):
         "comprador_logado": comprador_logado,
         "total_itens_carrinho": total_itens_carrinho(request),
     })
+
 def login_comprador(request, slug):
     loja = get_object_or_404(Loja, slug=slug)
 
@@ -495,7 +497,8 @@ def logout_comprador(request):
     logout(request)
 
     if slug:
-        return redirect(f"https://{slug}.nexastoreofficial.com.br")
+        return redirect("login_comprador", slug=slug)
+
     return redirect("home")
 
 @login_required
@@ -562,43 +565,41 @@ def adicionar_carrinho(request, produto_id):
 
     return redirect("ver_carrinho")
 
-def ver_carrinho(request):
+def ver_carrinho(request, slug=None):
+    loja = request.loja
+
+    if not loja and slug:
+        from .models import Loja
+        loja = Loja.objects.filter(slug=slug).first()
+
+    if not loja:
+        return HttpResponse("Loja não encontrada ou domínio inválido.", status=404)
+
     carrinho = request.session.get("carrinho", {})
     itens = []
-    total = Decimal("0.00")
-    loja = getattr(request, "loja", None)
+    total = 0
+
+    from .models import Produto
 
     for produto_id, quantidade in carrinho.items():
-        produto = get_object_or_404(Produto, id=produto_id, ativo=True)
+        try:
+            produto = Produto.objects.get(id=produto_id, loja=loja)
+            subtotal = produto.preco * quantidade
+            total += subtotal
 
-        if loja is None:
-            loja = produto.loja
+            itens.append({
+                "produto": produto,
+                "quantidade": quantidade,
+                "subtotal": subtotal
+            })
+        except Produto.DoesNotExist:
+            continue
 
-        subtotal = produto.preco * quantidade
-        total += subtotal
-
-        itens.append({
-            "produto": produto,
-            "quantidade": quantidade,
-            "subtotal": subtotal,
-        })
-
-    if loja is None:
-        slug = request.session.get("ultima_loja_slug")
-        if slug:
-            loja = Loja.objects.filter(slug=slug).first()
-
-    comprador_logado = get_comprador_logado(request, loja) if loja else None
-
-    return render(request, "carrinho.html", {
+    return render(request, "lojas/carrinho.html", {
         "itens": itens,
         "total": total,
-        "loja": loja,
-        "comprador_logado": comprador_logado,
-        "total_itens_carrinho": total_itens_carrinho(request),
+        "loja": loja
     })
-
-
 def remover_carrinho(request, produto_id):
     carrinho = request.session.get("carrinho", {})
     produto_id = str(produto_id)
@@ -638,17 +639,22 @@ def atualizar_carrinho(request):
     return redirect("ver_carrinho")
 
 
-def checkout(request):
+def checkout(request, slug=None):
     carrinho = request.session.get("carrinho", {})
     itens = []
     subtotal_geral = Decimal("0.00")
-    loja = None
+
+    loja = request.loja
+
+    if not loja and slug:
+        from .models import Loja
+        loja = Loja.objects.filter(slug=slug).first()
+
+    if not loja:
+        return HttpResponse("Loja não encontrada ou domínio inválido.", status=404)
 
     for produto_id, quantidade in carrinho.items():
-        produto = get_object_or_404(Produto, id=produto_id, ativo=True)
-
-        if loja is None:
-            loja = produto.loja
+        produto = get_object_or_404(Produto, id=produto_id, ativo=True, loja=loja)
 
         subtotal = produto.preco * quantidade
         subtotal_geral += subtotal
@@ -660,30 +666,8 @@ def checkout(request):
         })
 
     if not itens:
-        pedido_pendente = None
-
-        if request.user.is_authenticated:
-            comprador_pendente = Comprador.objects.filter(
-                usuario=request.user,
-                ativo=True
-            ).first()
-
-            if comprador_pendente:
-                pedido_pendente = Pedido.objects.filter(
-                    comprador=comprador_pendente,
-                    status="pendente",
-                    status_pagamento__in=["aguardando", "confirmacao"]
-                ).order_by("-data").first()
-
-        if pedido_pendente:
-            messages.warning(
-                request,
-                "Pedido pendente. Finalize no histórico."
-            )
-            return redirect("meus_pedidos")
-
         messages.warning(request, "Seu carrinho está vazio.")
-        return redirect("ver_carrinho")
+        return redirect("ver_carrinho", slug=loja.slug)
 
     comprador = Comprador.objects.filter(
         usuario=request.user,
@@ -717,9 +701,6 @@ def checkout(request):
         tipo_entrega = request.POST.get("tipo_entrega", "entrega").strip().lower()
         retirada_na_loja = tipo_entrega == "retirada"
 
-        # Mantido por compatibilidade com o model atual
-        distancia_km = Decimal("0.00")
-
         if forma_pagamento != "cartao":
             tipo_cartao = ""
 
@@ -733,8 +714,6 @@ def checkout(request):
                 "loja": loja,
                 "comprador": comprador,
                 "config_frete": config_frete,
-                "comprador_logado": comprador,
-                "total_itens_carrinho": total_itens_carrinho(request),
             })
 
         if not retirada_na_loja:
@@ -748,96 +727,34 @@ def checkout(request):
                     "loja": loja,
                     "comprador": comprador,
                     "config_frete": config_frete,
-                    "comprador_logado": comprador,
-                    "total_itens_carrinho": total_itens_carrinho(request),
                 })
 
-            endereco = f"{rua_entrega}, {numero_entrega}, {bairro_entrega}, {cidade_entrega} - {estado_entrega}, CEP: {cep_entrega}"
-
-            frete_calculado = calcular_frete_checkout(
+            frete = calcular_frete_checkout(
                 loja=loja,
                 estado_entrega=estado_entrega,
                 cidade_entrega=cidade_entrega,
                 retirada_na_loja=False,
             )
-
-            if frete_calculado is None:
-                return render(request, "checkout.html", {
-                    "erro": "Não foi possível calcular o frete para essa localização.",
-                    "itens": itens,
-                    "subtotal_geral": subtotal_geral,
-                    "frete": frete,
-                    "total": total_geral,
-                    "loja": loja,
-                    "comprador": comprador,
-                    "config_frete": config_frete,
-                    "comprador_logado": comprador,
-                    "total_itens_carrinho": total_itens_carrinho(request),
-                })
-
-            frete = frete_calculado
-
         else:
-            frete = calcular_frete_checkout(
-                loja=loja,
-                estado_entrega=estado_entrega,
-                cidade_entrega=cidade_entrega,
-                retirada_na_loja=True,
-            )
-
-            if frete is None:
-                return render(request, "checkout.html", {
-                    "erro": "Retirada na loja não está disponível.",
-                    "itens": itens,
-                    "subtotal_geral": subtotal_geral,
-                    "frete": Decimal("0.00"),
-                    "total": subtotal_geral,
-                    "loja": loja,
-                    "comprador": comprador,
-                    "config_frete": config_frete,
-                    "comprador_logado": comprador,
-                    "total_itens_carrinho": total_itens_carrinho(request),
-                })
-
-            cep_entrega = ""
-            rua_entrega = "RETIRADA NA LOJA"
-            numero_entrega = ""
-            complemento_entrega = ""
-            bairro_entrega = ""
-            cidade_entrega = ""
-            estado_entrega = ""
-            endereco = "RETIRADA NA LOJA"
+            frete = Decimal("0.00")
 
         total_geral = subtotal_geral + frete
-
-        quantidade_itens = len(itens)
-        frete_rateado = frete / quantidade_itens if quantidade_itens > 0 else Decimal("0.00")
 
         referencia_pagamento = uuid4().hex[:20].upper()
 
         for item in itens:
-            valor_total_item = item["subtotal"] + frete_rateado
-
             Pedido.objects.create(
                 produto=item["produto"],
-                loja=item["produto"].loja,
+                loja=loja,
                 comprador=comprador,
                 nome_cliente=nome_cliente,
                 telefone=telefone,
-                endereco=endereco,
+                endereco="",
                 forma_pagamento=forma_pagamento,
                 tipo_cartao=tipo_cartao,
                 observacao=observacao,
-                cep_entrega=cep_entrega,
-                rua_entrega=rua_entrega,
-                numero_entrega=numero_entrega,
-                complemento_entrega=complemento_entrega,
-                bairro_entrega=bairro_entrega,
-                cidade_entrega=cidade_entrega,
-                estado_entrega=estado_entrega,
-                distancia_km=distancia_km,
-                valor_frete=frete_rateado,
-                valor_total=valor_total_item,
+                valor_frete=frete,
+                valor_total=item["subtotal"] + frete,
                 status_pagamento="aguardando",
                 referencia_pagamento=referencia_pagamento,
                 quantidade=item["quantidade"],
@@ -856,9 +773,7 @@ def checkout(request):
         "total": total_geral,
         "loja": loja,
         "comprador": comprador,
-        "comprador_logado": comprador,
         "config_frete": config_frete,
-        "total_itens_carrinho": total_itens_carrinho(request),
     })
 @login_required
 def pagina_pagamento(request, referencia):
