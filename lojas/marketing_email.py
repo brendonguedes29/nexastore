@@ -9,7 +9,7 @@ def enviar_notificacao_produto(produto):
         compradores = Comprador.objects.filter(
             loja=produto.loja,
             ativo=True,
-            usuario_email_isnull=False,
+            usuario__email__isnull=False,
         ).select_related("usuario")
 
         emails = []
