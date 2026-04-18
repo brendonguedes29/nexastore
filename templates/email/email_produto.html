@@ -1,63 +1,98 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <title>Novidade da loja</title>
-</head>
-<body style="margin:0;padding:24px;background:#f4f6fb;font-family:Arial,sans-serif;color:#111827;">
-    <div style="max-width:640px;margin:0 auto;background:#ffffff;border-radius:18px;padding:30px;border:1px solid #e5e7eb;box-shadow:0 10px 30px rgba(15,23,42,0.08);">
+<html>
+<body style="margin:0; padding:20px; font-family:Arial, sans-serif; background:#f4f6fb;">
 
-        <div style="margin-bottom:24px;">
-            <h2 style="margin:0 0 8px 0;font-size:28px;color:#111827;">{{ loja.nome }}</h2>
-            <p style="margin:0;color:#6b7280;">Tem novidade esperando por você.</p>
-        </div>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#f4f6fb;">
+  <tr>
+    <td align="center">
 
-        <div style="padding:22px;background:#f8fafc;border:1px solid #e5e7eb;border-radius:16px;">
-            <h3 style="margin:0 0 10px 0;font-size:24px;color:#111827;">{{ produto.nome }}</h3>
+      <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="max-width:600px; width:100%; background:#ffffff; border-radius:16px; border:1px solid #e5e7eb;">
+        <tr>
+          <td style="padding:24px;">
 
-            {% if produto.produto_novo %}
-                <p style="margin:0 0 8px 0;color:#16a34a;font-weight:bold;">🆕 Produto novo</p>
-            {% endif %}
+            <h2 style="margin:0 0 12px 0; color:#111827; font-size:28px; font-family:Arial, sans-serif;">
+              {{ loja.nome }}
+            </h2>
 
-            {% if produto.em_destaque %}
-                <p style="margin:0 0 8px 0;color:#2563eb;font-weight:bold;">⭐ Produto em destaque</p>
-            {% endif %}
+            <p style="margin:0 0 20px 0; color:#6b7280; font-size:16px; line-height:1.5; font-family:Arial, sans-serif;">
+              Tem novidade esperando por você.
+            </p>
 
-            {% if produto.percentual_promocao > 0 %}
-                <p style="margin:0 0 14px 0;color:#dc2626;font-weight:bold;">
-                    🔥 Promoção de {{ produto.percentual_promocao }}%
-                </p>
-            {% endif %}
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#f9fafb; border:1px solid #e5e7eb; border-radius:16px;">
+              <tr>
+                <td style="padding:20px;">
 
-            {% if produto.descricao %}
-                <p style="margin:0 0 16px 0;color:#374151;line-height:1.6;">
-                    {{ produto.descricao|truncatechars:220 }}
-                </p>
-            {% endif %}
+                  {% if tem_imagem_inline %}
+                  <img
+                    src="cid:produto_img"
+                    alt="{{ produto.nome }}"
+                    width="560"
+                    style="display:block; width:100%; max-width:560px; height:auto; border:0; outline:none; text-decoration:none; border-radius:12px; margin:0 0 16px 0;"
+                  >
+                  {% endif %}
 
-            {% if produto.percentual_promocao > 0 %}
-                <p style="margin:0 0 6px 0;color:#6b7280;">
-                    De: <span style="text-decoration:line-through;">R$ {{ produto.preco }}</span>
-                </p>
-                <p style="margin:0;font-size:24px;font-weight:800;color:#111827;">
-                    Por: R$ {{ produto.preco_promocional }}
-                </p>
-            {% else %}
-                <p style="margin:0;font-size:24px;font-weight:800;color:#111827;">
+                  <h3 style="margin:0 0 10px 0; color:#111827; font-size:24px; font-family:Arial, sans-serif;">
+                    {{ produto.nome }}
+                  </h3>
+
+                  {% if produto.em_destaque %}
+                  <p style="margin:4px 0; color:#2563eb; font-weight:bold; font-family:Arial, sans-serif;">
+                    ⭐ Produto em destaque
+                  </p>
+                  {% endif %}
+
+                  {% if produto.produto_novo %}
+                  <p style="margin:4px 0; color:#16a34a; font-weight:bold; font-family:Arial, sans-serif;">
+                    🆕 Produto novo
+                  </p>
+                  {% endif %}
+
+                  {% if produto.percentual_promocao and produto.percentual_promocao > 0 %}
+                  <p style="margin:4px 0; color:#dc2626; font-weight:bold; font-family:Arial, sans-serif;">
+                    🔥 Desconto de {{ produto.percentual_promocao }}%
+                  </p>
+                  {% endif %}
+
+                  {% if produto.descricao %}
+                  <p style="margin:10px 0 14px 0; color:#374151; font-size:14px; line-height:1.6; font-family:Arial, sans-serif;">
+                    {{ produto.descricao }}
+                  </p>
+                  {% endif %}
+
+                  <p style="margin:0; font-size:22px; font-weight:bold; color:#111827; font-family:Arial, sans-serif;">
                     R$ {{ produto.preco }}
-                </p>
-            {% endif %}
-        </div>
+                  </p>
 
-        <div style="margin-top:24px;">
-            <a href="#" style="display:inline-block;padding:14px 22px;background:#0ea5e9;color:#ffffff;text-decoration:none;border-radius:12px;font-weight:bold;">
-                Ver produto na loja
-            </a>
-        </div>
+                </td>
+              </tr>
+            </table>
 
-        <p style="margin:24px 0 0 0;color:#6b7280;font-size:13px;line-height:1.6;">
-            Você recebeu esta mensagem porque possui cadastro de comprador na loja {{ loja.nome }}.
-        </p>
-    </div>
+            <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin-top:22px;">
+              <tr>
+                <td bgcolor="#0ea5e9" style="border-radius:12px;">
+                  <a
+                    href="{{ loja_url }}"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style="display:inline-block; padding:14px 22px; color:#ffffff; text-decoration:none; font-weight:bold; font-family:Arial, sans-serif;"
+                  >
+                    Ver produto na loja
+                  </a>
+                </td>
+              </tr>
+            </table>
+
+            <p style="margin-top:26px; color:#6b7280; font-size:13px; line-height:1.6; font-family:Arial, sans-serif;">
+              Você recebeu esta mensagem porque possui cadastro de comprador na loja {{ loja.nome }}.
+            </p>
+
+          </td>
+        </tr>
+      </table>
+
+    </td>
+  </tr>
+</table>
+
 </body>
 </html>

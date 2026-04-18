@@ -2,7 +2,7 @@ import requests
 from django.conf import settings
 
 
-def enviar_email(destinatario, assunto, html):
+def enviar_email(destinatario, assunto, html, inline_attachments=None):
     api_key = settings.BREVO_API_KEY.strip()
 
     print("BREVO API KEY CARREGADA:", bool(api_key))
@@ -28,11 +28,13 @@ def enviar_email(destinatario, assunto, html):
         "htmlContent": html,
     }
 
-    response = requests.post(url, json=payload, headers=headers, timeout=20)
+    if inline_attachments:
+        payload["attachment"] = inline_attachments
+
+    response = requests.post(url, json=payload, headers=headers, timeout=30)
 
     print("BREVO STATUS:", response.status_code)
     print("BREVO RESPOSTA:", response.text)
 
     response.raise_for_status()
-
     return response.json()
