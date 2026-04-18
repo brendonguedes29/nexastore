@@ -365,17 +365,28 @@ def login_comprador(request, slug):
         user = authenticate(request, username=username, password=password)
 
         if user is not None:
-
-            # 🔥 BLOQUEIO AQUI
             if not user.is_active:
                 erro = "Confirme seu e-mail antes de entrar."
             else:
-                comprador = Comprador.objects.filter(usuario=user, loja=loja, ativo=True).first()
+                comprador = Comprador.objects.filter(
+                    usuario=user,
+                    loja=loja,
+                    ativo=True
+                ).first()
 
                 if comprador:
                     login(request, user)
                     request.session["ultima_loja_slug"] = loja.slug
-                    return redirect("loja", slug=loja.slug)
+
+                    if loja.dominio and loja.dominio not in [
+                        "nexastoreofficial.com.br",
+                        "www.nexastoreofficial.com.br",
+                    ]:
+                        return redirect(f"https://{loja.dominio}")
+                    else:
+                        return redirect(f"https://{loja.slug}.nexastoreofficial.com.br")
+
+                erro = "Sua conta não está vinculada a esta loja."
 
         else:
             erro = "Usuário ou senha inválidos."
@@ -384,8 +395,6 @@ def login_comprador(request, slug):
         "loja": loja,
         "erro": erro,
     })
-
-
 def cadastro_comprador(request, slug):
     loja = get_object_or_404(Loja, slug=slug)
 
