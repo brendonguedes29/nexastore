@@ -308,8 +308,13 @@ def root_view(request):
 def loja_view(request):
     loja = getattr(request, "loja", None)
 
+    # 🔴 Proteção contra erro 500
     if not loja:
-        return HttpResponse("Loja não encontrada.", status=404)
+        return HttpResponse("Loja não encontrada ou domínio inválido.", status=404)
+
+    # 🔍 DEBUG (pode remover depois)
+    print("HOST:", request.get_host())
+    print("LOJA:", loja)
 
     loja.verificar_licenca()
 

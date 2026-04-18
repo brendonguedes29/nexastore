@@ -8,19 +8,10 @@ class SubdominioMiddleware:
 
         from lojas.models import Loja
 
-        if request.path.startswith((
-            "/admin",
-            "/login",
-            "/painel",
-            "/entrar",
-            "/criar-loja",
-        )):
-            return self.get_response(request)
-
         loja = Loja.objects.filter(dominio=host).first()
 
         if not loja and host.endswith(".nexastoreofficial.com.br"):
-            subdominio = host.replace(".nexastoreofficial.com.br", "")
+            subdominio = host.replace(".nexastoreofficial.com.br", "").strip()
 
             if subdominio and subdominio != "www":
                 loja = Loja.objects.filter(slug=subdominio).first()
