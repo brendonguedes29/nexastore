@@ -1033,7 +1033,7 @@ def painel_loja(request):
         )["total"] or 0
 
         valor_total_estoque = produtos.aggregate(
-            total=Sum(F("preco") * F("estoque"))
+            total=Sum(F("custo") * F("estoque"))
         )["total"] or 0
 
         pedidos_lista = Pedido.objects.filter(loja=loja)
