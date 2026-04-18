@@ -398,427 +398,6 @@
             border-radius:18px;
             box-shadow:0 8px 24px rgba(15,23,42,0.06);
             color:#64748b;
-        }.rodape-contato{
-            margin-top:25px;
-            background:linear-gradient(180deg, #1f2937 0%, #374151 100%);
-            padding:18px 20px;
-            color:white;
-        }
-
-        .rodape-container{
-            max-width:1200px;
-            margin:0 auto;
-        }
-
-        .rodape-linha{
-            display:flex;
-            align-items:center;
-            justify-content:center;
-            gap:18px;
-            flex-wrap:wrap;
-            text-align:center;
-        }
-
-        <!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ loja.nome }} | NexaStore</title>
-
-    <style>
-        *{margin:0;padding:0;box-sizing:border-box;}
-        body{font-family:Arial, sans-serif;background:#f4f6fb;color:#1f2937;}
-        .wrap{width:94%;max-width:1300px;margin:0 auto;}
-
-        .tag-loja{
-            display:inline-block;
-            background:#22c55e;
-            color:white;
-            padding:6px 10px;
-            border-radius:999px;
-            font-size:12px;
-            font-weight:bold;
-            margin-top:6px;
-        }
-
-        .header{
-            background:#0b1220;
-            padding:14px 0;
-            box-shadow:0 2px 8px rgba(0,0,0,0.08);
-            position:sticky;
-            top:0;
-            z-index:50;
-        }
-
-        .header-flex{
-            display:flex;
-            align-items:center;
-            justify-content:space-between;
-            gap:20px;
-            flex-wrap:wrap;
-        }
-
-        .logo-area{
-            display:flex;
-            align-items:center;
-            gap:14px;
-            min-width:220px;
-        }
-
-        .logo-imagem{
-            height:54px;
-            width:54px;
-            border-radius:12px;
-            object-fit:cover;
-            background:#fff;
-            border:2px solid rgba(255,255,255,.12);
-            flex-shrink:0;
-        }
-
-        .logo-texto{
-            display:flex;
-            flex-direction:column;
-            line-height:1.1;
-        }
-
-        .logo-nome{
-            color:white;
-            font-size:30px;
-            font-weight:900;
-            text-transform:uppercase;
-            letter-spacing:1px;
-        }
-
-        .logo-sub{
-            color:#cbd5e1;
-            font-size:13px;
-            margin-top:4px;
-        }
-
-        .busca{
-            flex:1;
-            min-width:280px;
-            max-width:520px;
-        }
-
-        .busca form{
-            width:100%;
-        }
-
-        .busca input{
-            width:100%;
-            padding:15px 18px;
-            border:none;
-            border-radius:12px;
-            font-size:16px;
-            outline:none;
-        }
-
-        .acoes-header{
-            display:flex;
-            gap:14px;
-            align-items:center;
-            flex-wrap:wrap;
-        }
-
-        .acoes-header a{
-            color:white;
-            text-decoration:none;
-            font-size:15px;
-            font-weight:600;
-        }
-
-        .carrinho{
-            background:white;
-            color:#0b1220 !important;
-            padding:10px 14px;
-            border-radius:12px;
-            font-weight:bold;
-            display:inline-flex;
-            align-items:center;
-            gap:8px;
-        }
-
-        .banner{
-            margin:22px auto 18px;
-            min-height:320px;
-            border-radius:24px;
-            overflow:hidden;
-            display:flex;
-            align-items:center;
-            padding:40px 50px;
-            color:white;
-            position:relative;
-            background:linear-gradient(90deg, {{ loja.banner_cor_inicio|default:'#22c55e' }}, {{ loja.banner_cor_fim|default:'#0ea5e9' }});
-        }
-
-        .banner-fundo-imagem{
-            position:absolute;
-            inset:0;
-            width:100%;
-            height:100%;
-            object-fit:cover;
-            z-index:1;
-        }
-
-        .banner-overlay{
-            position:absolute;
-            inset:0;
-            background:rgba(0,0,0,0.28);
-            z-index:2;
-        }
-
-        .banner-sem-imagem .banner-overlay{
-            background:rgba(0,0,0,0.10);
-        }
-
-        .banner-conteudo{
-            max-width:540px;
-            position:relative;
-            z-index:3;
-        }
-
-        .banner-conteudo h2{
-            font-size:56px;
-            line-height:0.95;
-            margin-bottom:16px;
-            font-weight:800;
-            text-transform:uppercase;
-            white-space:pre-line;
-        }
-
-        .banner-conteudo p{
-            font-size:22px;
-            margin-bottom:22px;
-        }
-
-        .banner-botao{
-            display:inline-block;
-            background:white;
-            color:#111827;
-            padding:14px 26px;
-            border-radius:14px;
-            text-decoration:none;
-            font-weight:bold;
-        }
-
-        .secao{
-            margin:30px 0;
-        }
-
-        .secao-titulo{
-            font-size:34px;
-            font-weight:bold;
-            margin-bottom:18px;
-            color:#111827;
-        }
-
-        .secao-sub{
-            color:#64748b;
-            font-size:15px;
-            margin-bottom:18px;
-        }
-
-        .categorias-retangulos{
-            display:flex;
-            gap:12px;
-            flex-wrap:wrap;
-            margin-bottom:24px;
-        }
-
-        .categoria-chip{
-            text-decoration:none;
-            background:white;
-            color:#111827;
-            padding:12px 18px;
-            border-radius:14px;
-            border:1px solid #e5e7eb;
-            font-weight:700;
-            box-shadow:0 4px 10px rgba(0,0,0,0.05);
-            display:inline-block;
-        }
-
-        .categoria-chip:hover{
-            background:#eef2ff;
-        }
-
-        .chip-promocao{
-            background:#fee2e2;
-            color:#b91c1c;
-            border:1px solid #fecaca;
-        }
-
-        .chip-destaque{
-            background:#e0e7ff;
-            color:#4338ca;
-            border:1px solid #c7d2fe;
-        }
-
-        .chip-novo{
-            background:#dbeafe;
-            color:#1d4ed8;
-            border:1px solid #bfdbfe;
-        }
-
-        .grid-produtos{
-            display:grid;
-            grid-template-columns:repeat(auto-fit, minmax(280px, 1fr));
-            gap:24px;
-        }
-
-        .card-produto{
-            background:white;
-            border-radius:22px;
-            overflow:hidden;
-            box-shadow:0 8px 24px rgba(15,23,42,0.08);
-            transition:0.2s;
-            display:flex;
-            flex-direction:column;
-            border:1px solid #eceff3;
-        }
-
-        .card-produto:hover{
-            transform:translateY(-5px);
-            box-shadow:0 12px 30px rgba(15,23,42,0.12);
-        }
-
-        .card-topo{
-            position:relative;
-        }
-
-        .produto-imagem{
-            width:100%;
-            height:260px;
-            object-fit:cover;
-            background:#f1f5f9;
-            display:block;
-        }
-
-        .produto-sem-imagem{
-            width:100%;
-            height:260px;
-            background:#e5e7eb;
-            display:flex;
-            align-items:center;
-            justify-content:center;
-            color:#64748b;
-            font-size:14px;
-        }
-
-        .selinho-container{
-            position:absolute;
-            top:12px;
-            left:12px;
-            display:flex;
-            flex-wrap:wrap;
-            gap:6px;
-            z-index:2;
-            max-width:calc(100% - 24px);
-        }
-
-        .selo{
-            font-size:11px;
-            padding:4px 8px;
-            border-radius:6px;
-            font-weight:bold;
-            color:white;
-            white-space:nowrap;
-            line-height:1.1;
-            box-shadow:0 2px 6px rgba(0,0,0,0.12);
-        }
-
-        .selo-novo{ background:#3b82f6; }
-        .selo-destaque{ background:#6366f1; }
-        .selo-promocao{ background:#ef4444; }
-
-        .produto-conteudo{
-            padding:18px;
-            display:flex;
-            flex-direction:column;
-            gap:10px;
-            flex:1;
-        }
-
-        .produto-categoria{
-            font-size:13px;
-            color:#64748b;
-            font-weight:700;
-            text-transform:uppercase;
-        }
-
-        .produto-nome{
-            font-size:22px;
-            font-weight:900;
-            min-height:52px;
-        }
-
-        .produto-descricao{
-            color:#6b7280;
-            font-size:14px;
-            min-height:42px;
-        }
-
-        .produto-preco{
-            color:#111827;
-            font-size:28px;
-            font-weight:800;
-        }
-
-        .preco-antigo{
-            color:#94a3b8;
-            text-decoration:line-through;
-            font-size:16px;
-            font-weight:700;
-        }
-
-        .preco-promocional{
-            color:#dc2626;
-            font-size:30px;
-            font-weight:900;
-        }
-
-        .produto-estoque{
-            color:#475569;
-            font-size:14px;
-        }
-
-        .produto-acoes{
-            display:flex;
-            gap:10px;
-            flex-wrap:wrap;
-            margin-top:auto;
-        }
-
-        .botao{
-            border:none;
-            cursor:pointer;
-            text-decoration:none;
-            padding:12px 16px;
-            border-radius:12px;
-            font-weight:900;
-            font-size:14px;
-            display:inline-flex;
-            align-items:center;
-            justify-content:center;
-        }
-
-        .botao-escuro{
-            background:#111827;
-            color:white;
-        }
-
-        .botao-azul{
-            background:#0b1220;
-            color:white;
-        }
-
-        .vazio{
-            background:white;
-            padding:26px;
-            border-radius:18px;
-            box-shadow:0 8px 24px rgba(15,23,42,0.06);
-            color:#64748b;
         }
 
         .rodape-contato{
@@ -955,9 +534,7 @@
         }
     </style>
 </head>
-<body>
-
-    <div class="header">
+<body><div class="header">
         <div class="wrap header-flex">
             <div class="logo-area">
                 {% if loja.logo %}
@@ -978,14 +555,14 @@
 
             <div class="acoes-header">
                 {% if comprador_logado %}
-                    <a href="{% url 'meus_pedidos' %}">Meus pedidos</a>
+                    <a href="{% url 'meus_pedidos' loja.slug %}">Meus pedidos</a>
                     <a href="{% url 'logout_comprador' %}">Sair</a>
                 {% else %}
                     <a href="{% url 'login_comprador' loja.slug %}">Entrar</a>
                     <a href="{% url 'cadastro_comprador' loja.slug %}">Cadastrar</a>
                 {% endif %}
 
-                <a href="{% url 'ver_carrinho' %}" class="carrinho">🛒 {{ total_itens_carrinho }}</a>
+                <a href="{% url 'ver_carrinho' loja.slug %}" class="carrinho">🛒 {{ total_itens_carrinho }}</a>
             </div>
         </div>
     </div>
@@ -1021,13 +598,13 @@
         <div class="secao">
             <div class="secao-titulo">Categorias</div>
             <div class="categorias-retangulos">
-               <a href="?tipo=promocao" class="categoria-chip chip-promocao">Promoções</a>
-               <a href="?tipo=destaque" class="categoria-chip chip-destaque">Destaques</a>
-               <a href="?tipo=novo" class="categoria-chip chip-novo">Novidades</a>
-               <a href="." class="categoria-chip">Todas as categorias</a>
-               {% for categoria in categorias %}
-               <a href="?categoria={{ categoria.id }}" class="categoria-chip">{{ categoria.nome }}</a>
-               {% endfor %}
+                <a href="?tipo=promocao" class="categoria-chip chip-promocao">Promoções</a>
+                <a href="?tipo=destaque" class="categoria-chip chip-destaque">Destaques</a>
+                <a href="?tipo=novo" class="categoria-chip chip-novo">Novidades</a>
+                <a href="." class="categoria-chip">Todas as categorias</a>
+                {% for categoria in categorias %}
+                    <a href="?categoria={{ categoria.id }}" class="categoria-chip">{{ categoria.nome }}</a>
+                {% endfor %}
             </div>
         </div>
 
@@ -1107,7 +684,8 @@
 
                                         <form method="post" action="{% url 'adicionar_carrinho' produto.id %}">
                                             {% csrf_token %}
-                                            <input type="hidden" name="quantidade" value="1"><button type="submit" class="botao botao-azul">🛒 Adicionar</button>
+                                            <input type="hidden" name="quantidade" value="1">
+                                            <button type="submit" class="botao botao-azul">🛒 Adicionar</button>
                                         </form>
                                     {% endif %}
                                 </div>
@@ -1119,9 +697,7 @@
                 <div class="vazio">Nenhum produto encontrado.</div>
             {% endif %}
         </div>
-    </div>
-
-    <div class="rodape-contato">
+    </div><div class="rodape-contato">
         <div class="rodape-container">
             <div class="rodape-linha">
                 {% if loja.logo %}
