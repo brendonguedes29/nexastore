@@ -515,11 +515,13 @@ def excluir_produto(request, produto_id):
 
 
 @login_required
-def meus_pedidos(request):
+def meus_pedidos(request, slug=None):
     comprador = get_comprador_logado(request)
 
     if not comprador:
-        return redirect("home")
+        if slug:
+            return redirect("login_comprador", slug=slug)
+        return redirect("/")
 
     pedidos_lista = (
         Pedido.objects.filter(comprador=comprador)
@@ -533,7 +535,6 @@ def meus_pedidos(request):
         "pedidos": pedidos_lista,
         "total_itens_carrinho": total_itens_carrinho(request),
     })
-
 
 def adicionar_carrinho(request, produto_id):
     produto = get_object_or_404(Produto, id=produto_id, ativo=True)
@@ -553,12 +554,16 @@ def adicionar_carrinho(request, produto_id):
     request.session["carrinho"] = carrinho
     request.session["ultima_loja_slug"] = produto.loja.slug
 
-    return redirect("ver_carrinho")
-def ver_carrinho(request):
+    return redirect("ver_carrinho", slug=produto.loja.slug)
+
+def ver_carrinho(request, slug=None):
     carrinho = request.session.get("carrinho", {})
     itens = []
     total = Decimal("0.00")
     loja = None
+
+    if slug:
+        loja = Loja.objects.filter(slug=slug).first()
 
     for produto_id, quantidade in carrinho.items():
         produto = get_object_or_404(Produto, id=produto_id, ativo=True)
@@ -576,9 +581,9 @@ def ver_carrinho(request):
         })
 
     if loja is None:
-        slug = request.session.get("ultima_loja_slug")
-        if slug:
-            loja = Loja.objects.filter(slug=slug).first()
+        slug_sessao = request.session.get("ultima_loja_slug")
+        if slug_sessao:
+            loja = Loja.objects.filter(slug=slug_sessao).first()
 
     comprador_logado = get_comprador_logado(request, loja) if loja else None
 
