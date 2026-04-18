@@ -568,15 +568,12 @@ def adicionar_carrinho(request, produto_id):
 def ver_carrinho(request):
     loja = getattr(request, "loja", None)
 
-    # fallback pela sessão
+    # fallback 1: sessão
     if not loja:
         slug = request.session.get("ultima_loja_slug")
         if slug:
             from .models import Loja
             loja = Loja.objects.filter(slug=slug).first()
-
-    if not loja:
-        return HttpResponse("Loja não encontrada.", status=404)
 
     carrinho = request.session.get("carrinho", {})
     itens = []
@@ -586,7 +583,12 @@ def ver_carrinho(request):
 
     for produto_id, quantidade in carrinho.items():
         try:
-            produto = Produto.objects.get(id=produto_id, loja=loja, ativo=True)
+            produto = Produto.objects.get(id=produto_id)
+
+            # 🔴 IGNORA loja se estiver None
+            if loja and produto.loja != loja:
+                continue
+
             subtotal = produto.preco * quantidade
             total += subtotal
 
@@ -595,7 +597,9 @@ def ver_carrinho(request):
                 "quantidade": quantidade,
                 "subtotal": subtotal
             })
-        except Produto.DoesNotExist:
+
+        except Exception as e:
+            print("ERRO CARRINHO:", e)
             continue
 
     return render(request, "lojas/carrinho.html", {
