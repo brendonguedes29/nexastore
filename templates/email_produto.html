@@ -2,33 +2,43 @@
 <html>
 <body style="font-family: Arial; background:#f4f6fb; padding:20px;">
 
-<div style="max-width:600px;margin:auto;background:white;padding:20px;border-radius:12px">
+<div style="max-width:600px; margin:auto; background:white; padding:20px; border-radius:12px;">
 
-<h2 style="color:#111827;">🔥 {{ produto.nome }}</h2>
+    <h2 style="color:#111827;">🔥 {{ produto.nome }}</h2>
 
-<p>Uma novidade acabou de chegar na loja <strong>{{ loja.nome }}</strong></p>
+    <p>Uma novidade acabou de chegar na loja <strong>{{ loja.nome }}</strong></p>
 
-{% if produto.em_destaque %}
-<p style="color:#2563eb;"><strong>Produto em destaque ⭐</strong></p>
-{% endif %}
+    {% if produto_imagem_url %}
+        <div style="margin:20px 0;">
+            <img
+                src="{{ produto_imagem_url }}"
+                alt="{{ produto.nome }}"
+                style="max-width:100%; border-radius:12px; display:block;"
+            >
+        </div>
+    {% endif %}
 
-{% if produto.produto_novo %}
-<p style="color:#16a34a;"><strong>Produto novo 🆕</strong></p>
-{% endif %}
+    {% if produto.em_destaque %}
+        <p style="color:#2563eb;"><strong>Produto em destaque ⭐</strong></p>
+    {% endif %}
 
-{% if produto.percentual_promocao > 0 %}
-<p style="color:#dc2626;">
-🔥 Desconto de {{ produto.percentual_promocao }}%
-</p>
-{% endif %}
+    {% if produto.produto_novo %}
+        <p style="color:#16a34a;"><strong>Produto novo 🆕</strong></p>
+    {% endif %}
 
-<p style="margin-top:20px;">
-Preço: <strong>R$ {{ produto.preco }}</strong>
-</p>
+    {% if produto.percentual_promocao > 0 %}
+        <p style="color:#dc2626;">
+            🔥 Desconto de {{ produto.percentual_promocao }}%
+        </p>
+    {% endif %}
 
-<p style="margin-top:20px;">
-Acesse agora a loja e confira!
-</p>
+    <p style="margin-top:20px;">
+        Preço: <strong>R$ {{ produto.preco }}</strong>
+    </p>
+
+    <p style="margin-top:20px;">
+        Acesse agora a loja e confira!
+    </p>
 
 </div>
 
