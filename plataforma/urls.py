@@ -120,10 +120,11 @@ urlpatterns = [
     path("comprador/redefinir/<uidb64>/<token>/", redefinir_senha_comprador, name="redefinir_senha_comprador"),
     path("comprador/redefinir/concluido/", redefinir_senha_comprador_concluida, name="redefinir_senha_comprador_concluida"),
 
-    path("<slug:slug>/meus-pedidos/", meus_pedidos, name="meus_pedidos"),
+    # 🔥 CORRIGIDO AQUI
+    path("meus-pedidos/", meus_pedidos, name="meus_pedidos"),
 
     # CARRINHO
-    path("<slug:slug>/carrinho/", ver_carrinho, name="ver_carrinho"),
+    path("carrinho/", ver_carrinho, name="ver_carrinho"),
     path("carrinho/adicionar/<int:produto_id>/", adicionar_carrinho, name="adicionar_carrinho"),
     path("carrinho/remover/<int:produto_id>/", remover_carrinho, name="remover_carrinho"),
     path("carrinho/atualizar/", atualizar_carrinho, name="atualizar_carrinho"),
