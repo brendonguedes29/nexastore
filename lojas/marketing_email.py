@@ -1,4 +1,3 @@
-from django.conf import settings
 from django.template.loader import render_to_string
 
 from produtos.models import Comprador
@@ -10,7 +9,7 @@ def enviar_notificacao_produto(produto):
         compradores = Comprador.objects.filter(
             loja=produto.loja,
             ativo=True,
-            usuario__email__isnull=False,
+            usuario_email_isnull=False,
         ).select_related("usuario")
 
         emails = []
@@ -28,18 +27,15 @@ def enviar_notificacao_produto(produto):
 
         assunto = f"Novidade na loja {produto.loja.nome}"
 
+        # 🔥 CORREÇÃO PRINCIPAL AQUI (URL ABSOLUTA)
         produto_imagem_url = ""
         if produto.imagem:
             try:
-                url = produto.imagem.url
-                if url.startswith("http://") or url.startswith("https://"):
-                    produto_imagem_url = url
-                else:
-                    base_url = settings.PLATFORM_BASE_URL.rstrip("/")
-                    produto_imagem_url = f"{base_url}{url}"
+                produto_imagem_url = f"https://nexastoreofficial.com.br{produto.imagem.url}"
             except Exception as e:
-                print("ERRO AO MONTAR IMAGEM DO PRODUTO:", str(e))
+                print("ERRO AO GERAR URL DA IMAGEM:", str(e))
 
+        # URL da loja
         if produto.loja.dominio and produto.loja.dominio not in [
             "nexastoreofficial.com.br",
             "www.nexastoreofficial.com.br",
@@ -58,6 +54,7 @@ def enviar_notificacao_produto(produto):
         enviados = 0
         for email in emails:
             try:
+                print(f"EMAIL MARKETING: enviando para {email}")
                 enviar_email(email, assunto, html_body)
                 enviados += 1
             except Exception as e:
