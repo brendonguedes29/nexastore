@@ -566,47 +566,56 @@ def adicionar_carrinho(request, produto_id):
     return redirect("ver_carrinho")
 
 def ver_carrinho(request):
-    loja = getattr(request, "loja", None)
+    try:
+        loja = getattr(request, "loja", None)
 
-    # fallback 1: sessão
-    if not loja:
-        slug = request.session.get("ultima_loja_slug")
-        if slug:
-            from .models import Loja
-            loja = Loja.objects.filter(slug=slug).first()
+        if not loja:
+            slug = request.session.get("ultima_loja_slug")
+            if slug:
+                loja = Loja.objects.filter(slug=slug).first()
 
-    carrinho = request.session.get("carrinho", {})
-    itens = []
-    total = 0
+        print("DEBUG CARRINHO - LOJA:", loja)
+        print("DEBUG CARRINHO - SESSAO:", request.session.get("carrinho", {}))
 
-    from .models import Produto
+        if not loja:
+            return HttpResponse("Loja não encontrada.", status=404)
 
-    for produto_id, quantidade in carrinho.items():
-        try:
-            produto = Produto.objects.get(id=produto_id)
+        carrinho = request.session.get("carrinho", {})
+        itens = []
+        total = Decimal("0.00")
 
-            # 🔴 IGNORA loja se estiver None
-            if loja and produto.loja != loja:
+        for produto_id, quantidade in carrinho.items():
+            print("DEBUG ITEM:", produto_id, quantidade)
+
+            try:
+                produto = Produto.objects.get(id=produto_id, ativo=True)
+                subtotal = produto.preco * quantidade
+                total += subtotal
+
+                itens.append({
+                    "produto": produto,
+                    "quantidade": quantidade,
+                    "subtotal": subtotal,
+                })
+            except Produto.DoesNotExist:
+                print("DEBUG PRODUTO NAO EXISTE:", produto_id)
                 continue
 
-            subtotal = produto.preco * quantidade
-            total += subtotal
+        comprador_logado = get_comprador_logado(request, loja) if loja else None
 
-            itens.append({
-                "produto": produto,
-                "quantidade": quantidade,
-                "subtotal": subtotal
-            })
+        return render(request, "carrinho.html", {
+            "itens": itens,
+            "total": total,
+            "loja": loja,
+            "comprador_logado": comprador_logado,
+            "total_itens_carrinho": total_itens_carrinho(request),
+        })
 
-        except Exception as e:
-            print("ERRO CARRINHO:", e)
-            continue
-
-    return render(request, "lojas/carrinho.html", {
-        "itens": itens,
-        "total": total,
-        "loja": loja
-    })
+    except Exception as e:
+        import traceback
+        print("ERRO VER_CARRINHO:")
+        print(traceback.format_exc())
+        return HttpResponse(f"Erro interno no carrinho: {e}", status=500)
 
 def remover_carrinho(request, produto_id):
     carrinho = request.session.get("carrinho", {})
