@@ -565,23 +565,24 @@ def adicionar_carrinho(request, produto_id):
 
     return redirect("ver_carrinho")
 
-def ver_carrinho(request, slug=None):
+def ver_carrinho(request):
     loja = getattr(request, "loja", None)
 
-    if not loja and slug:
-        loja = Loja.objects.filter(slug=slug).first()
+    # fallback pela sessão
+    if not loja:
+        slug = request.session.get("ultima_loja_slug")
+        if slug:
+            from .models import Loja
+            loja = Loja.objects.filter(slug=slug).first()
 
     if not loja:
-        slug_sessao = request.session.get("ultima_loja_slug")
-        if slug_sessao:
-            loja = Loja.objects.filter(slug=slug_sessao).first()
-
-    if not loja:
-        return HttpResponse("Loja não encontrada ou domínio inválido.", status=404)
+        return HttpResponse("Loja não encontrada.", status=404)
 
     carrinho = request.session.get("carrinho", {})
     itens = []
-    total = Decimal("0.00")
+    total = 0
+
+    from .models import Produto
 
     for produto_id, quantidade in carrinho.items():
         try:
@@ -597,16 +598,11 @@ def ver_carrinho(request, slug=None):
         except Produto.DoesNotExist:
             continue
 
-    comprador_logado = get_comprador_logado(request, loja)
-
-    return render(request, "carrinho.html", {
+    return render(request, "lojas/carrinho.html", {
         "itens": itens,
         "total": total,
-        "loja": loja,
-        "comprador_logado": comprador_logado,
-        "total_itens_carrinho": total_itens_carrinho(request),
+        "loja": loja
     })
-
 
 def remover_carrinho(request, produto_id):
     carrinho = request.session.get("carrinho", {})
