@@ -300,9 +300,14 @@ def confirmar_pagamento_por_referencia(referencia):
         print("CONFIRMACAO PRODUTO PIX: nenhum pedido encontrado para", referencia)
         return False
 
-    for pedido in pedidos:
-        try:
-            pedido.status_pagamento = "pago"
+   for pedido in pedidos:
+    try:
+        # 🚨 EVITA BAIXAR DUAS VEZES
+        if pedido.status_pagamento == "pago":
+            print(f"PEDIDO {pedido.id} já estava pago - ignorando")
+            continue
+
+        pedido.status_pagamento = "pago"
             pedido.status = "aguardando_envio"
             pedido.data_pagamento = timezone.now()
             pedido.save()
