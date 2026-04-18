@@ -490,7 +490,7 @@
     <script>
         const FORMA_PAGAMENTO = "{{ forma_pagamento|default:'pix'|escapejs }}".trim().toLowerCase();
         const REFERENCIA = "{{ referencia|escapejs }}";
-        const TOTAL = "{{ total_pedido|floatformat:2|escapejs }}".replace(",", ".");
+        const TOTAL = parseFloat("{{ total_pedido|floatformat:2|escapejs }}".replace(",", "."));
         const MP_PUBLIC_KEY = "{{ mp_public_key|default:''|escapejs }}";
         const EMAIL_PAGADOR = "{{ email_pagador|default:''|escapejs }}";
 
@@ -555,24 +555,26 @@
         }
 
         async function verificarStatus() {
-            if (pagamentoConfirmado) return;
+    if (pagamentoConfirmado) return;
 
-            try {
-                const response = await fetch(`/api/pagamento/status/${REFERENCIA}/`);
-                const data = await response.json();
+    try {
+        const response = await fetch(/api/pagamento/status/${REFERENCIA}/);
+        const data = await response.json();
 
-                if (
-                    data.status === "pago" ||
-                    data.status === "approved" ||
-                    data.pago === true ||
-                    data.status_pagamento === "pago"
-                ) {
-                    mostrarSucesso("Pagamento confirmado com sucesso.");
-                }
-            } catch (e) {
-                console.log("Falha ao consultar status:", e);
-            }
+        console.log("STATUS API:", data); // 👈 ADICIONA ISSO
+
+        if (
+            data.status === "pago" ||
+            data.status === "approved" ||
+            data.pago === true ||
+            data.status_pagamento === "pago"
+        ) {
+            mostrarSucesso("Pagamento confirmado com sucesso.");
         }
+    } catch (e) {
+        console.log("Falha ao consultar status:", e);
+    }
+}
 
         async function iniciarPix() {
             tituloPagamento.textContent = "Pague com Pix";

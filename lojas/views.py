@@ -264,20 +264,35 @@ def calcular_frete_checkout(
         return config.valor_mesmo_estado or Decimal("0.00")
 
     return None
+
 @transaction.atomic
 def confirmar_pagamento_por_referencia(referencia):
     pedidos = Pedido.objects.filter(referencia_pagamento=referencia)
 
     if not pedidos.exists():
+        print("CONFIRMACAO PRODUTO PIX: nenhum pedido encontrado para", referencia)
         return False
 
     for pedido in pedidos:
-        pedido.status_pagamento = "pago"
-        pedido.status = "aguardando_envio"
-        pedido.data_pagamento = timezone.now()
-        pedido.save()
-        baixar_estoque_do_pedido(pedido)
-        enviar_email_status_pedido(pedido)
+        try:
+            pedido.status_pagamento = "pago"
+            pedido.status = "aguardando_envio"
+            pedido.data_pagamento = timezone.now()
+            pedido.save()
+            print("CONFIRMACAO PRODUTO PIX: pedido confirmado", pedido.id)
+
+            try:
+                baixar_estoque_do_pedido(pedido)
+            except Exception as e:
+                print(f"ERRO AO BAIXAR ESTOQUE DO PEDIDO {pedido.id}: {e}")
+
+            try:
+                enviar_email_status_pedido(pedido)
+            except Exception as e:
+                print(f"ERRO AO ENVIAR EMAIL DO PEDIDO {pedido.id}: {e}")
+
+        except Exception as e:
+            print(f"ERRO AO CONFIRMAR PEDIDO {pedido.id}: {e}")
 
     return True
 
@@ -888,24 +903,25 @@ def status_pagamento(request, referencia):
                 pagamento = response.json()
                 status_mp = pagamento.get("status")
 
+                print("STATUS PAGAMENTO PRODUTO:", referencia, status_mp)
+
                 if status_mp == "approved":
                     confirmar_pagamento_por_referencia(referencia)
-                    pedido.refresh_from_db()
 
                 elif status_mp in ["pending", "in_process"]:
                     Pedido.objects.filter(referencia_pagamento=referencia).update(
-                        status_pagamento="confirmação"
+                        status_pagamento="confirmacao"
                     )
-                    pedido.refresh_from_db()
 
                 elif status_mp in ["rejected", "cancelled"]:
                     Pedido.objects.filter(referencia_pagamento=referencia).update(
                         status_pagamento="recusado"
                     )
-                    pedido.refresh_from_db()
 
-        except Exception:
-            pass
+                pedido = Pedido.objects.filter(referencia_pagamento=referencia).order_by("id").first()
+
+        except Exception as e:
+            print("ERRO AO CONSULTAR STATUS PAGAMENTO:", e)
 
     return JsonResponse({
         "ok": True,
@@ -915,7 +931,6 @@ def status_pagamento(request, referencia):
         "referencia": referencia,
         "pago": pedido.status_pagamento == "pago",
     })
-
 
 @login_required
 def pagamento_sucesso(request, referencia):
@@ -2108,7 +2123,7 @@ def callback_mercadopago(request):
 
 @csrf_exempt
 def webhook_mercadopago(request):
-    print("=== WEBHOOK RECEBIDO ===")
+    print("=== WEBHOOK PRODUTO RECEBIDO ===")
     print("METHOD:", request.method)
     print("GET:", request.GET.dict())
     print("BODY RAW:", request.body.decode("utf-8", errors="ignore"))
@@ -2116,35 +2131,31 @@ def webhook_mercadopago(request):
     try:
         payment_id = None
 
-        # 🔹 1. Tenta pegar do GET
         if request.GET:
             payment_id = request.GET.get("data.id") or request.GET.get("id")
 
-        # 🔹 2. Tenta pegar do BODY (JSON)
         if not payment_id:
             try:
                 data = json.loads(request.body.decode("utf-8") or "{}")
-
                 print("BODY JSON:", data)
 
-                # Mercado Pago padrão webhook
                 payment_id = (
                     data.get("data", {}).get("id")
                     or data.get("id")
                 )
             except Exception as e:
-                print("ERRO AO LER JSON:", str(e))
+                print("ERRO AO LER JSON DO WEBHOOK:", str(e))
 
         print("PAYMENT_ID:", payment_id)
 
-        # 🔥 IMPORTANTE: SEM ID = RESPONDE OK PRA SIMULAÇÃO
         if not payment_id:
             return JsonResponse({"ok": True, "msg": "sem payment_id"}, status=200)
 
-        # 🔹 Consulta pagamento na API
         response = requests.get(
             f"https://api.mercadopago.com/v1/payments/{payment_id}",
-            headers={"Authorization": f"Bearer {settings.MERCADOPAGO_ACCESS_TOKEN}"},
+            headers={
+                "Authorization": f"Bearer {settings.MERCADOPAGO_ACCESS_TOKEN}"
+            },
             timeout=20
         )
 
@@ -2158,31 +2169,31 @@ def webhook_mercadopago(request):
         status = pagamento.get("status")
         referencia = pagamento.get("external_reference")
 
-        print("STATUS PAGAMENTO:", status)
-        print("REFERENCIA PAGAMENTO:", referencia)
+        print("STATUS PAGAMENTO PRODUTO:", status)
+        print("REFERENCIA PAGAMENTO PRODUTO:", referencia)
 
-        # 🔹 Atualização do sistema
         if referencia:
             if status == "approved":
                 confirmar_pagamento_por_referencia(referencia)
-                print("PAGAMENTO CONFIRMADO COM SUCESSO")
+                print("PAGAMENTO PRODUTO CONFIRMADO COM SUCESSO")
 
             elif status in ["pending", "in_process"]:
                 Pedido.objects.filter(referencia_pagamento=referencia).update(
                     status_pagamento="confirmacao"
                 )
+                print("PAGAMENTO PRODUTO EM ANALISE:", referencia)
 
             elif status in ["rejected", "cancelled"]:
                 Pedido.objects.filter(referencia_pagamento=referencia).update(
                     status_pagamento="recusado"
                 )
+                print("PAGAMENTO PRODUTO RECUSADO/CANCELADO:", referencia)
 
         return JsonResponse({"ok": True}, status=200)
 
     except Exception as e:
-        print("ERRO WEBHOOK:", str(e))
+        print("ERRO WEBHOOK PRODUTO:", str(e))
         return JsonResponse({"ok": True, "erro": str(e)}, status=200)
-
 
 @csrf_exempt
 def webhook_mercadopago_licenca(request):
@@ -2378,6 +2389,9 @@ def criar_pagamento_pix(request):
                     pagamento = response.json()
                     status_mp = pagamento.get("status")
 
+                    print("STATUS MP PIX EXISTENTE:", status_mp)
+                    print("REFERENCIA PIX:", referencia)
+
                     if status_mp == "approved":
                         confirmar_pagamento_por_referencia(referencia)
                         return JsonResponse({
@@ -2389,8 +2403,8 @@ def criar_pagamento_pix(request):
                     elif status_mp in ["pending", "in_process"]:
                         Pedido.objects.filter(
                             referencia_pagamento=referencia
-                        ).update(status_pagamento="confirmação")
-                        pedido_base.status_pagamento = "em_analise"
+                        ).update(status_pagamento="confirmacao")
+                        pedido_base.status_pagamento = "confirmacao"
 
                     elif status_mp in ["rejected", "cancelled"]:
                         Pedido.objects.filter(
@@ -2398,13 +2412,13 @@ def criar_pagamento_pix(request):
                         ).update(status_pagamento="recusado")
                         pedido_base.status_pagamento = "recusado"
 
-            except Exception:
-                pass
+            except Exception as e:
+                print("ERRO AO CONSULTAR PIX EXISTENTE:", e)
 
         if (
             pedido_base.mp_qr_code
             and pedido_base.mp_qr_code_base64
-            and pedido_base.status_pagamento in ["aguardando", "em_analise"]
+            and pedido_base.status_pagamento in ["aguardando", "confirmacao"]
         ):
             return JsonResponse({
                 "ok": True,
@@ -2456,6 +2470,8 @@ def criar_pagamento_pix(request):
                 "raw": response.text
             }, status=400)
 
+        print("RESPOSTA CRIAR PIX:", resposta)
+
         if response.status_code not in [200, 201]:
             return JsonResponse({
                 "ok": False,
@@ -2495,8 +2511,8 @@ def criar_pagamento_pix(request):
         })
 
     except Exception as e:
+        print("ERRO CRIAR PIX:", e)
         return JsonResponse({"ok": False, "erro": str(e)}, status=500)
-
 
 def login_loja(request):
     erro = None
