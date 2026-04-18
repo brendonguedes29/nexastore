@@ -555,14 +555,14 @@
 
             <div class="acoes-header">
                 {% if comprador_logado %}
-                    <a href="{% url 'meus_pedidos' loja.slug %}">Meus pedidos</a>
+                    <a href="{% url 'meus_pedidos' %}">Meus pedidos</a>
                     <a href="{% url 'logout_comprador' %}">Sair</a>
                 {% else %}
                     <a href="{% url 'login_comprador' loja.slug %}">Entrar</a>
                     <a href="{% url 'cadastro_comprador' loja.slug %}">Cadastrar</a>
                 {% endif %}
 
-                <a href="{% url 'ver_carrinho' loja.slug %}" class="carrinho">🛒 {{ total_itens_carrinho }}</a>
+                <a href="{% url 'ver_carrinho' %}" class="carrinho">🛒 {{ total_itens_carrinho }}</a>
             </div>
         </div>
     </div>
