@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.template.loader import render_to_string
 
 from produtos.models import Comprador
@@ -27,15 +28,18 @@ def enviar_notificacao_produto(produto):
 
         assunto = f"Novidade na loja {produto.loja.nome}"
 
-        # 🔥 CORREÇÃO PRINCIPAL AQUI (URL ABSOLUTA)
         produto_imagem_url = ""
         if produto.imagem:
             try:
-                produto_imagem_url = f"https://nexastoreofficial.com.br{produto.imagem.url}"
+                url = produto.imagem.url
+                if url.startswith("http://") or url.startswith("https://"):
+                    produto_imagem_url = url
+                else:
+                    base_url = settings.PLATFORM_BASE_URL.rstrip("/")
+                    produto_imagem_url = f"{base_url}{url}"
             except Exception as e:
                 print("ERRO AO GERAR URL DA IMAGEM:", str(e))
 
-        # URL da loja
         if produto.loja.dominio and produto.loja.dominio not in [
             "nexastoreofficial.com.br",
             "www.nexastoreofficial.com.br",
@@ -55,13 +59,13 @@ def enviar_notificacao_produto(produto):
         for email in emails:
             try:
                 print(f"EMAIL MARKETING: enviando para {email}")
+                print(f"EMAIL MARKETING: imagem usada = {produto_imagem_url}")
                 enviar_email(email, assunto, html_body)
                 enviados += 1
             except Exception as e:
                 print(f"ERRO EMAIL MARKETING para {email}: {str(e)}")
 
         print(f"EMAIL MARKETING: {enviados} e-mail(s) enviado(s)")
-        print(f"EMAIL MARKETING: imagem usada = {produto_imagem_url}")
 
     except Exception as e:
         print("ERRO EMAIL MARKETING:", str(e))

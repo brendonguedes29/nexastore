@@ -4,71 +4,78 @@
 
 <div style="max-width:600px; margin:auto; background:#ffffff; padding:24px; border-radius:16px; border:1px solid #e5e7eb;">
 
-    <h2 style="margin:0 0 12px 0; color:#111827; font-size:32px;">
+    <!-- Nome da loja -->
+    <h2 style="margin:0 0 12px 0; color:#111827; font-size:28px;">
         {{ loja.nome }}
     </h2>
 
-    <p style="margin:0 0 24px 0; color:#6b7280; font-size:16px; line-height:1.6;">
+    <p style="margin:0 0 20px 0; color:#6b7280; font-size:16px;">
         Tem novidade esperando por você.
     </p>
 
+    <!-- Card do produto -->
     <div style="border:1px solid #e5e7eb; border-radius:16px; padding:20px; background:#f8fafc;">
 
+        <!-- IMAGEM -->
         {% if produto_imagem_url %}
-            <div style="margin-bottom:18px;">
-                <img
-                    src="{{ produto_imagem_url }}"
-                    alt="{{ produto.nome }}"
-                    style="width:100%; max-width:100%; height:auto; display:block; border-radius:12px;"
-                >
-            </div>
+            <img
+                src="{{ produto_imagem_url }}"
+                alt="{{ produto.nome }}"
+                style="width:100%; max-width:100%; height:auto; border-radius:12px; margin-bottom:16px; display:block;"
+            >
         {% endif %}
 
-        <h3 style="margin:0 0 12px 0; color:#111827; font-size:26px;">
+        <!-- Nome do produto -->
+        <h3 style="margin:0 0 10px 0; color:#111827; font-size:24px;">
             {{ produto.nome }}
         </h3>
 
+        <!-- Flags -->
         {% if produto.em_destaque %}
-            <p style="margin:0 0 10px 0; color:#2563eb; font-size:16px; font-weight:bold;">
+            <p style="margin:0 0 6px 0; color:#2563eb; font-weight:bold;">
                 ⭐ Produto em destaque
             </p>
         {% endif %}
 
         {% if produto.produto_novo %}
-            <p style="margin:0 0 10px 0; color:#16a34a; font-size:16px; font-weight:bold;">
+            <p style="margin:0 0 6px 0; color:#16a34a; font-weight:bold;">
                 🆕 Produto novo
             </p>
         {% endif %}
 
         {% if produto.percentual_promocao > 0 %}
-            <p style="margin:0 0 10px 0; color:#dc2626; font-size:16px; font-weight:bold;">
+            <p style="margin:0 0 6px 0; color:#dc2626; font-weight:bold;">
                 🔥 Desconto de {{ produto.percentual_promocao }}%
             </p>
         {% endif %}
 
+        <!-- Descrição -->
         {% if produto.descricao %}
-            <p style="margin:0 0 18px 0; color:#374151; font-size:16px; line-height:1.6;">
+            <p style="margin:10px 0 14px 0; color:#374151;">
                 {{ produto.descricao }}
             </p>
         {% endif %}
 
-        <p style="margin:0; color:#111827; font-size:22px; font-weight:bold;">
+        <!-- Preço -->
+        <p style="margin:0; font-size:22px; font-weight:bold; color:#111827;">
             R$ {{ produto.preco }}
         </p>
+
     </div>
 
-    <div style="margin-top:24px;">
+    <!-- BOTÃO -->
+    <div style="margin-top:22px;">
         <a
             href="{{ loja_url }}"
-            style="display:inline-block; background:#0ea5e9; color:#ffffff; text-decoration:none; padding:14px 24px; border-radius:12px; font-size:16px; font-weight:bold;"
+            style="display:inline-block; background:#0ea5e9; color:#ffffff; text-decoration:none; padding:14px 22px; border-radius:12px; font-weight:bold;"
             target="_blank"
-            rel="noopener noreferrer"
         >
             Ver produto na loja
         </a>
     </div>
 
-    <p style="margin:28px 0 0 0; color:#6b7280; font-size:14px; line-height:1.7;">
+    <!-- Rodapé -->
+    <p style="margin-top:26px; color:#6b7280; font-size:13px;">
         Você recebeu esta mensagem porque possui cadastro de comprador na loja {{ loja.nome }}.
     </p>
 
