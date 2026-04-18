@@ -1356,9 +1356,6 @@ def cadastrar_produto(request):
                 produto.loja = loja
                 produto.save()
 
-                if produto.produto_novo or produto.em_destaque or produto.percentual_promocao > 0:
-                    enviar_notificacao_produto(produto)
-
                 imagens_extras = request.FILES.getlist("imagens_extras")
                 for indice, imagem in enumerate(imagens_extras):
                     ProdutoImagem.objects.create(
@@ -1376,10 +1373,17 @@ def cadastrar_produto(request):
                         motivo="Cadastro inicial",
                     )
 
+                if produto.produto_novo or produto.em_destaque or produto.percentual_promocao > 0:
+                    print("🔥 DISPARANDO EMAIL MARKETING...")
+                    enviar_notificacao_produto(produto)
+                else:
+                    print("ℹ️ EMAIL MARKETING NÃO ENVIADO: produto sem novo/destaque/promoção")
+
                 return redirect("lista_produtos_painel")
 
             except Exception as e:
                 print("ERRO AO SALVAR PRODUTO:", str(e))
+                print(traceback.format_exc())
 
         else:
             print("ERROS FORM CADASTRO:", form.errors.as_json())
