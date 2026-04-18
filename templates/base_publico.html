@@ -140,7 +140,7 @@
 
     <div class="header">
         <div class="wrap header-flex">
-            <a href="{% if loja %}{% url 'loja' loja.slug %}{% else %}{% url 'home' %}{% endif %}" class="logo-area">
+            <a href="{% if loja %}https://{{ loja.slug }}.nexastoreofficial.com.br{% else %}{% url 'home' %}{% endif %}" class="logo-area">
                 <div class="logo-badge">
                     {% if loja %}
                         {{ loja.nome|slice:":1"|upper }}
@@ -165,7 +165,7 @@
 
             <div class="acoes-topo">
                 {% if loja %}
-                    <a href="{% url 'loja' loja.slug %}">Início</a>
+                    <a href="https://{{ loja.slug }}.nexastoreofficial.com.br">Início</a>
                 {% else %}
                     <a href="{% url 'home' %}">Início</a>
                 {% endif %}
@@ -191,7 +191,7 @@
 
     <div class="rodape-brand">
         <div class="wrap">
-            <span> <strong>NexaStore</strong></span>
+            <span><strong>NexaStore</strong></span>
         </div>
     </div>
 
