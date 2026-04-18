@@ -32,10 +32,20 @@ def enviar_notificacao_produto(produto):
         produto_imagem_url = ""
         if produto.imagem:
             try:
-                url = produto.imagem.url
+                url = str(produto.imagem.url).strip()
 
-                # Corrige espaços e caracteres problemáticos na URL
-                produto_imagem_url = quote(url, safe=":/?&=%._-")
+                # Se já vier URL completa, codifica direito
+                if url.startswith("http://") or url.startswith("https://"):
+                    produto_imagem_url = quote(url, safe=":/?&=%._-")
+                else:
+                    # fallback simples, se um dia vier relativa
+                    produto_imagem_url = quote(
+                        f"https://www.nexastoreofficial.com.br{url}",
+                        safe=":/?&=%._-"
+                    )
+
+                # reforço extra contra espaço
+                produto_imagem_url = produto_imagem_url.replace(" ", "%20")
 
             except Exception as e:
                 print("ERRO AO GERAR URL DA IMAGEM:", str(e))

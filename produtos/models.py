@@ -1,8 +1,38 @@
 from decimal import Decimal
+import os
+import uuid
 
 from django.db import models
 from django.contrib.auth.models import User
+from django.utils.text import slugify
+
 from lojas.models import Loja
+
+
+def upload_produto_imagem(instance, filename):
+    ext = os.path.splitext(filename)[1].lower() or ".jpg"
+
+    if hasattr(instance, "nome") and instance.nome:
+        nome_base = slugify(instance.nome) or "produto"
+    elif hasattr(instance, "produto") and instance.produto and instance.produto.nome:
+        nome_base = slugify(instance.produto.nome) or "produto"
+    else:
+        nome_base = "produto"
+
+    nome_unico = uuid.uuid4().hex[:10]
+    return f"produtos/{nome_base}-{nome_unico}{ext}"
+
+
+def upload_produto_imagem_extra(instance, filename):
+    ext = os.path.splitext(filename)[1].lower() or ".jpg"
+
+    if instance.produto and instance.produto.nome:
+        nome_base = slugify(instance.produto.nome) or "produto"
+    else:
+        nome_base = "produto"
+
+    nome_unico = uuid.uuid4().hex[:10]
+    return f"produtos/extras/{nome_base}-{nome_unico}{ext}"
 
 
 class Categoria(models.Model):
@@ -35,7 +65,7 @@ class Produto(models.Model):
     em_destaque = models.BooleanField(default=False)
     produto_novo = models.BooleanField(default=False)
     percentual_promocao = models.PositiveIntegerField(default=0)
-    imagem = models.ImageField(upload_to="produtos/", blank=True, null=True)
+    imagem = models.ImageField(upload_to=upload_produto_imagem, blank=True, null=True)
     estoque = models.IntegerField(default=0)
 
     def __str__(self):
@@ -70,7 +100,7 @@ class ProdutoImagem(models.Model):
         on_delete=models.CASCADE,
         related_name="imagens_extras"
     )
-    imagem = models.ImageField(upload_to="produtos/extras/")
+    imagem = models.ImageField(upload_to=upload_produto_imagem_extra)
     ordem = models.PositiveIntegerField(default=0)
     criada_em = models.DateTimeField(auto_now_add=True)
 
