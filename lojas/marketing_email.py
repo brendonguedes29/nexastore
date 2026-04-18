@@ -1,5 +1,5 @@
-from django.conf import settings
 from django.template.loader import render_to_string
+from django.conf import settings
 
 from produtos.models import Comprador
 from .email_service import enviar_email
@@ -28,44 +28,49 @@ def enviar_notificacao_produto(produto):
 
         assunto = f"Novidade na loja {produto.loja.nome}"
 
+        # =========================
+        # 🔥 CORREÇÃO DA IMAGEM
+        # =========================
         produto_imagem_url = ""
+
         if produto.imagem:
             try:
                 url = produto.imagem.url
+
+                # Se já for absoluta
                 if url.startswith("http://") or url.startswith("https://"):
                     produto_imagem_url = url
                 else:
-                    base_url = settings.PLATFORM_BASE_URL.rstrip("/")
+                    # Monta URL absoluta (Render)
+                    base_url = getattr(settings, "PLATFORM_BASE_URL", "").rstrip("/")
                     produto_imagem_url = f"{base_url}{url}"
+
             except Exception as e:
                 print("ERRO AO GERAR URL DA IMAGEM:", str(e))
 
-        if produto.loja.dominio and produto.loja.dominio not in [
-            "nexastoreofficial.com.br",
-            "www.nexastoreofficial.com.br",
-        ]:
-            loja_url = f"https://{produto.loja.dominio}"
-        else:
-            loja_url = f"https://{produto.loja.slug}.nexastoreofficial.com.br"
+        # DEBUG PRA GENTE VER
+        print("URL FINAL DA IMAGEM:", produto_imagem_url)
 
+        # =========================
+        # TEMPLATE
+        # =========================
         html_body = render_to_string("email/email_produto.html", {
             "produto": produto,
             "loja": produto.loja,
             "produto_imagem_url": produto_imagem_url,
-            "loja_url": loja_url,
         })
 
         enviados = 0
+
         for email in emails:
             try:
                 print(f"EMAIL MARKETING: enviando para {email}")
-                print(f"EMAIL MARKETING: imagem usada = {produto_imagem_url}")
                 enviar_email(email, assunto, html_body)
                 enviados += 1
             except Exception as e:
                 print(f"ERRO EMAIL MARKETING para {email}: {str(e)}")
 
-        print(f"EMAIL MARKETING: {enviados} e-mail(s) enviado(s)")
+        print(f"EMAIL MARKETING: {enviados} e-mail(s) enviado(s) para o produto {produto.nome}")
 
     except Exception as e:
         print("ERRO EMAIL MARKETING:", str(e))
