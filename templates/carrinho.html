@@ -86,7 +86,7 @@
                     </button>
 
                     {% if loja %}
-                    <a href="{% url 'loja' loja.slug %}"
+                    <a href="https://{{ loja.slug }}.nexastoreofficial.com.br"
                        style="display:inline-block;background:#f8fafc;color:#0f172a;text-decoration:none;padding:14px 20px;border-radius:14px;font-weight:800;border:1px solid #cbd5e1;">
                         Adicionar mais itens
                     </a>
@@ -113,7 +113,7 @@
             <div style="text-align:center;padding:30px 10px;">
                 <p style="font-size:22px;color:#64748b;margin-bottom:20px;">Seu carrinho está vazio.</p>
                 {% if loja %}
-                <a href="{% url 'loja' loja.slug %}"
+                <a href="https://{{ loja.slug }}.nexastoreofficial.com.br"
                    style="display:inline-block;background:#0f172a;color:white;text-decoration:none;padding:14px 22px;border-radius:14px;font-weight:800;">
                     Ir para a loja
                 </a>
