@@ -59,7 +59,7 @@ class Loja(models.Model):
 
     ativa = models.BooleanField(default=True)
 
-    valor_licenca = models.DecimalField(max_digits=10, decimal_places=2, default=49.90)
+    valor_licenca = models.DecimalField(max_digits=10, decimal_places=2, default=59.90)
 
     data_ultimo_pagamento = models.DateField(blank=True, null=True)
     data_vencimento_licenca = models.DateField(blank=True, null=True)
@@ -83,6 +83,12 @@ class Loja(models.Model):
     aceitar_whatsapp_financeiro = models.BooleanField(default=True)
 
     observacoes_licenca = models.TextField(blank=True, null=True)
+
+    # ASSINATURA AUTOMÁTICA MERCADO PAGO
+    mp_preapproval_id = models.CharField(max_length=120, blank=True, null=True)
+    mp_preapproval_status = models.CharField(max_length=50, blank=True, null=True)
+    mp_preapproval_init_point = models.TextField(blank=True, null=True)
+    cobranca_automatica_ativa = models.BooleanField(default=False)
 
     criado_em = models.DateTimeField(auto_now_add=True)
     atualizado_em = models.DateTimeField(auto_now=True)
@@ -160,6 +166,14 @@ class Loja(models.Model):
         return max(dias, 0)
 
     @property
+    def em_teste_gratis(self):
+        return (
+            self.status_licenca == "ativa"
+            and self.data_ultimo_pagamento is None
+            and self.data_vencimento_licenca is not None
+        )
+
+    @property
     def pagamento_disponivel(self):
         return bool(
             (self.aceitar_pix and (self.chave_pix or self.pix_copia_cola)) or
@@ -221,21 +235,3 @@ class PagamentoLicenca(models.Model):
             self.data_aprovacao = timezone.now()
             self.save(update_fields=["status", "data_aprovacao", "data_atualizacao"])
             self.loja.renovar_licenca(30)
-
-    def marcar_status_por_mp(self, status_mp):
-        mapa = {
-            "approved": "aprovado",
-            "pending": "pendente",
-            "in_process": "pendente",
-            "rejected": "recusado",
-            "cancelled": "cancelado",
-            "expired": "expirado",
-        }
-
-        novo_status = mapa.get(status_mp, "pendente")
-
-        if novo_status == "aprovado":
-            self.marcar_aprovado()
-        else:
-            self.status = novo_status
-            self.save(update_fields=["status", "data_atualizacao"])

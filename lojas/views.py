@@ -1035,6 +1035,7 @@ def painel_loja(request):
         total_pedidos = pedidos_lista.count()
         pedidos_pendentes = pedidos_lista.filter(status="pendente").count()
         pedidos_entregues = pedidos_lista.filter(status="entregue").count()
+        pedidos_pagos = pedidos_lista.filter(status_pagamento="pago").count()
 
         hoje = timezone.localdate()
 
@@ -1110,6 +1111,7 @@ def painel_loja(request):
             "licenca_bloqueada": licenca_bloqueada,
             "mp_connected": mp_connected,
             "loja_url_publica": loja_url_publica,
+            "pedidos_pagos": pedidos_pagos,
         }
 
         return render(request, "painel_loja.html", context)

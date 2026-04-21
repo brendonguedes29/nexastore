@@ -39,9 +39,50 @@
         .acoes{display:flex;gap:12px;margin-top:24px;flex-wrap:wrap;}
         .botao{background:#111827;color:white;border:none;padding:14px 18px;border-radius:12px;cursor:pointer;font-size:15px;text-decoration:none;display:inline-block;}
         .botao-secundario{background:white;color:#111827;border:1px solid #ccc;padding:14px 18px;border-radius:12px;cursor:pointer;font-size:15px;text-decoration:none;display:inline-block;}
+
+        .aviso-divulgacao{
+            margin:16px 0 22px 0;
+            background:linear-gradient(135deg,#eff6ff 0%, #f0fdf4 100%);
+            border:1px solid #bfdbfe;
+            border-radius:16px;
+            padding:14px 16px;
+            display:flex;
+            align-items:flex-start;
+            gap:12px;
+        }
+
+        .aviso-icone{
+            width:38px;
+            height:38px;
+            min-width:38px;
+            border-radius:12px;
+            background:linear-gradient(135deg,#2563eb,#22c55e);
+            color:#fff;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            font-size:18px;
+            font-weight:900;
+            box-shadow:0 8px 18px rgba(37,99,235,.18);
+        }
+
+        .aviso-titulo{
+            font-size:15px;
+            font-weight:800;
+            color:#0f172a;
+            margin-bottom:4px;
+        }
+
+        .aviso-texto{
+            font-size:13px;
+            line-height:1.6;
+            color:#475569;
+        }
+
         @media (max-width:760px){
             .categoria-linha{grid-template-columns:1fr;}
             .preview-card,.preview-card img{width:90px;height:90px;}
+            .aviso-divulgacao{padding:14px;}
         }
     </style>
 </head>
@@ -68,6 +109,16 @@
             <div class="secao">
                 <h3>Dados principais</h3>
                 <div class="secao-sub">Cadastre as informações básicas do produto.</div>
+
+                <div class="aviso-divulgacao">
+                    <div class="aviso-icone">✉</div>
+                    <div>
+                        <div class="aviso-titulo">Novo produto com divulgação automática</div>
+                        <div class="aviso-texto">
+                            Ao cadastrar este produto, os compradores cadastrados e ativos da sua loja poderão ser notificados por e-mail sobre a novidade, aumentando as chances de venda.
+                        </div>
+                    </div>
+                </div>
 
                 <div class="linha">
                     <label>Nome</label>

@@ -13,6 +13,9 @@ from lojas.licenca_views import (
     gerar_checkout_licenca,
     status_pagamento_licenca,
     webhook_mercadopago_licenca,
+    criar_assinatura_automatica_licenca,
+    status_assinatura_automatica_licenca,
+    cancelar_assinatura_automatica_licenca,
 )
 
 from lojas.views import (
@@ -184,6 +187,11 @@ urlpatterns = [
     path("painel/financeiro/gerar-pix/", gerar_pix_licenca, name="gerar_pix_licenca"),
     path("painel/financeiro/gerar-checkout/", gerar_checkout_licenca, name="gerar_checkout_licenca"),
     path("painel/financeiro/status/<int:pagamento_id>/", status_pagamento_licenca, name="status_pagamento_licenca"),
+
+    # ASSINATURA AUTOMÁTICA DA LICENÇA
+    path("painel/financeiro/assinatura/criar/", criar_assinatura_automatica_licenca, name="criar_assinatura_automatica_licenca"),
+    path("painel/financeiro/assinatura/status/", status_assinatura_automatica_licenca, name="status_assinatura_automatica_licenca"),
+    path("painel/financeiro/assinatura/cancelar/", cancelar_assinatura_automatica_licenca, name="cancelar_assinatura_automatica_licenca"),
 
     # WEBHOOK
     path("webhooks/mercadopago/", webhook_mercadopago, name="webhook_mercadopago"),

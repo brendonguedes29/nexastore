@@ -82,6 +82,16 @@
             color:white;
         }
 
+        .botao-verde{
+            background:#16a34a;
+            color:white;
+        }
+
+        .botao-vermelho{
+            background:#dc2626;
+            color:white;
+        }
+
         .grid-cards{
             display:grid;
             grid-template-columns:repeat(auto-fit, minmax(240px, 1fr));
@@ -132,6 +142,21 @@
         .status-pendente{
             background:#fef3c7;
             color:#92400e;
+        }
+
+        .status-assinatura-ativa{
+            background:#dcfce7;
+            color:#166534;
+        }
+
+        .status-assinatura-inativa{
+            background:#fee2e2;
+            color:#991b1b;
+        }
+
+        .status-assinatura-pendente{
+            background:#dbeafe;
+            color:#1d4ed8;
         }
 
         .alerta{
@@ -310,6 +335,93 @@
             line-height:1.6;
         }
 
+        .faixa-plano{
+            background:#111827;
+            color:white;
+            padding:18px;
+            border-radius:16px;
+            margin-bottom:18px;
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+            flex-wrap:wrap;
+            gap:12px;
+        }
+
+        .faixa-plano .principal{
+            font-size:15px;
+            font-weight:700;
+            color:white;
+        }
+
+        .faixa-plano .secundario{
+            font-size:13px;
+            color:#9ca3af;
+        }
+
+        .urgencia-licenca{
+            margin-top:16px;
+            background:#fef3c7;
+            border:1px solid #fde68a;
+            color:#92400e;
+            padding:14px 16px;
+            border-radius:12px;
+            font-weight:600;
+            line-height:1.5;
+        }
+
+        .assinatura-box{
+            background:linear-gradient(135deg,#eff6ff 0%, #f8fafc 100%);
+            border:1px solid #bfdbfe;
+            border-radius:18px;
+            padding:18px;
+            margin-bottom:18px;
+        }
+
+        .assinatura-head{
+            display:flex;
+            align-items:center;
+            justify-content:space-between;
+            flex-wrap:wrap;
+            gap:12px;
+            margin-bottom:12px;
+        }
+
+        .assinatura-head h3{
+            font-size:18px;
+            color:#111827;
+            margin:0;
+        }
+
+        .assinatura-grid{
+            display:grid;
+            grid-template-columns:repeat(auto-fit, minmax(220px, 1fr));
+            gap:14px;
+            margin-top:14px;
+        }
+
+        .assinatura-mini{
+            background:white;
+            border:1px solid #dbeafe;
+            border-radius:14px;
+            padding:14px;
+        }
+
+        .assinatura-mini strong{
+            display:block;
+            font-size:13px;
+            color:#475569;
+            margin-bottom:6px;
+        }
+
+        .assinatura-mini span{
+            display:block;
+            font-size:14px;
+            color:#111827;
+            font-weight:700;
+            word-break:break-word;
+        }
+
         @media (max-width:900px){
             .pix-grid{
                 grid-template-columns:1fr;
@@ -436,7 +548,96 @@
         </div>
 
         <div class="bloco">
-            <h2>Pagamento automático da licença</h2>
+            <h2>Cobrança automática</h2>
+
+            <p class="texto-suave" style="margin-bottom:16px;">
+                Ative a cobrança automática no cartão para renovar a licença mensalmente sem precisar gerar um novo pagamento manual.
+            </p>
+
+            <div class="assinatura-box">
+                <div class="assinatura-head">
+                    <h3>Assinatura automática da licença</h3>
+
+                    {% if loja.cobranca_automatica_ativa %}
+                        <span class="status-badge status-assinatura-ativa">ATIVA</span>
+                    {% elif loja.mp_preapproval_id %}
+                        <span class="status-badge status-assinatura-pendente">PENDENTE</span>
+                    {% else %}
+                        <span class="status-badge status-assinatura-inativa">INATIVA</span>
+                    {% endif %}
+                </div>
+
+                <div class="assinatura-grid">
+                    <div class="assinatura-mini">
+                        <strong>Status da assinatura</strong>
+                        <span id="statusAssinaturaTexto">
+                            {% if loja.cobranca_automatica_ativa %}
+                                Ativa
+                            {% elif loja.mp_preapproval_status %}
+                                {{ loja.mp_preapproval_status }}
+                            {% else %}
+                                Inativa
+                            {% endif %}
+                        </span>
+                    </div>
+
+                    <div class="assinatura-mini">
+                        <strong>ID da assinatura</strong>
+                        <span id="assinaturaIdTexto">
+                            {% if loja.mp_preapproval_id %}
+                                {{ loja.mp_preapproval_id }}
+                            {% else %}
+                                Ainda não gerado
+                            {% endif %}
+                        </span>
+                    </div>
+
+                    <div class="assinatura-mini">
+                        <strong>Modelo</strong>
+                        <span>R$ {{ loja.valor_licenca|floatformat:2 }} / mês</span>
+                    </div>
+                </div>
+
+                <div class="acoes-pagamento">
+                    {% if not loja.cobranca_automatica_ativa %}
+                        <button type="button" id="btnAtivarAssinatura" class="botao botao-verde">
+                            Ativar cobrança automática
+                        </button>
+                    {% endif %}
+
+                    {% if loja.mp_preapproval_id %}
+                        <button type="button" id="btnConsultarAssinatura" class="botao botao-cinza">
+                            Atualizar status da assinatura
+                        </button>
+                    {% endif %}
+
+                    {% if loja.mp_preapproval_id and loja.cobranca_automatica_ativa %}
+                        <button type="button" id="btnCancelarAssinatura" class="botao botao-vermelho">
+                            Cancelar cobrança automática
+                        </button>
+                    {% endif %}
+                </div>
+
+                <div id="statusAssinaturaBox" class="status-caixa"></div>
+            </div>
+        </div>
+
+        <div class="bloco">
+            <h2>Ative sua loja agora</h2>
+
+            <p class="texto-suave" style="margin-bottom:16px;">
+                Para manter sua loja online e disponível para seus clientes, é necessário manter a licença ativa.
+            </p>
+
+            <div class="faixa-plano">
+                <div class="principal">
+                    💳 <strong>Plano único:</strong> R$ {{ loja.valor_licenca|floatformat:2 }} / mês
+                </div>
+
+                <div class="secundario">
+                    Liberação imediata após pagamento
+                </div>
+            </div>
 
             <p class="texto-suave" style="margin-bottom:16px;">
                 Gere o pagamento da licença diretamente por aqui. Após a aprovação no Mercado Pago, a licença será ativada automaticamente.
@@ -444,11 +645,11 @@
 
             <div class="acoes-pagamento">
                 <button type="button" id="btnGerarPixLicenca" class="botao botao-cyan">
-                    Gerar Pix automático
+                    Pagar agora via Pix
                 </button>
 
                 <button type="button" id="btnGerarCheckoutLicenca" class="botao botao-azul">
-                    Pagar com cartão
+                    Pagar agora com cartão
                 </button>
 
                 {% if loja.aceitar_whatsapp_financeiro and loja.whatsapp_financeiro %}
@@ -460,6 +661,10 @@
                         Falar com o financeiro
                     </a>
                 {% endif %}
+            </div>
+
+            <div class="urgencia-licenca">
+                ⚠️ Sua loja pode ficar indisponível caso a licença não seja regularizada.
             </div>
 
             <div id="statusPagamento" class="status-caixa"></div>
@@ -580,7 +785,9 @@
                 <p class="texto-suave">Nenhum pagamento de licença foi gerado ainda.</p>
             {% endif %}
         </div>
-    </div>    <script>
+    </div>
+
+    <script>
         document.addEventListener("DOMContentLoaded", function () {
             let pagamentoLicencaId = {% if pagamento_pendente %}{{ pagamento_pendente.id }}{% else %}null{% endif %};
             const licencaAtiva = "{{ loja.status_licenca }}" === "ativa";
@@ -590,8 +797,19 @@
             const btnCheckout = document.getElementById("btnGerarCheckoutLicenca");
             const btnCopiarPix = document.getElementById("btnCopiarPix");
 
+            const btnAtivarAssinatura = document.getElementById("btnAtivarAssinatura");
+            const btnConsultarAssinatura = document.getElementById("btnConsultarAssinatura");
+            const btnCancelarAssinatura = document.getElementById("btnCancelarAssinatura");
+
             function mostrarStatus(texto) {
                 const box = document.getElementById("statusPagamento");
+                if (!box) return;
+                box.style.display = "block";
+                box.innerText = texto;
+            }
+
+            function mostrarStatusAssinatura(texto) {
+                const box = document.getElementById("statusAssinaturaBox");
                 if (!box) return;
                 box.style.display = "block";
                 box.innerText = texto;
@@ -761,6 +979,128 @@
                 }
             }
 
+            async function ativarAssinaturaAutomatica() {
+                try {
+                    mostrarStatusAssinatura("Gerando assinatura automática...");
+
+                    const response = await fetch("{% url 'criar_assinatura_automatica_licenca' %}", {
+                        method: "GET",
+                        headers: {
+                            "X-Requested-With": "XMLHttpRequest"
+                        }
+                    });
+
+                    const data = await response.json();
+
+                    if (!data.ok) {
+                        mostrarStatusAssinatura(
+                            (data.erro || "Não foi possível criar a assinatura.") +
+                            (data.resposta_mp ? "\n\n" + JSON.stringify(data.resposta_mp) : "")
+                        );
+                        return;
+                    }
+
+                    if (data.ja_existe) {
+                        mostrarStatusAssinatura(data.mensagem || "A assinatura já está ativa.");
+                        setTimeout(function () {
+                            window.location.reload();
+                        }, 1200);
+                        return;
+                    }
+
+                    if (data.checkout_url) {
+                        mostrarStatusAssinatura("Redirecionando para ativação da cobrança automática...");
+                        window.location.href = data.checkout_url;
+                        return;
+                    }
+
+                    mostrarStatusAssinatura("Assinatura criada, mas o link de ativação não foi retornado.");
+                } catch (e) {
+                    console.error("erro assinatura:", e);
+                    mostrarStatusAssinatura("Erro ao ativar cobrança automática: " + e);
+                }
+            }
+
+            async function consultarStatusAssinatura() {
+                try {
+                    mostrarStatusAssinatura("Atualizando status da assinatura...");
+
+                    const response = await fetch("{% url 'status_assinatura_automatica_licenca' %}", {
+                        method: "GET",
+                        headers: {
+                            "X-Requested-With": "XMLHttpRequest"
+                        }
+                    });
+
+                    const data = await response.json();
+
+                    if (!data.ok) {
+                        mostrarStatusAssinatura(data.erro || "Não foi possível consultar a assinatura.");
+                        return;
+                    }
+
+                    const statusTexto = document.getElementById("statusAssinaturaTexto");
+                    const assinaturaIdTexto = document.getElementById("assinaturaIdTexto");
+
+                    if (statusTexto) {
+                        statusTexto.innerText = data.status || (data.ativa ? "Ativa" : "Inativa");
+                    }
+
+                    if (assinaturaIdTexto) {
+                        assinaturaIdTexto.innerText = data.assinatura_id || "Ainda não gerado";
+                    }
+
+                    mostrarStatusAssinatura(
+                        data.ativa
+                            ? "A cobrança automática está ativa."
+                            : "A cobrança automática ainda não está ativa."
+                    );
+
+                    if (data.ativa) {
+                        setTimeout(function () {
+                            window.location.reload();
+                        }, 1200);
+                    }
+                } catch (e) {
+                    console.error("erro status assinatura:", e);
+                    mostrarStatusAssinatura("Erro ao consultar status da assinatura: " + e);
+                }
+            }
+
+            async function cancelarAssinaturaAutomatica() {
+                const confirmar = confirm("Deseja realmente cancelar a cobrança automática da licença?");
+                if (!confirmar) {
+                    return;
+                }
+
+                try {
+                    mostrarStatusAssinatura("Cancelando cobrança automática...");
+
+                    const response = await fetch("{% url 'cancelar_assinatura_automatica_licenca' %}", {
+                        method: "GET",
+                        headers: {
+                            "X-Requested-With": "XMLHttpRequest"
+                        }
+                    });
+
+                    const data = await response.json();
+
+                    if (!data.ok) {
+                        mostrarStatusAssinatura(data.erro || "Não foi possível cancelar a assinatura.");
+                        return;
+                    }
+
+                    mostrarStatusAssinatura(data.mensagem || "Assinatura cancelada com sucesso.");
+
+                    setTimeout(function () {
+                        window.location.reload();
+                    }, 1400);
+                } catch (e) {
+                    console.error("erro cancelar assinatura:", e);
+                    mostrarStatusAssinatura("Erro ao cancelar assinatura: " + e);
+                }
+            }
+
             if (btnPix) {
                 btnPix.addEventListener("click", gerarPixLicenca);
             }
@@ -771,6 +1111,18 @@
 
             if (btnCopiarPix) {
                 btnCopiarPix.addEventListener("click", copiarPix);
+            }
+
+            if (btnAtivarAssinatura) {
+                btnAtivarAssinatura.addEventListener("click", ativarAssinaturaAutomatica);
+            }
+
+            if (btnConsultarAssinatura) {
+                btnConsultarAssinatura.addEventListener("click", consultarStatusAssinatura);
+            }
+
+            if (btnCancelarAssinatura) {
+                btnCancelarAssinatura.addEventListener("click", cancelarAssinaturaAutomatica);
             }
 
             {% if pagamento_pendente and pagamento_pendente.qr_code and pagamento_pendente.qr_code_base64 %}

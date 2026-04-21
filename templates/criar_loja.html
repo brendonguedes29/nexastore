@@ -117,6 +117,50 @@
             color:#93c5fd;
         }
 
+        .faixa-plano{
+            margin:0 0 18px 0;
+            padding:16px 18px;
+            border-radius:18px;
+            background:linear-gradient(135deg,rgba(34,211,238,.10),rgba(59,130,246,.10));
+            border:1px solid rgba(147,197,253,.18);
+        }
+
+        .faixa-plano-topo{
+            display:flex;
+            justify-content:space-between;
+            gap:12px;
+            flex-wrap:wrap;
+            align-items:center;
+            margin-bottom:8px;
+        }
+
+        .faixa-plano-tag{
+            display:inline-flex;
+            align-items:center;
+            gap:8px;
+            font-size:12px;
+            font-weight:900;
+            color:#dbeafe;
+            background:rgba(255,255,255,.06);
+            border:1px solid rgba(255,255,255,.10);
+            padding:8px 10px;
+            border-radius:999px;
+        }
+
+        .faixa-plano-valor{
+            font-size:24px;
+            font-weight:900;
+            color:#fff;
+            letter-spacing:-.5px;
+        }
+
+        .faixa-plano p{
+            color:#cbd5e1;
+            line-height:1.6;
+            font-size:14px;
+            margin:0;
+        }
+
         .btn{
             width:100%;
             border:none;
@@ -367,6 +411,10 @@
             .resumo-valor{
                 text-align:left;
             }
+
+            .faixa-plano-valor{
+                font-size:21px;
+            }
         }
     </style>
 </head>
@@ -377,6 +425,16 @@
                 <h1>Criar minha loja</h1>
                 <div class="sub">
                     Cadastre sua conta e comece a estruturar sua loja na NexaStore.
+                </div>
+
+                <div class="faixa-plano">
+                    <div class="faixa-plano-topo">
+                        <div class="faixa-plano-tag">Plano único da plataforma</div>
+                        <div class="faixa-plano-valor">R$ 59,90 / mês</div>
+                    </div>
+                    <p>
+                        Após criar e ativar sua conta, você poderá acessar o painel e regularizar a licença da plataforma para liberar sua operação.
+                    </p>
                 </div>
 
                 {% if erro %}

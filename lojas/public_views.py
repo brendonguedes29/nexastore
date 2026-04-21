@@ -81,7 +81,7 @@ def criar_loja_publica(request):
             email_comercial=email,
             telefone=telefone,
             ativa=False,
-            valor_licenca=49.90,
+            valor_licenca=59.90,
             status_licenca="pendente",
             banner_titulo="+ PRODUTOS NA SUA LOJA",
             banner_subtitulo="Compre com praticidade e encontre tudo em um só lugar.",
@@ -92,7 +92,6 @@ def criar_loja_publica(request):
             texto_busca="O que você procura?",
         )
 
-        # domínio padrão automático da loja
         loja.dominio = f"{loja.slug}.nexastoreofficial.com.br"
         loja.save(update_fields=["dominio", "atualizado_em"])
 

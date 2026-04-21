@@ -714,42 +714,50 @@
             <h1>Dashboard</h1>
             <p>Resumo geral da operação da loja</p>
 
-            {% if loja.status_licenca == "ativa" %}
-                <div class="alerta-licenca alerta-verde">
-                    Sua licença está ativa e a área administrativa está liberada.
-                </div>
-            {% elif loja.status_licenca == "vencida" %}
-                <div class="alerta-licenca alerta-vermelho">
-                    Sua licença está vencida. Regularize o pagamento para reativar todas as funções da loja.
-                </div>
-            {% else %}
-                <div class="alerta-licenca alerta-amarelo">
-                    Sua licença está pendente. Finalize o pagamento para liberar o acesso completo do sistema.
-                </div>
-            {% endif %}
-        </div>
+           {% if loja.status_licenca == "ativa" %}
+    <div class="alerta-licenca alerta-verde">
+        Sua licença está ativa e a área administrativa está liberada.
+    </div>
+{% elif loja.status_licenca == "vencida" %}
+    <div class="alerta-licenca alerta-vermelho">
+        Sua licença está vencida. Regularize o pagamento para reativar todas as funções da loja.
+    </div>
+{% else %}
+    <div class="alerta-licenca alerta-amarelo">
+        Sua licença está pendente. Finalize o pagamento para liberar o acesso completo do sistema.
+    </div>
+{% endif %}
+</div>
 
-        <div class="cards">
-            <div class="card">
-                <small>Total de produtos</small>
-                <strong>{{ total_produtos|default:"0" }}</strong>
-            </div>
+<div class="cards">
 
-            <div class="card">
-                <small>Produtos ativos</small>
-                <strong>{{ produtos_ativos|default:"0" }}</strong>
-            </div>
+    <div class="card">
+        <small>Total de produtos</small>
+        <strong>{{ total_produtos|default:"0" }}</strong>
+    </div>
 
-            <div class="card">
-                <small>Total de pedidos</small>
-                <strong>{{ total_pedidos|default:"0" }}</strong>
-            </div>
+    <div class="card">
+        <small>Produtos ativos</small>
+        <strong>{{ produtos_ativos|default:"0" }}</strong>
+    </div>
 
-            <div class="card card-destaque-azul">
-                <small>Pedidos hoje</small>
-                <strong>{{ pedidos_hoje|default:"0" }}</strong>
-            </div>
+    <div class="card">
+        <small>Total de pedidos</small>
+        <strong>{{ total_pedidos|default:"0" }}</strong>
+    </div>
 
+    <!-- 🔥 NOVO CARD -->
+    <div class="card">
+        <small>Pedidos pagos</small>
+        <strong>{{ pedidos_pagos|default:"0" }}</strong>
+    </div>
+
+    <div class="card card-destaque-azul">
+        <small>Pedidos hoje</small>
+        <strong>{{ pedidos_hoje|default:"0" }}</strong>
+    </div>
+
+</div>
             <div class="card">
                 <small>Total em estoque</small>
                 <strong>{{ total_estoque|default:"0" }}</strong>
@@ -794,28 +802,44 @@
                 </div>
 
                 <div class="grafico-area">
-                    {% for item in movimento_mensal %}
-                        <div class="grafico-coluna">
-                            <div class="grafico-total">{{ item.total|default:"0" }}</div>
+    {% for item in movimento_mensal %}
+        <div class="grafico-coluna">
+            <div class="grafico-total">
+    {{ item.total|default:"0" }}
+</div>
 
-                            <div class="grafico-barras">
-                                <div class="grafico-barra-wrap">
-                                    <div
-                                        class="grafico-barra grafico-barra-total"
-                                        style="height:{{ item.altura|default:'12' }}%;"
-                                        title="{{ item.mes }} - Total de pedidos: {{ item.total|default:'0' }}"
-                                    ></div>
-                                </div>
+<div class="grafico-total" style="color:#16a34a;">
+    {{ item.pagos|default:"0" }}
+</div>
 
-                                <div class="grafico-barra-wrap">
-                                    <div
-                                        class="grafico-barra grafico-barra-pagos"
-                                        style="height:{{ item.altura_pagos|default:'12' }}%;"
-                                        title="{{ item.mes }} - Pedidos pagos: {{ item.pagos|default:'0' }}"
-                                    ></div>
-                                </div>
-                            </div>
+           <div class="grafico-barras">
 
+    <!-- TOTAL -->
+    <div class="grafico-barra-wrap">
+        <div
+            class="grafico-barra grafico-barra-total"
+            style="height:{{ item.altura|default:'12' }}%;"
+        ></div>
+    </div>
+
+    <!-- PAGOS -->
+    <div class="grafico-barra-wrap">
+
+        <!-- 👇 NÚMERO DO PAGOS (AQUI!) -->
+        <span style="font-size:10px;color:#16a34a;font-weight:700;">
+            {{ item.pagos|default:"0" }}
+        </span>
+
+        <div
+            class="grafico-barra grafico-barra-pagos"
+            style="height:{{ item.altura_pagos|default:'12' }}%;"
+        ></div>
+
+    </div>
+
+</div>
+
+           
                             <div class="grafico-mes">{{ item.mes }}</div>
                         </div>
                     {% empty %}
