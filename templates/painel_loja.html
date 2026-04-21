@@ -179,7 +179,7 @@
 
         .principal{
             flex:1;
-            padding:26px 28px 26px;
+            padding:24px;
         }
 
         .topo{
@@ -187,12 +187,11 @@
         }
 
         .topo h1{
-            font-size:38px;
+            font-size:36px;
             line-height:1;
             margin-bottom:8px;
             letter-spacing:-1px;
             color:#111827;
-            text-align:left;
         }
 
         .topo p{
@@ -238,10 +237,10 @@
         .card{
             background:var(--card);
             border-radius:16px;
-            padding:14px;
+            padding:16px;
             box-shadow:var(--shadow-soft);
             border:1px solid var(--line);
-            min-height:102px;
+            min-height:92px;
             display:flex;
             flex-direction:column;
             justify-content:center;
@@ -256,20 +255,18 @@
         .card small{
             display:block;
             color:var(--muted);
-            margin-bottom:10px;
-            font-size:10px;
+            margin-bottom:8px;
+            font-size:11px;
             font-weight:800;
             text-transform:uppercase;
-            letter-spacing:.7px;
-            text-align:center;
+            letter-spacing:.6px;
         }
 
         .card strong{
-            font-size:22px;
+            font-size:28px;
             line-height:1.1;
             color:#0f172a;
-            letter-spacing:-.5px;
-            text-align:center;
+            letter-spacing:-.8px;
         }
 
         .card .mini{
@@ -291,6 +288,16 @@
             color:#0369a1;
         }
 
+        .card-destaque-verde{
+            background:linear-gradient(180deg,#f0fdf4,#dcfce7);
+            border:1px solid #bbf7d0;
+        }
+
+        .card-destaque-verde small,
+        .card-destaque-verde strong{
+            color:#166534;
+        }
+
         .card-destaque-estoque{
             background:linear-gradient(180deg,#f8fafc,#eef2ff);
             border:1px solid #dbe4ff;
@@ -304,17 +311,13 @@
         .divisor-secao{
             height:1px;
             background:linear-gradient(90deg,rgba(0,0,0,0),#d9e2ec,rgba(0,0,0,0));
-            margin:2px 0 18px;
+            margin:4px 0 18px;
             border-radius:999px;
         }
 
         .card-licenca{
             justify-content:flex-start;
-            min-height:102px;
-        }
-
-        .card-licenca small{
-            text-align:left;
+            min-height:unset;
         }
 
         .licenca-pill{
@@ -336,27 +339,27 @@
             grid-template-columns:1.08fr .92fr;
             gap:18px;
             margin-bottom:18px;
-            align-items:stretch;
+            align-items:start;
         }
 
         .grid-main{
             display:grid;
             grid-template-columns:1.08fr .92fr;
             gap:18px;
-            margin-bottom:26px;
+            margin-bottom:24px;
             align-items:start;
         }
 
         .box{
             background:var(--card);
             border-radius:18px;
-            padding:20px;
+            padding:18px;
             box-shadow:var(--shadow);
             border:1px solid var(--line);
         }
 
         .box h2{
-            font-size:18px;
+            font-size:20px;
             margin-bottom:14px;
             color:#0f172a;
             letter-spacing:-.2px;
@@ -407,7 +410,7 @@
             justify-content:space-between;
             gap:8px;
             height:260px;
-            padding:12px 4px 0;
+            padding:14px 4px 0;
             border-top:1px solid #eef2f7;
         }
 
@@ -436,16 +439,26 @@
             flex-direction:column;
             align-items:center;
             justify-content:flex-end;
+            gap:4px;
             height:100%;
             flex:1;
             max-width:30px;
         }
 
+        .grafico-total,
+        .grafico-pagos{
+            font-size:10px;
+            font-weight:800;
+            min-height:12px;
+            line-height:1;
+        }
+
         .grafico-total{
-            font-size:11px;
             color:#94a3b8;
-            font-weight:700;
-            min-height:14px;
+        }
+
+        .grafico-pagos{
+            color:#16a34a;
         }
 
         .grafico-barra{
@@ -568,11 +581,11 @@
         }
 
         .bloco-recebimento{
-            margin-top:22px;
+            margin-top:18px;
             background:linear-gradient(135deg,#0b1220,#162a4d 55%, #1d4ed8 140%);
             color:white;
             border-radius:22px;
-            padding:24px;
+            padding:22px;
             box-shadow:0 14px 32px rgba(15,23,42,.16);
             border:1px solid rgba(255,255,255,.08);
         }
@@ -714,52 +727,51 @@
             <h1>Dashboard</h1>
             <p>Resumo geral da operação da loja</p>
 
-           {% if loja.status_licenca == "ativa" %}
-    <div class="alerta-licenca alerta-verde">
-        Sua licença está ativa e a área administrativa está liberada.
-    </div>
-{% elif loja.status_licenca == "vencida" %}
-    <div class="alerta-licenca alerta-vermelho">
-        Sua licença está vencida. Regularize o pagamento para reativar todas as funções da loja.
-    </div>
-{% else %}
-    <div class="alerta-licenca alerta-amarelo">
-        Sua licença está pendente. Finalize o pagamento para liberar o acesso completo do sistema.
-    </div>
-{% endif %}
-</div>
+            {% if loja.status_licenca == "ativa" %}
+                <div class="alerta-licenca alerta-verde">
+                    Sua licença está ativa e a área administrativa está liberada.
+                </div>
+            {% elif loja.status_licenca == "vencida" %}
+                <div class="alerta-licenca alerta-vermelho">
+                    Sua licença está vencida. Regularize o pagamento para reativar todas as funções da loja.
+                </div>
+            {% else %}
+                <div class="alerta-licenca alerta-amarelo">
+                    Sua licença está pendente. Finalize o pagamento para liberar o acesso completo do sistema.
+                </div>
+            {% endif %}
+        </div>
 
-<div class="cards">
-
-    <div class="card">
-        <small>Total de produtos</small>
-        <strong>{{ total_produtos|default:"0" }}</strong>
-    </div>
-
-    <div class="card">
-        <small>Produtos ativos</small>
-        <strong>{{ produtos_ativos|default:"0" }}</strong>
-    </div>
-
-    <div class="card">
-        <small>Total de pedidos</small>
-        <strong>{{ total_pedidos|default:"0" }}</strong>
-    </div>
-
-    <!-- 🔥 NOVO CARD -->
-    <div class="card">
-        <small>Pedidos pagos</small>
-        <strong>{{ pedidos_pagos|default:"0" }}</strong>
-    </div>
-
-    <div class="card card-destaque-azul">
-        <small>Pedidos hoje</small>
-        <strong>{{ pedidos_hoje|default:"0" }}</strong>
-    </div>
-
-</div>
+        <div class="cards">
             <div class="card">
-                <small>Total em estoque</small>
+                <small>Total de produtos</small>
+                <strong>{{ total_produtos|default:"0" }}</strong>
+            </div>
+
+            <div class="card">
+                <small>Produtos ativos</small>
+                <strong>{{ produtos_ativos|default:"0" }}</strong>
+            </div>
+
+            <div class="card">
+                <small>Pedidos totais</small>
+                <strong>{{ total_pedidos|default:"0" }}</strong>
+                <span class="mini">Todos os pedidos lançados no sistema</span>
+            </div>
+
+            <div class="card card-destaque-verde">
+                <small>Pedidos pagos</small>
+                <strong>{{ pedidos_pagos|default:"0" }}</strong>
+                <span class="mini">Pedidos com pagamento confirmado</span>
+            </div>
+
+            <div class="card card-destaque-azul">
+                <small>Pedidos hoje</small>
+                <strong>{{ pedidos_hoje|default:"0" }}</strong>
+            </div>
+
+            <div class="card">
+                <small>Estoque total</small>
                 <strong>{{ total_estoque|default:"0" }}</strong>
             </div>
 
@@ -771,11 +783,6 @@
             <div class="card card-destaque-estoque">
                 <small>Valor em estoque</small>
                 <strong>R$ {{ valor_total_estoque|default:"0"|floatformat:2 }}</strong>
-            </div>
-
-            <div class="card">
-                <small>Status da licença</small>
-                <strong>{{ loja.get_status_licenca_display|default:"-" }}</strong>
             </div>
         </div>
 
@@ -792,7 +799,7 @@
                     <div class="grafico-legenda">
                         <div class="grafico-legenda-item">
                             <span class="grafico-legenda-cor" style="background:linear-gradient(180deg,#22d3ee,#2563eb);"></span>
-                            Total de pedidos
+                            Pedidos totais
                         </div>
                         <div class="grafico-legenda-item">
                             <span class="grafico-legenda-cor" style="background:linear-gradient(180deg,#4ade80,#16a34a);"></span>
@@ -802,44 +809,28 @@
                 </div>
 
                 <div class="grafico-area">
-    {% for item in movimento_mensal %}
-        <div class="grafico-coluna">
-            <div class="grafico-total">
-    {{ item.total|default:"0" }}
-</div>
+                    {% for item in movimento_mensal %}
+                        <div class="grafico-coluna">
+                            <div class="grafico-barras">
+                                <div class="grafico-barra-wrap">
+                                    <div class="grafico-total">{{ item.total|default:"0" }}</div>
+                                    <div
+                                        class="grafico-barra grafico-barra-total"
+                                        style="height:{{ item.altura|default:'12' }}%;"
+                                        title="{{ item.mes }} - Pedidos totais: {{ item.total|default:'0' }}"
+                                    ></div>
+                                </div>
 
-<div class="grafico-total" style="color:#16a34a;">
-    {{ item.pagos|default:"0" }}
-</div>
+                                <div class="grafico-barra-wrap">
+                                    <div class="grafico-pagos">{{ item.pagos|default:"0" }}</div>
+                                    <div
+                                        class="grafico-barra grafico-barra-pagos"
+                                        style="height:{{ item.altura_pagos|default:'12' }}%;"
+                                        title="{{ item.mes }} - Pedidos pagos: {{ item.pagos|default:'0' }}"
+                                    ></div>
+                                </div>
+                            </div>
 
-           <div class="grafico-barras">
-
-    <!-- TOTAL -->
-    <div class="grafico-barra-wrap">
-        <div
-            class="grafico-barra grafico-barra-total"
-            style="height:{{ item.altura|default:'12' }}%;"
-        ></div>
-    </div>
-
-    <!-- PAGOS -->
-    <div class="grafico-barra-wrap">
-
-        <!-- 👇 NÚMERO DO PAGOS (AQUI!) -->
-        <span style="font-size:10px;color:#16a34a;font-weight:700;">
-            {{ item.pagos|default:"0" }}
-        </span>
-
-        <div
-            class="grafico-barra grafico-barra-pagos"
-            style="height:{{ item.altura_pagos|default:'12' }}%;"
-        ></div>
-
-    </div>
-
-</div>
-
-           
                             <div class="grafico-mes">{{ item.mes }}</div>
                         </div>
                     {% empty %}
@@ -859,6 +850,11 @@
                         </div>
 
                         <div class="resumo-item">
+                            <span>Pedidos pagos</span>
+                            <strong>{{ pedidos_pagos|default:"0" }}</strong>
+                        </div>
+
+                        <div class="resumo-item">
                             <span>Pedidos hoje</span>
                             <strong>{{ pedidos_hoje|default:"0" }}</strong>
                         </div>
@@ -866,16 +862,6 @@
                         <div class="resumo-item">
                             <span>Faturamento</span>
                             <strong>R$ {{ faturamento_total|default:"0"|floatformat:2 }}</strong>
-                        </div>
-
-                        <div class="resumo-item">
-                            <span>Estoque total</span>
-                            <strong>{{ total_estoque|default:"0" }}</strong>
-                        </div>
-
-                        <div class="resumo-item">
-                            <span>Valor em estoque</span>
-                            <strong>R$ {{ valor_total_estoque|default:"0"|floatformat:2 }}</strong>
                         </div>
 
                         <div class="resumo-item">
@@ -933,13 +919,13 @@
                             </div>
 
                             <div class="resumo-item">
-                                <span>Total de pedidos</span>
+                                <span>Pedidos totais</span>
                                 <strong>{{ total_pedidos|default:"0" }}</strong>
                             </div>
 
                             <div class="resumo-item">
-                                <span>Total de produtos</span>
-                                <strong>{{ total_produtos|default:"0" }}</strong>
+                                <span>Pedidos pagos</span>
+                                <strong>{{ pedidos_pagos|default:"0" }}</strong>
                             </div>
 
                             <div class="resumo-item">
