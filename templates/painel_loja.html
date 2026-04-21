@@ -179,7 +179,7 @@
 
         .principal{
             flex:1;
-            padding:24px;
+            padding:22px;
         }
 
         .topo{
@@ -237,13 +237,15 @@
         .card{
             background:var(--card);
             border-radius:16px;
-            padding:16px;
+            padding:14px;
             box-shadow:var(--shadow-soft);
             border:1px solid var(--line);
-            min-height:92px;
+            min-height:84px;
             display:flex;
             flex-direction:column;
             justify-content:center;
+            align-items:center;
+            text-align:center;
             transition:.2s ease;
         }
 
@@ -260,22 +262,26 @@
             font-weight:800;
             text-transform:uppercase;
             letter-spacing:.6px;
+            text-align:center;
         }
 
         .card strong{
-            font-size:28px;
+            font-size:24px;
             line-height:1.1;
             color:#0f172a;
-            letter-spacing:-.8px;
+            letter-spacing:-.6px;
+            text-align:center;
         }
 
         .card .mini{
-            font-size:13px;
+            font-size:12px;
             color:#475569;
             font-weight:600;
             margin-top:6px;
             display:block;
-            line-height:1.45;
+            line-height:1.4;
+            text-align:center;
+            max-width:100%;
         }
 
         .card-destaque-azul{
@@ -317,6 +323,8 @@
 
         .card-licenca{
             justify-content:flex-start;
+            align-items:flex-start;
+            text-align:left;
             min-height:unset;
         }
 
@@ -359,7 +367,7 @@
         }
 
         .box h2{
-            font-size:20px;
+            font-size:18px;
             margin-bottom:14px;
             color:#0f172a;
             letter-spacing:-.2px;
@@ -409,7 +417,7 @@
             align-items:flex-end;
             justify-content:space-between;
             gap:8px;
-            height:260px;
+            height:250px;
             padding:14px 4px 0;
             border-top:1px solid #eef2f7;
         }
@@ -442,7 +450,7 @@
             gap:4px;
             height:100%;
             flex:1;
-            max-width:30px;
+            max-width:28px;
         }
 
         .grafico-total,
@@ -451,6 +459,7 @@
             font-weight:800;
             min-height:12px;
             line-height:1;
+            text-align:center;
         }
 
         .grafico-total{
@@ -459,6 +468,10 @@
 
         .grafico-pagos{
             color:#16a34a;
+        }
+
+        .grafico-invisivel{
+            visibility:hidden;
         }
 
         .grafico-barra{
@@ -477,6 +490,13 @@
         .grafico-barra-pagos{
             background:linear-gradient(180deg,#4ade80,#16a34a);
             box-shadow:0 10px 25px rgba(34,197,94,.12);
+        }
+
+        .grafico-barra-zero{
+            background:transparent !important;
+            box-shadow:none !important;
+            min-height:0 !important;
+            border:none !important;
         }
 
         .grafico-barra:hover{
@@ -661,7 +681,7 @@
             .cards{grid-template-columns:1fr;}
             .topo h1{font-size:30px;}
             .grafico-area{height:210px;gap:6px;}
-            .grafico-barra-wrap{max-width:24px;}
+            .grafico-barra-wrap{max-width:22px;}
         }
     </style>
 </head>
@@ -813,19 +833,29 @@
                         <div class="grafico-coluna">
                             <div class="grafico-barras">
                                 <div class="grafico-barra-wrap">
-                                    <div class="grafico-total">{{ item.total|default:"0" }}</div>
+                                    {% if item.total > 0 %}
+                                        <div class="grafico-total">{{ item.total }}</div>
+                                    {% else %}
+                                        <div class="grafico-total grafico-invisivel">0</div>
+                                    {% endif %}
+
                                     <div
-                                        class="grafico-barra grafico-barra-total"
-                                        style="height:{{ item.altura|default:'12' }}%;"
+                                        class="grafico-barra grafico-barra-total {% if item.total == 0 %}grafico-barra-zero{% endif %}"
+                                        style="height:{% if item.total > 0 %}{{ item.altura|default:'12' }}%{% else %}0%{% endif %};"
                                         title="{{ item.mes }} - Pedidos totais: {{ item.total|default:'0' }}"
                                     ></div>
                                 </div>
 
                                 <div class="grafico-barra-wrap">
-                                    <div class="grafico-pagos">{{ item.pagos|default:"0" }}</div>
+                                    {% if item.pagos > 0 %}
+                                        <div class="grafico-pagos">{{ item.pagos }}</div>
+                                    {% else %}
+                                        <div class="grafico-pagos grafico-invisivel">0</div>
+                                    {% endif %}
+
                                     <div
-                                        class="grafico-barra grafico-barra-pagos"
-                                        style="height:{{ item.altura_pagos|default:'12' }}%;"
+                                        class="grafico-barra grafico-barra-pagos {% if item.pagos == 0 %}grafico-barra-zero{% endif %}"
+                                        style="height:{% if item.pagos > 0 %}{{ item.altura_pagos|default:'12' }}%{% else %}0%{% endif %};"
                                         title="{{ item.mes }} - Pedidos pagos: {{ item.pagos|default:'0' }}"
                                     ></div>
                                 </div>
