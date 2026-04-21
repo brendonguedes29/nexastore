@@ -69,6 +69,15 @@
             font-weight:bold;
             font-size:20px;
             color:white;
+            overflow:hidden;
+            flex-shrink:0;
+        }
+
+        .logo-badge img{
+            width:100%;
+            height:100%;
+            object-fit:cover;
+            display:block;
         }
 
         .logo-texto{
@@ -140,9 +149,13 @@
 
     <div class="header">
         <div class="wrap header-flex">
+
             <a href="{% if loja %}https://{{ loja.slug }}.nexastoreofficial.com.br{% else %}{% url 'home' %}{% endif %}" class="logo-area">
+                
                 <div class="logo-badge">
-                    {% if loja %}
+                    {% if loja and loja.logo %}
+                        <img src="{{ loja.logo.url }}" alt="{{ loja.nome }}">
+                    {% elif loja %}
                         {{ loja.nome|slice:":1"|upper }}
                     {% else %}
                         L
@@ -180,6 +193,7 @@
 
                 <a href="{% url 'ver_carrinho' %}">Carrinho</a>
             </div>
+
         </div>
     </div>
 
