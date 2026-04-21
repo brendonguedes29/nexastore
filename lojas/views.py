@@ -779,6 +779,32 @@ def checkout(request, slug=None):
                 "config_frete": config_frete,
             })
 
+        if forma_pagamento == "cartao":
+            if not config_frete.mp_connected or not config_frete.mp_access_token or not config_frete.mp_public_key:
+                return render(request, "checkout.html", {
+                    "erro": "Esta loja ainda não configurou pagamento com cartão.",
+                    "itens": itens,
+                    "subtotal_geral": subtotal_geral,
+                    "frete": frete,
+                    "total": total_geral,
+                    "loja": loja,
+                    "comprador": comprador,
+                    "config_frete": config_frete,
+                })
+
+        if forma_pagamento == "pix":
+            if not config_frete.mp_connected or not config_frete.mp_access_token:
+                return render(request, "checkout.html", {
+                    "erro": "Esta loja ainda não configurou pagamento via Pix.",
+                    "itens": itens,
+                    "subtotal_geral": subtotal_geral,
+                    "frete": frete,
+                    "total": total_geral,
+                    "loja": loja,
+                    "comprador": comprador,
+                    "config_frete": config_frete,
+                })
+
         if not retirada_na_loja:
             if not all([rua_entrega, numero_entrega, cidade_entrega, estado_entrega]):
                 return render(request, "checkout.html", {
@@ -853,6 +879,15 @@ def pagina_pagamento(request, referencia):
     if pedido.status_pagamento == "pago":
         return redirect("pagamento_sucesso", referencia=referencia)
 
+    config = ConfigFrete.objects.filter(loja=pedido.loja).first()
+
+    mp_public_key = ""
+    loja_com_pagamento_configurado = False
+
+    if config and config.mp_connected and config.mp_public_key:
+        mp_public_key = config.mp_public_key
+        loja_com_pagamento_configurado = True
+
     email_pagador = "cliente@exemplo.com"
     if pedido.comprador and pedido.comprador.usuario and pedido.comprador.usuario.email:
         email_pagador = pedido.comprador.usuario.email
@@ -863,8 +898,9 @@ def pagina_pagamento(request, referencia):
         "total_pedido": total_pedido,
         "forma_pagamento": (pedido.forma_pagamento or "").strip().lower(),
         "tipo_cartao": (pedido.tipo_cartao or "").strip().lower(),
-        "mp_public_key": getattr(settings, "MERCADOPAGO_PUBLIC_KEY", ""),
+        "mp_public_key": mp_public_key,
         "email_pagador": email_pagador,
+        "loja_com_pagamento_configurado": loja_com_pagamento_configurado,
     })
 
 
@@ -886,7 +922,14 @@ def pagina_pagamento_cartao(request, referencia):
     if pedido.forma_pagamento != "cartao":
         return redirect("pagina_pagamento", referencia=referencia)
 
-    mp_public_key = settings.MERCADOPAGO_PUBLIC_KEY
+    config = ConfigFrete.objects.filter(loja=pedido.loja).first()
+
+    mp_public_key = ""
+    loja_com_pagamento_configurado = False
+
+    if config and config.mp_connected and config.mp_public_key:
+        mp_public_key = config.mp_public_key
+        loja_com_pagamento_configurado = True
 
     email_pagador = "cliente@exemplo.com"
     if pedido.comprador and pedido.comprador.usuario and pedido.comprador.usuario.email:
@@ -901,6 +944,7 @@ def pagina_pagamento_cartao(request, referencia):
         "tipo_cartao": pedido.tipo_cartao,
         "mp_public_key": mp_public_key,
         "email_pagador": email_pagador,
+        "loja_com_pagamento_configurado": loja_com_pagamento_configurado,
     })
 @login_required
 def status_pagamento(request, referencia):
@@ -921,12 +965,25 @@ def status_pagamento(request, referencia):
             "pago": True,
         })
 
+    config = ConfigFrete.objects.filter(loja=pedido.loja).first()
+
+    if not config or not config.mp_connected or not config.mp_access_token:
+        return JsonResponse({
+            "ok": True,
+            "status": pedido.status_pagamento,
+            "status_pagamento": pedido.status_pagamento,
+            "status_pedido": pedido.status,
+            "referencia": referencia,
+            "pago": pedido.status_pagamento == "pago",
+            "loja_sem_pagamento": True,
+        })
+
     if pedido.mp_payment_id:
         try:
             response = requests.get(
                 f"https://api.mercadopago.com/v1/payments/{pedido.mp_payment_id}",
                 headers={
-                    "Authorization": f"Bearer {settings.MERCADOPAGO_ACCESS_TOKEN}"
+                    "Authorization": f"Bearer {config.mp_access_token}"
                 },
                 timeout=20
             )
@@ -950,7 +1007,9 @@ def status_pagamento(request, referencia):
                         status_pagamento="recusado"
                     )
 
-                pedido = Pedido.objects.filter(referencia_pagamento=referencia).order_by("id").first()
+                pedido = Pedido.objects.filter(
+                    referencia_pagamento=referencia
+                ).order_by("id").first()
 
         except Exception as e:
             print("ERRO AO CONSULTAR STATUS PAGAMENTO:", e)
@@ -1039,7 +1098,6 @@ def painel_loja(request):
 
         hoje = timezone.localdate()
 
-        # CORREÇÃO AQUI
         pedidos_hoje = pedidos_lista.filter(data__date=hoje).count()
 
         faturamento_total = pedidos_lista.filter(status_pagamento="pago").aggregate(
@@ -1081,7 +1139,13 @@ def painel_loja(request):
                 "altura_pagos": max(pagos_mes * 10, 12) if pagos_mes > 0 else 12,
             })
 
-        mp_connected = bool(loja.chave_pix or loja.link_pagamento)
+        config_pagamento = ConfigFrete.objects.filter(loja=loja).first()
+
+        mp_connected = bool(
+            config_pagamento
+            and config_pagamento.mp_connected
+            and config_pagamento.mp_access_token
+        )
 
         if loja.dominio and loja.dominio not in [
             "nexastoreofficial.com.br",
@@ -2175,31 +2239,67 @@ def webhook_mercadopago(request):
 
     try:
         payment_id = None
+        referencia = None
+        body_data = {}
 
         if request.GET:
             payment_id = request.GET.get("data.id") or request.GET.get("id")
 
         if not payment_id:
             try:
-                data = json.loads(request.body.decode("utf-8") or "{}")
-                print("BODY JSON:", data)
+                body_data = json.loads(request.body.decode("utf-8") or "{}")
+                print("BODY JSON:", body_data)
 
                 payment_id = (
-                    data.get("data", {}).get("id")
-                    or data.get("id")
+                    body_data.get("data", {}).get("id")
+                    or body_data.get("id")
                 )
             except Exception as e:
                 print("ERRO AO LER JSON DO WEBHOOK:", str(e))
+                body_data = {}
 
         print("PAYMENT_ID:", payment_id)
 
         if not payment_id:
             return JsonResponse({"ok": True, "msg": "sem payment_id"}, status=200)
 
+        # tenta obter referência do body, se vier
+        try:
+            referencia = (
+                body_data.get("external_reference")
+                or body_data.get("data", {}).get("external_reference")
+            )
+        except Exception:
+            referencia = None
+
+        pedido = None
+
+        # tenta localizar pedido pela referência
+        if referencia:
+            pedido = Pedido.objects.filter(
+                referencia_pagamento=referencia
+            ).order_by("id").first()
+
+        # se não encontrou, tenta localizar pelo mp_payment_id
+        if not pedido:
+            pedido = Pedido.objects.filter(
+                mp_payment_id=str(payment_id)
+            ).order_by("id").first()
+
+        if not pedido:
+            print("WEBHOOK PRODUTO: pedido não encontrado por referência nem mp_payment_id")
+            return JsonResponse({"ok": True, "msg": "pedido nao encontrado"}, status=200)
+
+        config = ConfigFrete.objects.filter(loja=pedido.loja).first()
+
+        if not config or not config.mp_connected or not config.mp_access_token:
+            print("WEBHOOK PRODUTO: loja sem configuração MP válida", pedido.loja_id)
+            return JsonResponse({"ok": True, "msg": "loja sem configuracao mp"}, status=200)
+
         response = requests.get(
             f"https://api.mercadopago.com/v1/payments/{payment_id}",
             headers={
-                "Authorization": f"Bearer {settings.MERCADOPAGO_ACCESS_TOKEN}"
+                "Authorization": f"Bearer {config.mp_access_token}"
             },
             timeout=20
         )
@@ -2211,33 +2311,68 @@ def webhook_mercadopago(request):
             return JsonResponse({"ok": True, "msg": "pagamento nao encontrado"}, status=200)
 
         pagamento = response.json()
-        status = pagamento.get("status")
-        referencia = pagamento.get("external_reference")
+        status_mp = pagamento.get("status")
+        referencia_mp = pagamento.get("external_reference")
 
-        print("STATUS PAGAMENTO PRODUTO:", status)
-        print("REFERENCIA PAGAMENTO PRODUTO:", referencia)
+        print("STATUS PAGAMENTO PRODUTO:", status_mp)
+        print("REFERENCIA PAGAMENTO PRODUTO:", referencia_mp)
 
-        if referencia:
-            if status == "approved":
-                confirmar_pagamento_por_referencia(referencia)
-                print("PAGAMENTO PRODUTO CONFIRMADO COM SUCESSO")
+        # atualiza mp_payment_id nos pedidos da referência retornada pelo MP
+        if referencia_mp:
+            Pedido.objects.filter(referencia_pagamento=referencia_mp).update(
+                mp_payment_id=str(payment_id)
+            )
 
-            elif status in ["pending", "in_process"]:
-                Pedido.objects.filter(referencia_pagamento=referencia).update(
+            if status_mp == "approved":
+                confirmar_pagamento_por_referencia(referencia_mp)
+                print("PAGAMENTO PRODUTO CONFIRMADO COM SUCESSO:", referencia_mp)
+
+            elif status_mp in ["pending", "in_process"]:
+                Pedido.objects.filter(referencia_pagamento=referencia_mp).update(
                     status_pagamento="confirmacao"
                 )
-                print("PAGAMENTO PRODUTO EM ANALISE:", referencia)
+                print("PAGAMENTO PRODUTO EM ANALISE:", referencia_mp)
 
-            elif status in ["rejected", "cancelled"]:
-                Pedido.objects.filter(referencia_pagamento=referencia).update(
+            elif status_mp in ["rejected", "cancelled"]:
+                Pedido.objects.filter(referencia_pagamento=referencia_mp).update(
                     status_pagamento="recusado"
                 )
-                print("PAGAMENTO PRODUTO RECUSADO/CANCELADO:", referencia)
+                print("PAGAMENTO PRODUTO RECUSADO/CANCELADO:", referencia_mp)
+
+            else:
+                print("STATUS NÃO TRATADO NO WEBHOOK:", status_mp)
+
+            return JsonResponse({"ok": True}, status=200)
+
+        # fallback: se não vier external_reference do MP, usa o pedido localizado
+        Pedido.objects.filter(id=pedido.id).update(
+            mp_payment_id=str(payment_id)
+        )
+
+        if status_mp == "approved":
+            confirmar_pagamento_por_referencia(pedido.referencia_pagamento)
+            print("PAGAMENTO PRODUTO CONFIRMADO PELO FALLBACK:", pedido.referencia_pagamento)
+
+        elif status_mp in ["pending", "in_process"]:
+            Pedido.objects.filter(
+                referencia_pagamento=pedido.referencia_pagamento
+            ).update(status_pagamento="confirmacao")
+            print("PAGAMENTO PRODUTO EM ANALISE PELO FALLBACK:", pedido.referencia_pagamento)
+
+        elif status_mp in ["rejected", "cancelled"]:
+            Pedido.objects.filter(
+                referencia_pagamento=pedido.referencia_pagamento
+            ).update(status_pagamento="recusado")
+            print("PAGAMENTO PRODUTO RECUSADO/CANCELADO PELO FALLBACK:", pedido.referencia_pagamento)
+
+        else:
+            print("STATUS NÃO TRATADO NO FALLBACK:", status_mp)
 
         return JsonResponse({"ok": True}, status=200)
 
     except Exception as e:
         print("ERRO WEBHOOK PRODUTO:", str(e))
+        print(traceback.format_exc())
         return JsonResponse({"ok": True, "erro": str(e)}, status=200)
 
 @csrf_exempt
@@ -2327,6 +2462,15 @@ def criar_pagamento_cartao(request):
             return JsonResponse({"ok": False, "erro": "Pedido não encontrado."}, status=404)
 
         pedido_base = pedidos_lista.first()
+
+        config = ConfigFrete.objects.filter(loja=pedido_base.loja).first()
+
+        if not config or not config.mp_connected or not config.mp_access_token:
+            return JsonResponse({
+                "ok": False,
+                "erro": "Esta loja não possui conta de recebimento configurada."
+            }, status=400)
+
         total = float(sum((p.valor_total for p in pedidos_lista), Decimal("0.00")))
 
         if pedido_base.status_pagamento == "pago":
@@ -2339,20 +2483,44 @@ def criar_pagamento_cartao(request):
         if not transaction_amount:
             transaction_amount = total
 
+        if transaction_amount <= 0:
+            return JsonResponse({
+                "ok": False,
+                "erro": "Valor da transação inválido."
+            }, status=400)
+
+        token_cartao = payload_front.get("token")
+        payment_method_id = payload_front.get("paymentMethodId")
+        installments = int(payload_front.get("installments") or 1)
+        cardholder_email = payload_front.get("cardholderEmail")
+        cardholder_name = payload_front.get("cardholderName") or "Cliente"
+        identification_type = payload_front.get("identificationType")
+        identification_number = payload_front.get("identificationNumber")
+
+        if not token_cartao or not payment_method_id:
+            return JsonResponse({
+                "ok": False,
+                "erro": "Dados do cartão incompletos."
+            }, status=400)
+
         payload_mp = {
             "transaction_amount": transaction_amount,
-            "token": payload_front.get("token"),
+            "token": token_cartao,
             "description": f"Pedido {referencia}",
-            "installments": int(payload_front.get("installments") or 1),
-            "payment_method_id": payload_front.get("paymentMethodId"),
+            "installments": installments,
+            "payment_method_id": payment_method_id,
             "external_reference": referencia,
             "notification_url": settings.MERCADOPAGO_WEBHOOK_URL,
             "payer": {
-                "email": payload_front.get("cardholderEmail"),
-                "first_name": payload_front.get("cardholderName") or "Cliente",
+                "email": cardholder_email or (
+                    pedido_base.comprador.usuario.email
+                    if pedido_base.comprador and pedido_base.comprador.usuario and pedido_base.comprador.usuario.email
+                    else "cliente@exemplo.com"
+                ),
+                "first_name": cardholder_name,
                 "identification": {
-                    "type": payload_front.get("identificationType"),
-                    "number": payload_front.get("identificationNumber")
+                    "type": identification_type,
+                    "number": identification_number
                 }
             }
         }
@@ -2360,19 +2528,36 @@ def criar_pagamento_cartao(request):
         response = requests.post(
             "https://api.mercadopago.com/v1/payments",
             headers={
-                "Authorization": f"Bearer {settings.MERCADOPAGO_ACCESS_TOKEN}",
+                "Authorization": f"Bearer {config.mp_access_token}",
                 "Content-Type": "application/json",
+                "X-Idempotency-Key": f"cartao-{referencia}",
             },
             json=payload_mp,
             timeout=30
         )
 
-        resposta = response.json()
+        try:
+            resposta = response.json()
+        except Exception:
+            return JsonResponse({
+                "ok": False,
+                "erro": "Resposta inválida do Mercado Pago.",
+                "raw": response.text
+            }, status=400)
 
         if response.status_code not in [200, 201]:
-            return JsonResponse({"ok": False, "erro": resposta}, status=400)
+            return JsonResponse({
+                "ok": False,
+                "erro": "Erro ao criar pagamento com cartão.",
+                "resposta_mp": resposta
+            }, status=400)
 
         status = resposta.get("status", "")
+        mp_payment_id = str(resposta.get("id", ""))
+
+        Pedido.objects.filter(referencia_pagamento=referencia).update(
+            mp_payment_id=mp_payment_id
+        )
 
         if status == "approved":
             Pedido.objects.filter(referencia_pagamento=referencia).update(
@@ -2387,7 +2572,21 @@ def criar_pagamento_cartao(request):
                 "redirect": f"/pagamento/{referencia}/sucesso/"
             })
 
-        return JsonResponse({"ok": True, "status": status})
+        elif status in ["pending", "in_process"]:
+            Pedido.objects.filter(referencia_pagamento=referencia).update(
+                status_pagamento="confirmacao"
+            )
+
+        elif status in ["rejected", "cancelled"]:
+            Pedido.objects.filter(referencia_pagamento=referencia).update(
+                status_pagamento="recusado"
+            )
+
+        return JsonResponse({
+            "ok": True,
+            "status": status,
+            "payment_id": mp_payment_id
+        })
 
     except Exception as e:
         return JsonResponse({"ok": False, "erro": str(e)}, status=500)
@@ -2413,6 +2612,14 @@ def criar_pagamento_pix(request):
 
         pedido_base = pedidos_lista.first()
 
+        config = ConfigFrete.objects.filter(loja=pedido_base.loja).first()
+
+        if not config or not config.mp_connected or not config.mp_access_token:
+            return JsonResponse({
+                "ok": False,
+                "erro": "Esta loja não possui conta de recebimento configurada."
+            }, status=400)
+
         if pedido_base.status_pagamento == "pago":
             return JsonResponse({
                 "ok": True,
@@ -2425,7 +2632,7 @@ def criar_pagamento_pix(request):
                 response = requests.get(
                     f"https://api.mercadopago.com/v1/payments/{pedido_base.mp_payment_id}",
                     headers={
-                        "Authorization": f"Bearer {settings.MERCADOPAGO_ACCESS_TOKEN}"
+                        "Authorization": f"Bearer {config.mp_access_token}"
                     },
                     timeout=20
                 )
@@ -2476,7 +2683,13 @@ def criar_pagamento_pix(request):
 
         total = float(sum((p.valor_total for p in pedidos_lista), Decimal("0.00")))
 
-        email_pagador = "test_user_123@testuser.com"
+        if total <= 0:
+            return JsonResponse({
+                "ok": False,
+                "erro": "Valor do pedido inválido."
+            }, status=400)
+
+        email_pagador = "cliente@exemplo.com"
         if (
             pedido_base.comprador
             and pedido_base.comprador.usuario
@@ -2498,7 +2711,7 @@ def criar_pagamento_pix(request):
         response = requests.post(
             "https://api.mercadopago.com/v1/payments",
             headers={
-                "Authorization": f"Bearer {settings.MERCADOPAGO_ACCESS_TOKEN}",
+                "Authorization": f"Bearer {config.mp_access_token}",
                 "Content-Type": "application/json",
                 "X-Idempotency-Key": f"pix-{referencia}",
             },

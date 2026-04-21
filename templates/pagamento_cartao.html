@@ -151,15 +151,31 @@
         function mostrarStatus(texto, tipo="info") {
             statusBox.style.display = "block";
             statusBox.className = "status-box";
-            if (tipo === "erro") statusBox.classList.add("status-erro");
-            else if (tipo === "sucesso") statusBox.classList.add("status-sucesso");
-            else statusBox.classList.add("status-info");
+
+            if (tipo === "erro") {
+                statusBox.classList.add("status-erro");
+            } else if (tipo === "sucesso") {
+                statusBox.classList.add("status-sucesso");
+            } else {
+                statusBox.classList.add("status-info");
+            }
+
             statusBox.innerText = texto;
         }
 
         function bloquearBotao(bloquear=true) {
             submitButton.disabled = bloquear;
             submitButton.innerText = bloquear ? "Processando..." : "Pagar com cartão";
+        }
+
+        function tratarErroPagamento(data) {
+            if (data && data.erro && String(data.erro).toLowerCase().includes("conta de recebimento")) {
+                mostrarStatus("Esta loja ainda não configurou pagamento com cartão.", "erro");
+            } else if (data && data.erro) {
+                mostrarStatus(data.erro, "erro");
+            } else {
+                mostrarStatus("Erro ao processar pagamento. Tente novamente.", "erro");
+            }
         }
 
         function getCookie(name) {
@@ -182,7 +198,7 @@
         });
 
         if (!publicKey) {
-            mostrarStatus("A chave pública do Mercado Pago não foi enviada para esta página.", "erro");
+            mostrarStatus("Esta loja ainda não aceita pagamentos com cartão.", "erro");
         } else {
             const mp = new MercadoPago(publicKey);
 
@@ -231,7 +247,7 @@
                 callbacks: {
                     onFormMounted: function(error) {
                         if (error) {
-                            mostrarStatus("Erro ao montar o formulário do cartão: " + JSON.stringify(error), "erro");
+                            mostrarStatus("Erro ao carregar o formulário de pagamento.", "erro");
                         }
                     },
                     onSubmit: async function(event) {
@@ -251,15 +267,15 @@
                                 },
                                 body: JSON.stringify({
                                     referencia: referencia,
-                                    transaction_amount: total,
+                                    transaction_amount: Number(total),
                                     payload: formData
                                 })
                             });
 
                             const data = await response.json();
 
-                            if (!data.ok) {
-                                mostrarStatus("Erro ao processar cartão.\n" + JSON.stringify(data.erro), "erro");
+                            if (!response.ok || data.ok === false) {
+                                tratarErroPagamento(data);
                                 bloquearBotao(false);
                                 return;
                             }
@@ -269,8 +285,11 @@
                                 return;
                             }
 
-                            if (data.status === "approved") {
-                                window.location.href = /pagamento/${referencia}/sucesso/;
+                            if (
+                                data.status === "approved" ||
+                                data.status_pagamento === "pago"
+                            ) {
+                                window.location.href = `/pagamento/${referencia}/sucesso/`;
                                 return;
                             }
 
@@ -280,15 +299,15 @@
                                 return;
                             }
 
-                            mostrarStatus("Pagamento não aprovado. Status: " + (data.status_detail || data.status || "desconhecido"), "erro");
+                            mostrarStatus("Pagamento não aprovado. Tente novamente ou utilize outra forma de pagamento.", "erro");
                             bloquearBotao(false);
                         } catch (e) {
-                            mostrarStatus("Erro ao enviar pagamento com cartão: " + e, "erro");
+                            mostrarStatus("Erro ao enviar pagamento com cartão. Tente novamente.", "erro");
                             bloquearBotao(false);
                         }
                     },
                     onError: function(error) {
-                        mostrarStatus("Erro no formulário do cartão: " + JSON.stringify(error), "erro");
+                        mostrarStatus("Erro no formulário de pagamento.", "erro");
                         bloquearBotao(false);
                     }
                 }

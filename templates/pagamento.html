@@ -483,7 +483,8 @@
                     <div class="acoes" style="justify-content:center;">
                         <a href="{% url 'meus_pedidos' %}" class="botao botao-verde">Ver meus pedidos</a>
                     </div>
-                </div></div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -554,27 +555,41 @@
             mostrarStatus("Código Pix copiado com sucesso.", "sucesso");
         }
 
-        async function verificarStatus() {
-    if (pagamentoConfirmado) return;
+        function tratarErroPagamento(data, contexto) {
+            if (data && data.erro && String(data.erro).toLowerCase().includes("conta de recebimento")) {
+                mostrarStatus("Esta loja ainda não configurou uma forma de pagamento.", "erro");
+                return;
+            }
 
-    try {
-        const response = await fetch(`/api/pagamento/status/${REFERENCIA}/`);
-        const data = await response.json();
+            if (data && data.erro) {
+                mostrarStatus(data.erro, "erro");
+                return;
+            }
 
-        console.log("STATUS API:", data); // 👈 ADICIONA ISSO
-
-        if (
-            data.status === "pago" ||
-            data.status === "approved" ||
-            data.pago === true ||
-            data.status_pagamento === "pago"
-        ) {
-            mostrarSucesso("Pagamento confirmado com sucesso.");
+            mostrarStatus(`Erro ao ${contexto}. Tente novamente.`, "erro");
         }
-    } catch (e) {
-        console.log("Falha ao consultar status:", e);
-    }
-}
+
+        async function verificarStatus() {
+            if (pagamentoConfirmado) return;
+
+            try {
+                const response = await fetch(`/api/pagamento/status/${REFERENCIA}/`);
+                const data = await response.json();
+
+                console.log("STATUS API:", data);
+
+                if (
+                    data.status === "pago" ||
+                    data.status === "approved" ||
+                    data.pago === true ||
+                    data.status_pagamento === "pago"
+                ) {
+                    mostrarSucesso("Pagamento confirmado com sucesso.");
+                }
+            } catch (e) {
+                console.log("Falha ao consultar status:", e);
+            }
+        }
 
         async function iniciarPix() {
             tituloPagamento.textContent = "Pague com Pix";
@@ -599,7 +614,7 @@
                 const data = await response.json();
 
                 if (!response.ok || data.ok === false) {
-                    mostrarStatus("Erro ao gerar QR Code.\n" + JSON.stringify(data, null, 2), "erro");
+                    tratarErroPagamento(data, "gerar o QR Code");
                     return;
                 }
 
@@ -609,7 +624,7 @@
                 }
 
                 if (!data.qr_code_base64 || !data.qr_code) {
-                    mostrarStatus("Resposta sem QR Code.\n" + JSON.stringify(data, null, 2), "erro");
+                    mostrarStatus("Não foi possível gerar o QR Code do pagamento.", "erro");
                     return;
                 }
 
@@ -634,7 +649,7 @@
                 monitoramentoPix = setInterval(verificarStatus, 5000);
 
             } catch (e) {
-                mostrarStatus("Erro ao gerar QR Code: " + e, "erro");
+                mostrarStatus("Erro ao gerar QR Code do Pix. Tente novamente.", "erro");
             }
         }
 
@@ -657,12 +672,12 @@
             });
 
             if (!MP_PUBLIC_KEY) {
-                mostrarStatus("Chave pública do Mercado Pago não encontrada.", "erro");
+                mostrarStatus("Esta loja ainda não aceita pagamentos com cartão.", "erro");
                 return;
             }
 
             if (typeof MercadoPago === "undefined") {
-                mostrarStatus("SDK do Mercado Pago não carregou.", "erro");
+                mostrarStatus("Não foi possível carregar o módulo de pagamento.", "erro");
                 return;
             }
 
@@ -687,7 +702,7 @@
                     callbacks: {
                         onFormMounted: function (error) {
                             if (error) {
-                                mostrarStatus("Erro ao montar formulário do cartão: " + JSON.stringify(error), "erro");
+                                mostrarStatus("Erro ao carregar o formulário do cartão.", "erro");
                             } else {
                                 mostrarStatus("Formulário do cartão carregado. Preencha os dados para pagar.");
                             }
@@ -707,22 +722,30 @@
                                     },
                                     body: JSON.stringify({
                                         referencia: REFERENCIA,
-                                        token: cardFormData.token,
-                                        payment_method_id: cardFormData.paymentMethodId,
-                                        issuer_id: cardFormData.issuerId,
-                                        transaction_amount: Number(TOTAL),
-                                        installments: Number(cardFormData.installments),
-                                        payer_email: cardFormData.cardholderEmail,
-                                        identification_type: cardFormData.identificationType,
-                                        identification_number: cardFormData.identificationNumber
+                                        payload: {
+                                            token: cardFormData.token,
+                                            paymentMethodId: cardFormData.paymentMethodId,
+                                            issuerId: cardFormData.issuerId,
+                                            installments: Number(cardFormData.installments),
+                                            cardholderEmail: cardFormData.cardholderEmail,
+                                            cardholderName: cardFormData.cardholderName,
+                                            identificationType: cardFormData.identificationType,
+                                            identificationNumber: cardFormData.identificationNumber
+                                        },
+                                        transaction_amount: Number(TOTAL)
                                     })
                                 });
 
                                 const data = await response.json();
 
                                 if (!response.ok || data.ok === false) {
-                                    mostrarStatus("Erro ao processar cartão.\n" + JSON.stringify(data, null, 2), "erro");
+                                    tratarErroPagamento(data, "processar o cartão");
                                     bloquearBotao(false);
+                                    return;
+                                }
+
+                                if (data.redirect) {
+                                    window.location.href = data.redirect;
                                     return;
                                 }
 
@@ -742,7 +765,7 @@
                                 monitoramentoCartao = setInterval(verificarStatus, 5000);
 
                             } catch (e) {
-                                mostrarStatus("Erro ao enviar pagamento com cartão: " + e, "erro");
+                                mostrarStatus("Erro ao enviar pagamento com cartão. Tente novamente.", "erro");
                                 bloquearBotao(false);
                             }
                         },
@@ -755,7 +778,7 @@
                     }
                 });
             } catch (e) {
-                mostrarStatus("Erro ao iniciar cartão: " + e, "erro");
+                mostrarStatus("Erro ao iniciar pagamento com cartão.", "erro");
             }
         }
 
