@@ -1037,9 +1037,11 @@ def painel_loja(request):
         pedidos_entregues = pedidos_lista.filter(status="entregue").count()
 
         hoje = timezone.localdate()
-        pedidos_hoje = pedidos_lista.filter(data=hoje).count()
 
-        faturamento_total = pedidos_lista.filter(status="entregue").aggregate(
+        # CORREÇÃO AQUI
+        pedidos_hoje = pedidos_lista.filter(data__date=hoje).count()
+
+        faturamento_total = pedidos_lista.filter(status_pagamento="pago").aggregate(
             total=Sum("valor_total")
         )["total"] or 0
 
@@ -1059,15 +1061,23 @@ def painel_loja(request):
         for i in range(11, -1, -1):
             referencia = hoje_datetime - relativedelta(months=i)
 
-            total_mes = pedidos_lista.filter(
+            pedidos_mes = pedidos_lista.filter(
                 data__year=referencia.year,
                 data__month=referencia.month
+            )
+
+            total_mes = pedidos_mes.count()
+
+            pagos_mes = pedidos_mes.filter(
+                status_pagamento="pago"
             ).count()
 
             movimento_mensal.append({
                 "mes": meses_labels[referencia.month - 1],
                 "total": total_mes,
-                "altura": max(total_mes * 10, 12) if total_mes > 0 else 12
+                "pagos": pagos_mes,
+                "altura": max(total_mes * 10, 12) if total_mes > 0 else 12,
+                "altura_pagos": max(pagos_mes * 10, 12) if pagos_mes > 0 else 12,
             })
 
         mp_connected = bool(loja.chave_pix or loja.link_pagamento)
@@ -1108,6 +1118,7 @@ def painel_loja(request):
         print("ERRO NO PAINEL_LOJA:")
         print(traceback.format_exc())
         return HttpResponse(f"Erro interno no painel da loja: {e}", status=500)
+
 @login_required
 def financeiro_loja(request):
     loja = get_loja_do_dono(request)

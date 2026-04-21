@@ -364,16 +364,41 @@
 
         .grafico-head{
             display:flex;
-            align-items:center;
+            align-items:flex-start;
             justify-content:space-between;
             gap:12px;
             margin-bottom:14px;
+            flex-wrap:wrap;
         }
 
         .grafico-head span{
             color:var(--muted);
             font-size:13px;
             font-weight:700;
+        }
+
+        .grafico-legenda{
+            display:flex;
+            align-items:center;
+            gap:14px;
+            flex-wrap:wrap;
+            margin-top:4px;
+        }
+
+        .grafico-legenda-item{
+            display:flex;
+            align-items:center;
+            gap:7px;
+            font-size:12px;
+            color:#64748b;
+            font-weight:700;
+        }
+
+        .grafico-legenda-cor{
+            width:10px;
+            height:10px;
+            border-radius:999px;
+            display:inline-block;
         }
 
         .grafico-area{
@@ -397,27 +422,23 @@
             min-width:0;
         }
 
-        .grafico-barra{
+        .grafico-barras{
+            display:flex;
+            align-items:flex-end;
+            justify-content:center;
+            gap:6px;
             width:100%;
-            max-width:28px;
-            border-radius:14px 14px 8px 8px;
-            background:linear-gradient(180deg,#22d3ee,#2563eb);
-            box-shadow:0 10px 25px rgba(34,211,238,.12);
-            min-height:18px;
-            transition:.2s ease;
-            cursor:pointer;
+            height:100%;
         }
 
-        .grafico-barra:hover{
-            transform:translateY(-4px);
-            filter:brightness(1.05);
-            box-shadow:0 18px 30px rgba(34,211,238,.22);
-        }
-
-        .grafico-mes{
-            font-size:12px;
-            color:var(--muted);
-            font-weight:700;
+        .grafico-barra-wrap{
+            display:flex;
+            flex-direction:column;
+            align-items:center;
+            justify-content:flex-end;
+            height:100%;
+            flex:1;
+            max-width:30px;
         }
 
         .grafico-total{
@@ -425,6 +446,35 @@
             color:#94a3b8;
             font-weight:700;
             min-height:14px;
+        }
+
+        .grafico-barra{
+            width:100%;
+            border-radius:14px 14px 8px 8px;
+            min-height:18px;
+            transition:.2s ease;
+            cursor:pointer;
+        }
+
+        .grafico-barra-total{
+            background:linear-gradient(180deg,#22d3ee,#2563eb);
+            box-shadow:0 10px 25px rgba(34,211,238,.12);
+        }
+
+        .grafico-barra-pagos{
+            background:linear-gradient(180deg,#4ade80,#16a34a);
+            box-shadow:0 10px 25px rgba(34,197,94,.12);
+        }
+
+        .grafico-barra:hover{
+            transform:translateY(-4px);
+            filter:brightness(1.05);
+        }
+
+        .grafico-mes{
+            font-size:12px;
+            color:var(--muted);
+            font-weight:700;
         }
 
         table{
@@ -449,7 +499,9 @@
             font-size:14px;
             color:#334155;
             font-weight:600;
-        }.resumo{
+        }
+
+        .resumo{
             display:flex;
             flex-direction:column;
             justify-content:space-between;
@@ -596,7 +648,7 @@
             .cards{grid-template-columns:1fr;}
             .topo h1{font-size:30px;}
             .grafico-area{height:210px;gap:6px;}
-            .grafico-barra{max-width:24px;}
+            .grafico-barra-wrap{max-width:24px;}
         }
     </style>
 </head>
@@ -644,9 +696,7 @@
             <div class="menu-titulo">Configurações</div>
             <a href="{% url 'minha_loja' %}">Minha loja</a>
             <a href="{% url 'editar_vitrine' %}">Editar vitrine</a>
-            <a href="{{ loja_url_publica }}" target="_blank" rel="noopener noreferrer">
-            Abrir página do consumidor </a>
-
+            <a href="{{ loja_url_publica }}" target="_blank" rel="noopener noreferrer">Abrir página do consumidor</a>
             <a href="{% url 'logout_loja' %}">Sair</a>
         </div>
 
@@ -726,22 +776,55 @@
         <div class="grid-topo">
             <div class="box">
                 <div class="grafico-head">
-                    <h2>Movimento de pedidos</h2>
-                    <span>Pedidos nos últimos 12 meses</span>
+                    <div>
+                        <h2 style="margin-bottom:6px;">Movimento de pedidos</h2>
+                        <span>Pedidos nos últimos 12 meses</span>
+                    </div>
+
+                    <div class="grafico-legenda">
+                        <div class="grafico-legenda-item">
+                            <span class="grafico-legenda-cor" style="background:linear-gradient(180deg,#22d3ee,#2563eb);"></span>
+                            Total de pedidos
+                        </div>
+                        <div class="grafico-legenda-item">
+                            <span class="grafico-legenda-cor" style="background:linear-gradient(180deg,#4ade80,#16a34a);"></span>
+                            Pedidos pagos
+                        </div>
+                    </div>
                 </div>
 
                 <div class="grafico-area">
                     {% for item in movimento_mensal %}
                         <div class="grafico-coluna">
                             <div class="grafico-total">{{ item.total|default:"0" }}</div>
-                            <div class="grafico-barra" style="height:{{ item.altura|default:"12" }}%;" title="{{ item.mes }} - {{ item.total|default:"0" }} pedidos"></div>
+
+                            <div class="grafico-barras">
+                                <div class="grafico-barra-wrap">
+                                    <div
+                                        class="grafico-barra grafico-barra-total"
+                                        style="height:{{ item.altura|default:'12' }}%;"
+                                        title="{{ item.mes }} - Total de pedidos: {{ item.total|default:'0' }}"
+                                    ></div>
+                                </div>
+
+                                <div class="grafico-barra-wrap">
+                                    <div
+                                        class="grafico-barra grafico-barra-pagos"
+                                        style="height:{{ item.altura_pagos|default:'12' }}%;"
+                                        title="{{ item.mes }} - Pedidos pagos: {{ item.pagos|default:'0' }}"
+                                    ></div>
+                                </div>
+                            </div>
+
                             <div class="grafico-mes">{{ item.mes }}</div>
                         </div>
                     {% empty %}
                         <p style="color:#64748b;">Ainda não há dados suficientes para exibir o gráfico.</p>
                     {% endfor %}
                 </div>
-            </div><div class="box resumo">
+            </div>
+
+            <div class="box resumo">
                 <div>
                     <h2>Resumo rápido</h2>
 
