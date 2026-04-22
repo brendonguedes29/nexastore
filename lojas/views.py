@@ -2502,7 +2502,6 @@ def simular_pagamento_aprovado(request, referencia):
     confirmar_pagamento_por_referencia(referencia)
     return redirect("painel_loja")
 
-
 @csrf_exempt
 def criar_pagamento_cartao(request):
     if request.method != "POST":
@@ -2629,8 +2628,25 @@ def criar_pagamento_cartao(request):
 
         print("RESPOSTA MP CARTAO:", resposta)
 
+        mapa_erros = {
+            "cc_rejected_high_risk": "Pagamento não aprovado. Tente outro cartão de crédito ou utilize Pix.",
+            "cc_rejected_insufficient_amount": "Saldo insuficiente no cartão.",
+            "cc_rejected_bad_filled_card_number": "Número do cartão inválido.",
+            "cc_rejected_bad_filled_date": "Data de validade inválida.",
+            "cc_rejected_bad_filled_security_code": "Código de segurança inválido.",
+            "cc_rejected_call_for_authorize": "Você precisa autorizar a compra com o seu banco.",
+            "cc_rejected_card_disabled": "Cartão desabilitado. Entre em contato com o banco.",
+            "cc_rejected_card_error": "Erro no cartão. Tente outro cartão.",
+            "cc_rejected_duplicated_payment": "Pagamento duplicado detectado.",
+            "cc_rejected_invalid_installments": "Parcelamento inválido.",
+            "cc_rejected_max_attempts": "Muitas tentativas. Tente novamente mais tarde.",
+        }
+
         if response.status_code not in [200, 201]:
-            mensagem_erro = (
+            status_detail = resposta.get("status_detail", "")
+
+            mensagem_erro = mapa_erros.get(
+                status_detail,
                 resposta.get("message")
                 or resposta.get("cause", [{}])[0].get("description")
                 or "Erro ao criar pagamento com cartão."
@@ -2643,6 +2659,7 @@ def criar_pagamento_cartao(request):
             }, status=400)
 
         status_mp = resposta.get("status", "")
+        status_detail = resposta.get("status_detail", "")
         mp_payment_id = str(resposta.get("id", ""))
 
         Pedido.objects.filter(referencia_pagamento=referencia).update(
@@ -2679,10 +2696,9 @@ def criar_pagamento_cartao(request):
                 status_pagamento="recusado"
             )
 
-            mensagem_erro = (
-                resposta.get("status_detail")
-                or resposta.get("message")
-                or "Pagamento recusado."
+            mensagem_erro = mapa_erros.get(
+                status_detail,
+                "Pagamento não aprovado. Tente outro cartão de crédito ou utilize Pix."
             )
 
             return JsonResponse({
