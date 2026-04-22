@@ -212,32 +212,6 @@
         color:#111827;
     }
 
-    .linha{
-        margin-bottom:14px;
-    }
-
-    .linha label{
-        display:block;
-        font-weight:700;
-        margin-bottom:6px;
-        color:#374151;
-    }
-
-    .linha input,.linha select{
-        width:100%;
-        padding:12px 14px;
-        border:1px solid #d1d5db;
-        border-radius:12px;
-        font-size:14px;
-        background:white;
-    }
-
-    .grid-2{
-        display:grid;
-        grid-template-columns:1fr 1fr;
-        gap:14px;
-    }
-
     .acoes{
         display:flex;
         gap:12px;
@@ -314,8 +288,12 @@
         line-height:1.6;
     }
 
+    #cardPaymentBrick_container{
+        margin-top:12px;
+    }
+
     @media (max-width:800px){
-        .pix-grid,.grid-2{
+        .pix-grid{
             grid-template-columns:1fr;
         }
 
@@ -416,63 +394,11 @@
                 </div>
 
                 <div id="cartaoArea" class="cartao-area">
-                    <form id="form-checkout" novalidate>
-                        <div class="linha">
-                            <label>Nome no cartão</label>
-                            <input type="text" id="form-checkout__cardholderName" placeholder="Nome como está no cartão">
-                        </div>
+                    <div id="cardPaymentBrick_container"></div>
 
-                        <div class="linha">
-                            <label>Número do cartão</label>
-                            <input type="text" id="form-checkout__cardNumber" placeholder="0000 0000 0000 0000">
-                        </div>
-
-                        <div class="grid-2">
-                            <div class="linha">
-                                <label>Validade</label>
-                                <input type="text" id="form-checkout__expirationDate" placeholder="MM/AA">
-                            </div>
-
-                            <div class="linha">
-                                <label>CVV</label>
-                                <input type="text" id="form-checkout__securityCode" placeholder="CVV">
-                            </div>
-                        </div>
-
-                        <div class="grid-2">
-                            <div class="linha">
-                                <label>E-mail</label>
-                                <input type="email" id="form-checkout__cardholderEmail" value="{{ email_pagador }}">
-                            </div>
-
-                            <div class="linha">
-                                <label>Parcelas</label>
-                                <select id="form-checkout__installments"></select>
-                            </div>
-                        </div>
-
-                        <div class="grid-2">
-                            <div class="linha">
-                                <label>Banco emissor</label>
-                                <select id="form-checkout__issuer"></select>
-                            </div>
-
-                            <div class="linha">
-                                <label>Tipo de documento</label>
-                                <select id="form-checkout__identificationType"></select>
-                            </div>
-                        </div>
-
-                        <div class="linha">
-                            <label>Número do documento</label>
-                            <input type="text" id="form-checkout__identificationNumber" placeholder="Digite apenas os números do CPF">
-                        </div>
-
-                        <div class="acoes">
-                            <button type="submit" id="form-checkout__submit" class="botao botao-azul">Pagar com cartão</button>
-                            <a href="{% url 'checkout' %}" class="botao botao-cinza">Voltar</a>
-                        </div>
-                    </form>
+                    <div class="acoes">
+                        <a href="{% url 'checkout' %}" class="botao botao-cinza">Voltar</a>
+                    </div>
                 </div>
 
                 <div id="sucessoArea" class="sucesso-area">
@@ -493,7 +419,6 @@
         const REFERENCIA = "{{ referencia|escapejs }}";
         const TOTAL = parseFloat("{{ total_pedido|floatformat:2|escapejs }}".replace(",", "."));
         const MP_PUBLIC_KEY = "{{ mp_public_key|default:''|escapejs }}";
-        const EMAIL_PAGADOR = "{{ email_pagador|default:''|escapejs }}";
 
         const statusBox = document.getElementById("statusBox");
         const pixArea = document.getElementById("pixArea");
@@ -576,8 +501,6 @@
                 const response = await fetch(`/api/pagamento/status/${REFERENCIA}/`);
                 const data = await response.json();
 
-                console.log("STATUS API:", data);
-
                 if (
                     data.status === "pago" ||
                     data.status === "approved" ||
@@ -659,18 +582,6 @@
             pixArea.style.display = "none";
             cartaoArea.style.display = "block";
 
-            const cpfInput = document.getElementById("form-checkout__identificationNumber");
-            const submitButton = document.getElementById("form-checkout__submit");
-
-            function bloquearBotao(bloquear) {
-                submitButton.disabled = bloquear;
-                submitButton.textContent = bloquear ? "Processando..." : "Pagar com cartão";
-            }
-
-            cpfInput.addEventListener("input", function () {
-                this.value = this.value.replace(/\D/g, "");
-            });
-
             if (!MP_PUBLIC_KEY) {
                 mostrarStatus("Esta loja ainda não aceita pagamentos com cartão.", "erro");
                 return;
@@ -682,37 +593,29 @@
             }
 
             try {
-                const mp = new MercadoPago(MP_PUBLIC_KEY);
+                const mp = new MercadoPago(MP_PUBLIC_KEY, {
+                    locale: "pt-BR"
+                });
 
-                const cardForm = mp.cardForm({
-                    amount: TOTAL,
-                    autoMount: true,
-                    form: {
-                        id: "form-checkout",
-                        cardholderName: { id: "form-checkout__cardholderName" },
-                        cardNumber: { id: "form-checkout__cardNumber" },
-                        expirationDate: { id: "form-checkout__expirationDate" },
-                        securityCode: { id: "form-checkout__securityCode" },
-                        installments: { id: "form-checkout__installments" },
-                        issuer: { id: "form-checkout__issuer" },
-                        identificationType: { id: "form-checkout__identificationType" },
-                        identificationNumber: { id: "form-checkout__identificationNumber" },
-                        cardholderEmail: { id: "form-checkout__cardholderEmail" }
+                const bricksBuilder = mp.bricks();
+
+                bricksBuilder.create("cardPayment", "cardPaymentBrick_container", {
+                    initialization: {
+                        amount: TOTAL
+                    },
+                    customization: {
+                        paymentMethods: {
+                            maxInstallments: 12
+                        }
                     },
                     callbacks: {
-                        onFormMounted: function (error) {
-                            if (error) {
-                                mostrarStatus("Erro ao carregar o formulário do cartão.", "erro");
-                            } else {
-                                mostrarStatus("Formulário do cartão carregado. Preencha os dados para pagar.");
-                            }
+                        onReady: function () {
+                            mostrarStatus("Formulário do cartão carregado.");
                         },
-                        onSubmit: async function (event) {
-                            event.preventDefault();
-                            bloquearBotao(true);
 
+                        onSubmit: async function (cardFormData) {
                             try {
-                                const cardFormData = cardForm.getCardFormData();
+                                mostrarStatus("Processando pagamento com cartão...");
 
                                 const response = await fetch("/api/cartao/", {
                                     method: "POST",
@@ -722,17 +625,17 @@
                                     },
                                     body: JSON.stringify({
                                         referencia: REFERENCIA,
+                                        transaction_amount: Number(TOTAL),
                                         payload: {
                                             token: cardFormData.token,
-                                            paymentMethodId: cardFormData.paymentMethodId,
-                                            issuerId: cardFormData.issuerId,
-                                            installments: Number(cardFormData.installments),
-                                            cardholderEmail: cardFormData.cardholderEmail,
-                                            cardholderName: cardFormData.cardholderName,
-                                            identificationType: cardFormData.identificationType,
-                                            identificationNumber: cardFormData.identificationNumber
-                                        },
-                                        transaction_amount: Number(TOTAL)
+                                            paymentMethodId: cardFormData.payment_method_id,
+                                            issuerId: cardFormData.issuer_id,
+                                            installments: Number(cardFormData.installments || 1),
+                                            cardholderEmail: cardFormData.payer?.email || "",
+                                            cardholderName: cardFormData.cardholder?.name || "",
+                                            identificationType: cardFormData.payer?.identification?.type || "",
+                                            identificationNumber: cardFormData.payer?.identification?.number || ""
+                                        }
                                     })
                                 });
 
@@ -740,7 +643,6 @@
 
                                 if (!response.ok || data.ok === false) {
                                     tratarErroPagamento(data, "processar o cartão");
-                                    bloquearBotao(false);
                                     return;
                                 }
 
@@ -758,26 +660,31 @@
                                     return;
                                 }
 
-                                mostrarStatus("Pagamento enviado. Aguardando confirmação...", "sucesso");
-                                bloquearBotao(false);
+                                if (data.status === "pending" || data.status === "in_process") {
+                                    mostrarStatus("Pagamento enviado. Aguardando confirmação...", "sucesso");
 
-                                if (monitoramentoCartao) clearInterval(monitoramentoCartao);
-                                monitoramentoCartao = setInterval(verificarStatus, 5000);
+                                    if (monitoramentoCartao) clearInterval(monitoramentoCartao);
+                                    monitoramentoCartao = setInterval(verificarStatus, 5000);
+                                    return;
+                                }
+
+                                mostrarStatus("Pagamento não aprovado. Verifique os dados e tente novamente.", "erro");
 
                             } catch (e) {
+                                console.error(e);
                                 mostrarStatus("Erro ao enviar pagamento com cartão. Tente novamente.", "erro");
-                                bloquearBotao(false);
                             }
                         },
-                        onFetching: function () {
-                            bloquearBotao(true);
-                            return function () {
-                                bloquearBotao(false);
-                            };
+
+                        onError: function (error) {
+                            console.error("ERRO NO BRICK:", error);
+                            mostrarStatus("Erro ao iniciar pagamento com cartão.", "erro");
                         }
                     }
                 });
+
             } catch (e) {
+                console.error("ERRO AO INICIAR MP:", e);
                 mostrarStatus("Erro ao iniciar pagamento com cartão.", "erro");
             }
         }
