@@ -2510,6 +2510,7 @@ def criar_pagamento_cartao(request):
 
     try:
         data = json.loads(request.body.decode("utf-8"))
+
         referencia = data.get("referencia")
         payload_front = data.get("payload", {})
         transaction_amount = float(data.get("transaction_amount") or 0)
@@ -2543,7 +2544,7 @@ def criar_pagamento_cartao(request):
                 "redirect": f"/pagamento/{referencia}/sucesso/"
             })
 
-        if not transaction_amount:
+        if not transaction_amount or transaction_amount <= 0:
             transaction_amount = total
 
         if transaction_amount <= 0:
@@ -2553,18 +2554,35 @@ def criar_pagamento_cartao(request):
             }, status=400)
 
         token_cartao = payload_front.get("token")
-        payment_method_id = payload_front.get("paymentMethodId")
+        payment_method_id = payload_front.get("paymentMethodId") or payload_front.get("payment_method_id")
+        issuer_id = payload_front.get("issuerId") or payload_front.get("issuer_id")
         installments = int(payload_front.get("installments") or 1)
-        cardholder_email = payload_front.get("cardholderEmail")
-        cardholder_name = payload_front.get("cardholderName") or "Cliente"
-        identification_type = payload_front.get("identificationType")
-        identification_number = payload_front.get("identificationNumber")
+        cardholder_email = payload_front.get("cardholderEmail") or payload_front.get("payer_email") or ""
+        cardholder_name = payload_front.get("cardholderName") or payload_front.get("cardholder_name") or "Cliente"
+        identification_type = payload_front.get("identificationType") or payload_front.get("identification_type") or "CPF"
+        identification_number = payload_front.get("identificationNumber") or payload_front.get("identification_number") or ""
 
-        if not token_cartao or not payment_method_id:
+        if not token_cartao:
             return JsonResponse({
                 "ok": False,
-                "erro": "Dados do cartão incompletos."
+                "erro": "Token do cartão não informado."
             }, status=400)
+
+        if not payment_method_id:
+            return JsonResponse({
+                "ok": False,
+                "erro": "Método de pagamento não identificado."
+            }, status=400)
+
+        if not cardholder_email:
+            if (
+                pedido_base.comprador
+                and pedido_base.comprador.usuario
+                and pedido_base.comprador.usuario.email
+            ):
+                cardholder_email = pedido_base.comprador.usuario.email
+            else:
+                cardholder_email = "cliente@exemplo.com"
 
         payload_mp = {
             "transaction_amount": transaction_amount,
@@ -2575,18 +2593,19 @@ def criar_pagamento_cartao(request):
             "external_reference": referencia,
             "notification_url": settings.MERCADOPAGO_WEBHOOK_URL,
             "payer": {
-                "email": cardholder_email or (
-                    pedido_base.comprador.usuario.email
-                    if pedido_base.comprador and pedido_base.comprador.usuario and pedido_base.comprador.usuario.email
-                    else "cliente@exemplo.com"
-                ),
+                "email": cardholder_email,
                 "first_name": cardholder_name,
-                "identification": {
-                    "type": identification_type,
-                    "number": identification_number
-                }
             }
         }
+
+        if issuer_id:
+            payload_mp["issuer_id"] = issuer_id
+
+        if identification_number:
+            payload_mp["payer"]["identification"] = {
+                "type": identification_type,
+                "number": identification_number
+            }
 
         response = requests.post(
             "https://api.mercadopago.com/v1/payments",
@@ -2608,21 +2627,29 @@ def criar_pagamento_cartao(request):
                 "raw": response.text
             }, status=400)
 
+        print("RESPOSTA MP CARTAO:", resposta)
+
         if response.status_code not in [200, 201]:
+            mensagem_erro = (
+                resposta.get("message")
+                or resposta.get("cause", [{}])[0].get("description")
+                or "Erro ao criar pagamento com cartão."
+            )
+
             return JsonResponse({
                 "ok": False,
-                "erro": "Erro ao criar pagamento com cartão.",
+                "erro": mensagem_erro,
                 "resposta_mp": resposta
             }, status=400)
 
-        status = resposta.get("status", "")
+        status_mp = resposta.get("status", "")
         mp_payment_id = str(resposta.get("id", ""))
 
         Pedido.objects.filter(referencia_pagamento=referencia).update(
             mp_payment_id=mp_payment_id
         )
 
-        if status == "approved":
+        if status_mp == "approved":
             Pedido.objects.filter(referencia_pagamento=referencia).update(
                 status_pagamento="pago",
                 status="aguardando_envio"
@@ -2632,26 +2659,50 @@ def criar_pagamento_cartao(request):
 
             return JsonResponse({
                 "ok": True,
+                "status": "approved",
                 "redirect": f"/pagamento/{referencia}/sucesso/"
             })
 
-        elif status in ["pending", "in_process"]:
+        elif status_mp in ["pending", "in_process"]:
             Pedido.objects.filter(referencia_pagamento=referencia).update(
                 status_pagamento="confirmacao"
             )
 
-        elif status in ["rejected", "cancelled"]:
+            return JsonResponse({
+                "ok": True,
+                "status": status_mp,
+                "payment_id": mp_payment_id
+            })
+
+        elif status_mp in ["rejected", "cancelled"]:
             Pedido.objects.filter(referencia_pagamento=referencia).update(
                 status_pagamento="recusado"
             )
 
+            mensagem_erro = (
+                resposta.get("status_detail")
+                or resposta.get("message")
+                or "Pagamento recusado."
+            )
+
+            return JsonResponse({
+                "ok": False,
+                "status": status_mp,
+                "erro": mensagem_erro,
+                "payment_id": mp_payment_id,
+                "resposta_mp": resposta
+            }, status=400)
+
         return JsonResponse({
             "ok": True,
-            "status": status,
-            "payment_id": mp_payment_id
+            "status": status_mp,
+            "payment_id": mp_payment_id,
+            "resposta_mp": resposta
         })
 
     except Exception as e:
+        print("ERRO CRIAR PAGAMENTO CARTAO:")
+        print(traceback.format_exc())
         return JsonResponse({"ok": False, "erro": str(e)}, status=500)
 
 @csrf_exempt

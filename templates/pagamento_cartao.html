@@ -7,37 +7,188 @@
     <script src="https://sdk.mercadopago.com/js/v2"></script>
     <style>
         *{margin:0;padding:0;box-sizing:border-box;}
-        body{font-family:Arial,sans-serif;background:#f4f6fb;color:#1f2937;}
-        .header{background:#0f172a;color:white;padding:18px 0;}
-        .header .wrap{width:94%;max-width:1200px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:20px;}
-        .marca{display:flex;align-items:center;gap:12px;}
-        .marca-bola{width:42px;height:42px;border-radius:50%;background:#22c55e;display:flex;align-items:center;justify-content:center;font-weight:900;color:white;}
-        .marca-texto strong{display:block;font-size:22px;}
-        .marca-texto span{color:#cbd5e1;font-size:13px;}
-        .nav a{color:white;text-decoration:none;font-weight:700;margin-left:20px;}
-        .container{width:94%;max-width:900px;margin:36px auto;}
-        .box{background:white;border-radius:24px;padding:32px;box-shadow:0 8px 24px rgba(15,23,42,0.08);border:1px solid #e5e7eb;}
-        h1{font-size:28px;margin-bottom:10px;color:#111827;}
-        .referencia{color:#4b5563;margin-bottom:8px;font-size:15px;}
-        .total{font-size:22px;font-weight:900;color:#111827;margin-bottom:28px;}
-        .cartao-box{border:1px solid #e5e7eb;border-radius:20px;padding:24px;background:#fafafa;}
-        .titulo-metodo{font-size:28px;margin-bottom:8px;text-align:center;color:#111827;}
-        .sub{text-align:center;color:#6b7280;margin-bottom:24px;}
-        .linha{margin-bottom:14px;}
-        .linha label{display:block;font-weight:700;margin-bottom:6px;color:#374151;}
-        .linha input,.linha select{width:100%;padding:12px 14px;border:1px solid #d1d5db;border-radius:12px;font-size:14px;background:white;}
-        .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
-        .status-box{display:none;margin-bottom:20px;padding:16px;border-radius:14px;line-height:1.6;font-weight:700;white-space:pre-wrap;}
-        .status-info{background:#eff6ff;border:1px solid #bfdbfe;color:#1d4ed8;}
-        .status-erro{background:#fee2e2;border:1px solid #fecaca;color:#991b1b;}
-        .status-sucesso{background:#dcfce7;border:1px solid #bbf7d0;color:#166534;}
-        .acoes{display:flex;gap:12px;flex-wrap:wrap;margin-top:18px;}
-        .botao{display:inline-flex;align-items:center;justify-content:center;padding:13px 18px;border-radius:12px;text-decoration:none;font-weight:800;border:none;cursor:pointer;font-size:14px;}
-        .botao-azul{background:#2563eb;color:white;}
-        .botao-cinza{background:#e5e7eb;color:#111827;}
-        .botao:disabled{opacity:.6;cursor:not-allowed;}
+
+        body{
+            font-family:Arial,sans-serif;
+            background:#f4f6fb;
+            color:#1f2937;
+        }
+
+        .header{
+            background:#0f172a;
+            color:white;
+            padding:18px 0;
+        }
+
+        .header .wrap{
+            width:94%;
+            max-width:1200px;
+            margin:0 auto;
+            display:flex;
+            align-items:center;
+            justify-content:space-between;
+            gap:20px;
+        }
+
+        .marca{
+            display:flex;
+            align-items:center;
+            gap:12px;
+        }
+
+        .marca-bola{
+            width:42px;
+            height:42px;
+            border-radius:50%;
+            background:#22c55e;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            font-weight:900;
+            color:white;
+            flex-shrink:0;
+        }
+
+        .marca-logo{
+            width:42px;
+            height:42px;
+            border-radius:50%;
+            object-fit:cover;
+            border:1px solid rgba(255,255,255,0.18);
+            background:white;
+            flex-shrink:0;
+        }
+
+        .marca-texto strong{
+            display:block;
+            font-size:22px;
+        }
+
+        .marca-texto span{
+            color:#cbd5e1;
+            font-size:13px;
+        }
+
+        .nav a{
+            color:white;
+            text-decoration:none;
+            font-weight:700;
+            margin-left:20px;
+        }
+
+        .container{
+            width:94%;
+            max-width:900px;
+            margin:36px auto;
+        }
+
+        .box{
+            background:white;
+            border-radius:24px;
+            padding:32px;
+            box-shadow:0 8px 24px rgba(15,23,42,0.08);
+            border:1px solid #e5e7eb;
+        }
+
+        h1{
+            font-size:28px;
+            margin-bottom:10px;
+            color:#111827;
+        }
+
+        .referencia{
+            color:#4b5563;
+            margin-bottom:8px;
+            font-size:15px;
+        }
+
+        .total{
+            font-size:22px;
+            font-weight:900;
+            color:#111827;
+            margin-bottom:28px;
+        }
+
+        .cartao-box{
+            border:1px solid #e5e7eb;
+            border-radius:20px;
+            padding:24px;
+            background:#fafafa;
+        }
+
+        .titulo-metodo{
+            font-size:28px;
+            margin-bottom:8px;
+            text-align:center;
+            color:#111827;
+        }
+
+        .sub{
+            text-align:center;
+            color:#6b7280;
+            margin-bottom:24px;
+            line-height:1.6;
+        }
+
+        .status-box{
+            display:none;
+            margin-bottom:20px;
+            padding:16px;
+            border-radius:14px;
+            line-height:1.6;
+            font-weight:700;
+            white-space:pre-wrap;
+        }
+
+        .status-info{
+            background:#eff6ff;
+            border:1px solid #bfdbfe;
+            color:#1d4ed8;
+        }
+
+        .status-erro{
+            background:#fee2e2;
+            border:1px solid #fecaca;
+            color:#991b1b;
+        }
+
+        .status-sucesso{
+            background:#dcfce7;
+            border:1px solid #bbf7d0;
+            color:#166534;
+        }
+
+        .acoes{
+            display:flex;
+            gap:12px;
+            flex-wrap:wrap;
+            margin-top:18px;
+            justify-content:center;
+        }
+
+        .botao{
+            display:inline-flex;
+            align-items:center;
+            justify-content:center;
+            padding:13px 18px;
+            border-radius:12px;
+            text-decoration:none;
+            font-weight:800;
+            border:none;
+            cursor:pointer;
+            font-size:14px;
+        }
+
+        .botao-cinza{
+            background:#e5e7eb;
+            color:#111827;
+        }
+
+        #cardPaymentBrick_container{
+            margin-top:20px;
+        }
+
         @media (max-width:800px){
-            .grid-2{grid-template-columns:1fr;}
             .nav{display:none;}
             .header .wrap{justify-content:center;}
             .box{padding:24px;}
@@ -48,14 +199,22 @@
     <div class="header">
         <div class="wrap">
             <div class="marca">
-                <div class="marca-bola">L</div>
+                {% if pedido.loja.logo %}
+                    <img src="{{ pedido.loja.logo.url }}" alt="Logo da loja" class="marca-logo">
+                {% else %}
+                    <div class="marca-bola">
+                        {{ pedido.loja.nome|slice:":1"|upper }}
+                    </div>
+                {% endif %}
+
                 <div class="marca-texto">
-                    <strong>Loja</strong>
+                    <strong>{{ pedido.loja.nome }}</strong>
                     <span>Área do comprador</span>
                 </div>
             </div>
+
             <div class="nav">
-                <a href="{% url 'loja' pedido.loja.slug %}">Início</a>
+                <a href="https://{{ pedido.loja.slug }}.nexastoreofficial.com.br">Início</a>
                 <a href="{% url 'ver_carrinho' %}">Carrinho</a>
             </div>
         </div>
@@ -75,67 +234,17 @@
 
             <div class="cartao-box">
                 <h2 class="titulo-metodo">Pague com Cartão</h2>
-                <div class="sub">Preencha os dados abaixo para finalizar o pagamento.</div>
+                <div class="sub">
+                    Preencha os dados abaixo para finalizar o pagamento.
+                </div>
 
                 <div id="statusBox" class="status-box status-info"></div>
 
-                <form id="form-checkout" novalidate>
-                    <div class="linha">
-                        <label>Nome no cartão</label>
-                        <input type="text" id="form-checkout__cardholderName" placeholder="Nome como está no cartão">
-                    </div>
+                <div id="cardPaymentBrick_container"></div>
 
-                    <div class="linha">
-                        <label>Número do cartão</label>
-                        <input type="text" id="form-checkout__cardNumber" placeholder="0000 0000 0000 0000">
-                    </div>
-
-                    <div class="grid-2">
-                        <div class="linha">
-                            <label>Validade</label>
-                            <input type="text" id="form-checkout__expirationDate" placeholder="MM/AA">
-                        </div>
-
-                        <div class="linha">
-                            <label>CVV</label>
-                            <input type="text" id="form-checkout__securityCode" placeholder="CVV">
-                        </div>
-                    </div>
-
-                    <div class="grid-2">
-                        <div class="linha">
-                            <label>E-mail</label>
-                            <input type="email" id="form-checkout__cardholderEmail" value="{{ email_pagador }}">
-                        </div>
-
-                        <div class="linha">
-                            <label>Parcelas</label>
-                            <select id="form-checkout__installments"></select>
-                        </div>
-                    </div>
-
-                    <div class="grid-2">
-                        <div class="linha">
-                            <label>Banco emissor</label>
-                            <select id="form-checkout__issuer"></select>
-                        </div>
-
-                        <div class="linha">
-                            <label>Tipo de documento</label>
-                            <select id="form-checkout__identificationType"></select>
-                        </div>
-                    </div>
-
-                    <div class="linha">
-                        <label>Número do documento</label>
-                        <input type="text" id="form-checkout__identificationNumber" placeholder="Digite apenas os números do CPF">
-                    </div>
-
-                    <div class="acoes">
-                        <button type="submit" id="form-checkout__submit" class="botao botao-azul">Pagar com cartão</button>
-                        <a href="{% url 'checkout' %}" class="botao botao-cinza">Voltar</a>
-                    </div>
-                </form>
+                <div class="acoes">
+                    <a href="{% url 'checkout' %}" class="botao botao-cinza">Voltar</a>
+                </div>
             </div>
         </div>
     </div>
@@ -143,10 +252,8 @@
     <script>
         const publicKey = "{{ mp_public_key|default:''|escapejs }}";
         const referencia = "{{ referencia|escapejs }}";
-        const total = "{{ total|floatformat:2 }}".replace(",", ".");
+        const total = Number("{{ total|floatformat:2 }}".replace(",", "."));
         const statusBox = document.getElementById("statusBox");
-        const submitButton = document.getElementById("form-checkout__submit");
-        const cpfInput = document.getElementById("form-checkout__identificationNumber");
 
         function mostrarStatus(texto, tipo="info") {
             statusBox.style.display = "block";
@@ -163,155 +270,106 @@
             statusBox.innerText = texto;
         }
 
-        function bloquearBotao(bloquear=true) {
-            submitButton.disabled = bloquear;
-            submitButton.innerText = bloquear ? "Processando..." : "Pagar com cartão";
-        }
-
-        function tratarErroPagamento(data) {
-            if (data && data.erro && String(data.erro).toLowerCase().includes("conta de recebimento")) {
-                mostrarStatus("Esta loja ainda não configurou pagamento com cartão.", "erro");
-            } else if (data && data.erro) {
-                mostrarStatus(data.erro, "erro");
-            } else {
-                mostrarStatus("Erro ao processar pagamento. Tente novamente.", "erro");
-            }
-        }
-
-        function getCookie(name) {
-            let cookieValue = null;
-            if (document.cookie && document.cookie !== "") {
-                const cookies = document.cookie.split(";");
-                for (let i = 0; i < cookies.length; i++) {
-                    const cookie = cookies[i].trim();
-                    if (cookie.substring(0, name.length + 1) === (name + "=")) {
-                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                        break;
-                    }
-                }
-            }
-            return cookieValue;
-        }
-
-        cpfInput.addEventListener("input", function() {
-            this.value = this.value.replace(/\D/g, "");
-        });
-
         if (!publicKey) {
             mostrarStatus("Esta loja ainda não aceita pagamentos com cartão.", "erro");
         } else {
-            const mp = new MercadoPago(publicKey);
+            try {
+                const mp = new MercadoPago(publicKey, {
+                    locale: "pt-BR"
+                });
 
-            const cardForm = mp.cardForm({
-                amount: total,
-                autoMount: true,
-                form: {
-                    id: "form-checkout",
-                    cardholderName: {
-                        id: "form-checkout__cardholderName",
-                        placeholder: "Nome como está no cartão"
+                const bricksBuilder = mp.bricks();
+
+                bricksBuilder.create("cardPayment", "cardPaymentBrick_container", {
+                    initialization: {
+                        amount: total
                     },
-                    cardNumber: {
-                        id: "form-checkout__cardNumber",
-                        placeholder: "0000 0000 0000 0000"
-                    },
-                    expirationDate: {
-                        id: "form-checkout__expirationDate",
-                        placeholder: "MM/AA"
-                    },
-                    securityCode: {
-                        id: "form-checkout__securityCode",
-                        placeholder: "CVV"
-                    },
-                    installments: {
-                        id: "form-checkout__installments",
-                        placeholder: "Parcelas"
-                    },
-                    issuer: {
-                        id: "form-checkout__issuer",
-                        placeholder: "Banco emissor"
-                    },
-                    identificationType: {
-                        id: "form-checkout__identificationType",
-                        placeholder: "Tipo de documento"
-                    },
-                    identificationNumber: {
-                        id: "form-checkout__identificationNumber",
-                        placeholder: "Digite apenas os números do CPF"
-                    },
-                    cardholderEmail: {
-                        id: "form-checkout__cardholderEmail",
-                        placeholder: "Seu e-mail"
-                    }
-                },
-                callbacks: {
-                    onFormMounted: function(error) {
-                        if (error) {
-                            mostrarStatus("Erro ao carregar o formulário de pagamento.", "erro");
+                    customization: {
+                        paymentMethods: {
+                            maxInstallments: 12
+                        },
+                        visual: {
+                            style: {
+                                theme: "default"
+                            }
                         }
                     },
-                    onSubmit: async function(event) {
-                        event.preventDefault();
+                    callbacks: {
+                        onReady: () => {
+                            mostrarStatus("Formulário de pagamento carregado.", "sucesso");
+                        },
 
-                        try {
-                            bloquearBotao(true);
-                            mostrarStatus("Processando pagamento com cartão...");
+                        onSubmit: async (cardFormData) => {
+                            try {
+                                mostrarStatus("Processando pagamento com cartão...");
 
-                            const formData = cardForm.getCardFormData();
+                                const response = await fetch("/api/cartao/", {
+                                    method: "POST",
+                                    headers: {
+                                        "Content-Type": "application/json",
+                                        "X-CSRFToken": "{{ csrf_token }}"
+                                    },
+                                    body: JSON.stringify({
+                                        referencia: referencia,
+                                        transaction_amount: total,
+                                        payload: {
+                                            token: cardFormData.token,
+                                            paymentMethodId: cardFormData.payment_method_id,
+                                            issuerId: cardFormData.issuer_id,
+                                            installments: Number(cardFormData.installments || 1),
+                                            cardholderEmail: cardFormData.payer?.email || "",
+                                            cardholderName: cardFormData.cardholder?.name || "",
+                                            identificationType: cardFormData.payer?.identification?.type || "",
+                                            identificationNumber: cardFormData.payer?.identification?.number || ""
+                                        }
+                                    })
+                                });
 
-                            const response = await fetch("/api/cartao/", {
-                                method: "POST",
-                                headers: {
-                                    "Content-Type": "application/json",
-                                    "X-CSRFToken": getCookie("csrftoken")
-                                },
-                                body: JSON.stringify({
-                                    referencia: referencia,
-                                    transaction_amount: Number(total),
-                                    payload: formData
-                                })
-                            });
+                                const data = await response.json();
 
-                            const data = await response.json();
+                                if (!response.ok || data.ok === false) {
+                                    if (data && data.erro) {
+                                        mostrarStatus(data.erro, "erro");
+                                    } else {
+                                        mostrarStatus("Erro ao processar pagamento com cartão.", "erro");
+                                    }
+                                    return;
+                                }
 
-                            if (!response.ok || data.ok === false) {
-                                tratarErroPagamento(data);
-                                bloquearBotao(false);
-                                return;
+                                if (data.redirect) {
+                                    window.location.href = data.redirect;
+                                    return;
+                                }
+
+                                if (data.status === "approved" || data.status_pagamento === "pago") {
+                                    window.location.href = /pagamento/${referencia}/sucesso/;
+                                    return;
+                                }
+
+                                if (data.status === "pending" || data.status === "in_process") {
+                                    mostrarStatus("Pagamento enviado para análise. Aguarde a confirmação.", "info");
+                                    return;
+                                }
+
+                                mostrarStatus("Pagamento não aprovado. Verifique os dados e tente novamente.", "erro");
+
+                            } catch (error) {
+                                console.error("ERRO AO ENVIAR PAGAMENTO:", error);
+                                mostrarStatus("Erro ao processar pagamento com cartão.", "erro");
                             }
+                        },
 
-                            if (data.redirect) {
-                                window.location.href = data.redirect;
-                                return;
-                            }
-
-                            if (
-                                data.status === "approved" ||
-                                data.status_pagamento === "pago"
-                            ) {
-                                window.location.href = `/pagamento/${referencia}/sucesso/`;
-                                return;
-                            }
-
-                            if (data.status === "in_process" || data.status === "pending") {
-                                mostrarStatus("Pagamento enviado para análise. Aguarde a confirmação.", "info");
-                                bloquearBotao(false);
-                                return;
-                            }
-
-                            mostrarStatus("Pagamento não aprovado. Tente novamente ou utilize outra forma de pagamento.", "erro");
-                            bloquearBotao(false);
-                        } catch (e) {
-                            mostrarStatus("Erro ao enviar pagamento com cartão. Tente novamente.", "erro");
-                            bloquearBotao(false);
+                        onError: (error) => {
+                            console.error("ERRO NO BRICK:", error);
+                            mostrarStatus("Erro ao iniciar pagamento com cartão.", "erro");
                         }
-                    },
-                    onError: function(error) {
-                        mostrarStatus("Erro no formulário de pagamento.", "erro");
-                        bloquearBotao(false);
                     }
-                }
-            });
+                });
+
+            } catch (error) {
+                console.error("ERRO AO INICIALIZAR MP:", error);
+                mostrarStatus("Erro ao iniciar pagamento com cartão.", "erro");
+            }
         }
     </script>
 </body>
