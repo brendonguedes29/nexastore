@@ -1,608 +1,348 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Checkout | {{ loja.nome }}</title>
-    <style>
-        *{margin:0;padding:0;box-sizing:border-box;}
+{% extends 'base_publico.html' %}
+{% block title %}Finalizar compra{% endblock %}
 
-        body{
-            font-family:Arial,sans-serif;
-            background:#f4f6fb;
-            color:#1f2937;
-        }
+{% block content %}
+<div style="background:white;padding:30px;border-radius:20px;box-shadow:0 8px 24px rgba(0,0,0,0.05);max-width:900px;margin:0 auto;">
 
-        .header{
-            background:#0f172a;
-            color:#fff;
-            padding:18px 0;
-        }
+    <h1 style="margin-bottom:10px;font-size:34px;">Finalizar pedido</h1>
+    <p style="color:#64748b;line-height:1.6;margin-bottom:20px;">
+        Preencha seus dados, escolha a forma de recebimento e confirme o pedido.
+    </p>
 
-        .header .wrap{
-            width:94%;
-            max-width:1200px;
-            margin:0 auto;
-            display:flex;
-            align-items:center;
-            justify-content:space-between;
-            gap:20px;
-        }
-
-        .marca{
-            display:flex;
-            align-items:center;
-            gap:12px;
-        }
-
-        .marca-bola{
-            width:42px;
-            height:42px;
-            border-radius:50%;
-            background:#22c55e;
-            display:flex;
-            align-items:center;
-            justify-content:center;
-            font-weight:900;
-            color:white;
-            flex-shrink:0;
-        }
-
-        .marca-logo{
-            width:42px;
-            height:42px;
-            border-radius:50%;
-            object-fit:cover;
-            border:1px solid rgba(255,255,255,0.18);
-            background:white;
-            flex-shrink:0;
-        }
-
-        .marca-texto strong{
-            display:block;
-            font-size:22px;
-        }
-
-        .marca-texto span{
-            color:#cbd5e1;
-            font-size:13px;
-        }
-
-        .nav a{
-            color:white;
-            text-decoration:none;
-            font-weight:700;
-            margin-left:20px;
-        }
-
-        .container{
-            width:94%;
-            max-width:1180px;
-            margin:34px auto;
-        }
-
-        .grid{
-            display:grid;
-            grid-template-columns:1.15fr .85fr;
-            gap:22px;
-            align-items:start;
-        }
-
-        .box{
-            background:white;
-            border-radius:24px;
-            padding:28px;
-            box-shadow:0 10px 28px rgba(15,23,42,0.08);
-            border:1px solid #e5e7eb;
-        }
-
-        h1{
-            font-size:30px;
-            color:#111827;
-            margin-bottom:8px;
-        }
-
-        .subtitulo{
-            color:#6b7280;
-            margin-bottom:24px;
-            line-height:1.6;
-        }
-
-        .erro{
-            background:#fee2e2;
-            border:1px solid #fecaca;
-            color:#991b1b;
-            padding:14px 16px;
-            border-radius:14px;
-            margin-bottom:18px;
-            font-weight:700;
-            line-height:1.5;
-        }
-
-        .secao{
-            margin-bottom:24px;
-        }
-
-        .secao h2{
-            font-size:18px;
-            color:#111827;
-            margin-bottom:14px;
-        }
-
-        .linha{
-            margin-bottom:14px;
-        }
-
-        .linha label{
-            display:block;
-            font-weight:700;
-            margin-bottom:6px;
-            color:#374151;
-            font-size:14px;
-        }
-
-        .linha input,
-        .linha select,
-        .linha textarea{
-            width:100%;
-            padding:12px 14px;
-            border:1px solid #d1d5db;
-            border-radius:12px;
-            font-size:14px;
-            background:white;
-            color:#111827;
-        }
-
-        .linha textarea{
-            resize:vertical;
-            min-height:90px;
-        }
-
-        .grid-2{
-            display:grid;
-            grid-template-columns:1fr 1fr;
-            gap:14px;
-        }
-
-        .opcoes-pagamento{
-            display:grid;
-            gap:12px;
-        }
-
-        .opcao{
-            border:1px solid #d1d5db;
-            border-radius:16px;
-            padding:16px;
-            display:flex;
-            align-items:flex-start;
-            gap:12px;
-            transition:.2s ease;
-            background:#fff;
-        }
-
-        .opcao:has(input:checked){
-            border-color:#2563eb;
-            box-shadow:0 0 0 3px rgba(37,99,235,0.08);
-            background:#f8fbff;
-        }
-
-        .opcao input{
-            margin-top:3px;
-            transform:scale(1.1);
-        }
-
-        .opcao strong{
-            display:block;
-            color:#111827;
-            margin-bottom:4px;
-            font-size:15px;
-        }
-
-        .opcao span{
-            color:#6b7280;
-            font-size:13px;
-            line-height:1.5;
-        }
-
-        .aviso-cartao{
-            display:none;
-            margin-top:12px;
-            padding:12px 14px;
-            border-radius:12px;
-            background:#eff6ff;
-            border:1px solid #bfdbfe;
-            color:#1d4ed8;
-            font-weight:700;
-            line-height:1.5;
-            font-size:13px;
-        }
-
-        .resumo-lista{
-            display:grid;
-            gap:12px;
-            margin-bottom:20px;
-        }
-
-        .item{
-            display:flex;
-            justify-content:space-between;
-            gap:12px;
-            padding:14px;
-            border:1px solid #e5e7eb;
-            border-radius:16px;
-            background:#fafafa;
-        }
-
-        .item strong{
-            color:#111827;
-            display:block;
-            margin-bottom:4px;
-        }
-
-        .item span{
-            color:#6b7280;
-            font-size:13px;
-        }
-
-        .resumo-valores{
-            border-top:1px solid #e5e7eb;
-            padding-top:16px;
-            display:grid;
-            gap:10px;
-        }
-
-        .resumo-linha{
-            display:flex;
-            justify-content:space-between;
-            gap:14px;
-            color:#374151;
-            font-weight:700;
-        }
-
-        .resumo-total{
-            display:flex;
-            justify-content:space-between;
-            gap:14px;
-            font-size:22px;
-            font-weight:900;
-            color:#111827;
-            padding-top:6px;
-        }
-
-        .acoes{
-            display:flex;
-            gap:12px;
-            flex-wrap:wrap;
-            margin-top:22px;
-        }
-
-        .botao{
-            display:inline-flex;
-            align-items:center;
-            justify-content:center;
-            padding:14px 18px;
-            border-radius:14px;
-            text-decoration:none;
-            font-weight:800;
-            border:none;
-            cursor:pointer;
-            font-size:14px;
-        }
-
-        .botao-azul{
-            background:#2563eb;
-            color:white;
-        }
-
-        .botao-cinza{
-            background:#e5e7eb;
-            color:#111827;
-        }
-
-        .botao-verde{
-            background:#16a34a;
-            color:white;
-        }
-
-        .badge{
-            display:inline-block;
-            padding:6px 10px;
-            border-radius:999px;
-            font-size:12px;
-            font-weight:800;
-            background:#ecfdf5;
-            color:#166534;
-            margin-bottom:12px;
-        }
-
-        .bloco-info{
-            background:#f8fafc;
-            border:1px solid #e5e7eb;
-            border-radius:16px;
-            padding:14px;
-            color:#475569;
-            line-height:1.6;
-            font-size:14px;
-            margin-top:12px;
-        }
-
-        @media (max-width:940px){
-            .grid{
-                grid-template-columns:1fr;
-            }
-
-            .nav{
-                display:none;
-            }
-
-            .header .wrap{
-                justify-content:center;
-            }
-        }
-
-        @media (max-width:700px){
-            .grid-2{
-                grid-template-columns:1fr;
-            }
-
-            .box{
-                padding:22px;
-            }
-
-            h1{
-                font-size:26px;
-            }
-        }
-    </style>
-</head>
-<body>
-    <div class="header">
-        <div class="wrap">
-            <div class="marca">
-                {% if loja.logo %}
-                    <img src="{{ loja.logo.url }}" alt="Logo da loja" class="marca-logo">
-                {% else %}
-                    <div class="marca-bola">
-                        {{ loja.nome|slice:":1"|upper }}
-                    </div>
-                {% endif %}
-
-                <div class="marca-texto">
-                    <strong>{{ loja.nome }}</strong>
-                    <span>Finalização da compra</span>
-                </div>
-            </div>
-
-            <div class="nav">
-                <a href="https://{{ loja.slug }}.nexastoreofficial.com.br">Início</a>
-                <a href="{% url 'ver_carrinho' %}">Carrinho</a>
-            </div>
+    {% if erro %}
+        <div style="background:#fee2e2;color:#991b1b;padding:12px 14px;border-radius:12px;margin-bottom:18px;border:1px solid #fecaca;line-height:1.6;">
+            {{ erro }}
         </div>
+    {% endif %}
+
+    <div style="background:#f8fafc;padding:14px 16px;border-radius:12px;margin-bottom:20px;border:1px solid #e5e7eb;color:#475569;line-height:1.7;">
+        <strong style="color:#0f172a;">Importante:</strong>
+        o frete será definido conforme a localização da entrega em relação à loja:
+        mesma cidade, mesmo estado ou outro estado. Se escolher retirada na loja, não haverá cobrança de frete.
     </div>
 
-    <div class="container">
-        <form method="post">
-            {% csrf_token %}
+    <form method="post" id="formCheckout">
+        {% csrf_token %}
 
-            <div class="grid">
-                <div class="box">
-                    <h1>Finalizar compra</h1>
-                    <p class="subtitulo">
-                        Revise seus dados, escolha a forma de pagamento e confirme o pedido.
-                    </p>
+        <h3 style="margin-bottom:12px;">Seus dados</h3>
 
-                    {% if erro %}
-                        <div class="erro">{{ erro }}</div>
-                    {% endif %}
+        <input
+            type="text"
+            name="nome_cliente"
+            value="{{ request.POST.nome_cliente|default:comprador.usuario.first_name }}"
+            required
+            placeholder="Seu nome"
+            style="width:100%;padding:12px;margin:10px 0;border-radius:12px;border:1px solid #ccc;"
+        >
 
-                    <div class="secao">
-                        <h2>Seus dados</h2>
+        <input
+            type="text"
+            name="telefone"
+            value="{{ request.POST.telefone|default:comprador.telefone }}"
+            required
+            placeholder="Telefone"
+            style="width:100%;padding:12px;margin:10px 0;border-radius:12px;border:1px solid #ccc;"
+        >
 
-                        <div class="grid-2">
-                            <div class="linha">
-                                <label for="nome_cliente">Nome</label>
-                                <input type="text" id="nome_cliente" name="nome_cliente" value="{% if comprador and comprador.usuario.first_name %}{{ comprador.usuario.first_name }}{% endif %}" required>
-                            </div>
+        <h3 style="margin-top:22px;margin-bottom:12px;">Tipo de recebimento</h3>
 
-                            <div class="linha">
-                                <label for="telefone">Telefone</label>
-                                <input type="text" id="telefone" name="telefone" value="{% if comprador %}{{ comprador.telefone }}{% endif %}" required>
-                            </div>
-                        </div>
+        <select
+            name="tipo_entrega"
+            id="tipo_entrega"
+            style="width:100%;padding:12px;margin:10px 0;border-radius:12px;border:1px solid #ccc;"
+        >
+            <option value="entrega" {% if request.POST.tipo_entrega == "entrega" or not request.POST.tipo_entrega %}selected{% endif %}>Entrega</option>
+            <option value="retirada" {% if request.POST.tipo_entrega == "retirada" %}selected{% endif %}>Retirar na loja</option>
+        </select>
 
-                        <div class="linha">
-                            <label for="observacao">Observação do pedido</label>
-                            <textarea id="observacao" name="observacao" placeholder="Se quiser, escreva uma observação sobre o pedido."></textarea>
-                        </div>
-                    </div>
+        <input type="hidden" name="distancia_km" id="distancia_km" value="0">
+        <input type="hidden" id="loja_id" value="{{ loja.id }}">
+        <input type="hidden" id="cidade_loja" value="{% if config_frete %}{{ config_frete.cidade_origem|default:'' }}{% else %}{% endif %}">
+        <input type="hidden" id="estado_loja" value="{% if config_frete %}{{ config_frete.estado_origem|default:'' }}{% else %}{% endif %}">
+        <input type="hidden" id="valor_mesma_cidade" value="{% if config_frete %}{{ config_frete.valor_mesma_cidade|default:'0' }}{% else %}0{% endif %}">
+        <input type="hidden" id="valor_mesmo_estado" value="{% if config_frete %}{{ config_frete.valor_mesmo_estado|default:'0' }}{% else %}0{% endif %}">
+        <input type="hidden" id="valor_fora_estado" value="{% if config_frete %}{{ config_frete.valor_fora_estado|default:'0' }}{% else %}0{% endif %}">
 
-                    <div class="secao">
-                        <h2>Entrega</h2>
+        <div id="bloco_endereco">
+            <h3 style="margin-top:22px;margin-bottom:12px;">Endereço de entrega</h3>
 
-                        <div class="opcoes-pagamento" style="margin-bottom:14px;">
-                            <label class="opcao">
-                                <input type="radio" name="tipo_entrega" value="entrega" checked>
-                                <div>
-                                    <strong>Entrega</strong>
-                                    <span>Receber no endereço informado.</span>
-                                </div>
-                            </label>
-
-                            {% if config_frete.retirada_loja %}
-                            <label class="opcao">
-                                <input type="radio" name="tipo_entrega" value="retirada">
-                                <div>
-                                    <strong>Retirar na loja</strong>
-                                    <span>Você busca o pedido diretamente na loja.</span>
-                                </div>
-                            </label>
-                            {% endif %}
-                        </div>
-
-                        <div id="bloco-endereco">
-                            <div class="grid-2">
-                                <div class="linha">
-                                    <label for="cep_entrega">CEP</label>
-                                    <input type="text" id="cep_entrega" name="cep_entrega">
-                                </div>
-
-                                <div class="linha">
-                                    <label for="estado_entrega">Estado</label>
-                                    <input type="text" id="estado_entrega" name="estado_entrega" required>
-                                </div>
-                            </div>
-
-                            <div class="grid-2">
-                                <div class="linha">
-                                    <label for="cidade_entrega">Cidade</label>
-                                    <input type="text" id="cidade_entrega" name="cidade_entrega" required>
-                                </div>
-
-                                <div class="linha">
-                                    <label for="bairro_entrega">Bairro</label>
-                                    <input type="text" id="bairro_entrega" name="bairro_entrega">
-                                </div>
-                            </div>
-
-                            <div class="grid-2">
-                                <div class="linha">
-                                    <label for="rua_entrega">Rua</label>
-                                    <input type="text" id="rua_entrega" name="rua_entrega" required>
-                                </div>
-
-                                <div class="linha">
-                                    <label for="numero_entrega">Número</label>
-                                    <input type="text" id="numero_entrega" name="numero_entrega" required>
-                                </div>
-                            </div>
-
-                            <div class="linha">
-                                <label for="complemento_entrega">Complemento</label>
-                                <input type="text" id="complemento_entrega" name="complemento_entrega">
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="secao">
-                        <h2>Forma de pagamento</h2>
-
-                        <div class="opcoes-pagamento">
-                            <label class="opcao">
-                                <input type="radio" name="forma_pagamento" value="pix" checked>
-                                <div>
-                                    <strong>Pix</strong>
-                                    <span>Pagamento rápido com QR Code ou código Pix.</span>
-                                </div>
-                            </label>
-
-                            <label class="opcao">
-                                <input type="radio" name="forma_pagamento" value="cartao">
-                                <div>
-                                    <strong>Cartão de crédito</strong>
-                                    <span>Use um cartão de crédito para finalizar o pagamento.</span>
-                                </div>
-                            </label>
-                        </div>
-
-                        <input type="hidden" name="tipo_cartao" id="tipo_cartao" value="credito">
-
-                        <div id="aviso-cartao" class="aviso-cartao">
-                            O pagamento com cartão está configurado para <strong>cartão de crédito</strong>.
-                        </div>
-
-                        <div class="bloco-info">
-                            No momento, este checkout trabalha com <strong>Pix</strong> e <strong>cartão de crédito</strong>.
-                        </div>
-                    </div>
-
-                    <div class="acoes">
-                        <button type="submit" class="botao botao-verde">Confirmar compra</button>
-                        <a href="{% url 'ver_carrinho' %}" class="botao botao-cinza">Voltar ao carrinho</a>
-                    </div>
-                </div>
-
-                <div class="box">
-                    <span class="badge">Resumo do pedido</span>
-
-                    <div class="resumo-lista">
-                        {% for item in itens %}
-                            <div class="item">
-                                <div>
-                                    <strong>{{ item.produto.nome }}</strong>
-                                    <span>Quantidade: {{ item.quantidade }}</span>
-                                </div>
-                                <div>
-                                    <strong>R$ {{ item.subtotal|floatformat:2 }}</strong>
-                                </div>
-                            </div>
-                        {% endfor %}
-                    </div>
-
-                    <div class="resumo-valores">
-                        <div class="resumo-linha">
-                            <span>Subtotal</span>
-                            <span>R$ {{ subtotal_geral|floatformat:2 }}</span>
-                        </div>
-
-                        <div class="resumo-linha">
-                            <span>Frete</span>
-                            <span>Calculado na confirmação</span>
-                        </div>
-
-                        <div class="resumo-total">
-                            <span>Total estimado</span>
-                            <span>R$ {{ total|floatformat:2 }}</span>
-                        </div>
-                    </div>
-                </div>
+            <div style="background:#f8fafc;padding:14px 16px;border-radius:12px;margin-bottom:14px;border:1px solid #e5e7eb;color:#475569;line-height:1.7;">
+                Preencha o endereço de entrega com atenção. O sistema vai comparar a cidade e o estado da entrega com o endereço cadastrado da loja para definir o frete.
             </div>
-        </form>
-    </div>
 
-    <script>
-        const radiosPagamento = document.querySelectorAll('input[name="forma_pagamento"]');
-        const avisoCartao = document.getElementById("aviso-cartao");
-        const tipoCartao = document.getElementById("tipo_cartao");
+            <input
+                type="text"
+                name="cep_entrega"
+                id="cep_entrega"
+                value="{{ request.POST.cep_entrega|default:'' }}"
+                required
+                placeholder="CEP"
+                style="width:100%;padding:12px;margin:10px 0;border-radius:12px;border:1px solid #ccc;"
+            >
 
-        const radiosEntrega = document.querySelectorAll('input[name="tipo_entrega"]');
-        const blocoEndereco = document.getElementById("bloco-endereco");
+            <input
+                type="text"
+                name="rua_entrega"
+                id="rua_entrega"
+                value="{{ request.POST.rua_entrega|default:'' }}"
+                required
+                placeholder="Rua"
+                style="width:100%;padding:12px;margin:10px 0;border-radius:12px;border:1px solid #ccc;"
+            >
 
-        function atualizarPagamento() {
-            const selecionado = document.querySelector('input[name="forma_pagamento"]:checked');
+            <input
+                type="text"
+                name="numero_entrega"
+                id="numero_entrega"
+                value="{{ request.POST.numero_entrega|default:'' }}"
+                required
+                placeholder="Número"
+                style="width:100%;padding:12px;margin:10px 0;border-radius:12px;border:1px solid #ccc;"
+            >
 
-            if (!selecionado) return;
+            <input
+                type="text"
+                name="complemento_entrega"
+                id="complemento_entrega"
+                value="{{ request.POST.complemento_entrega|default:'' }}"
+                placeholder="Complemento"
+                style="width:100%;padding:12px;margin:10px 0;border-radius:12px;border:1px solid #ccc;"
+            >
 
-            if (selecionado.value === "cartao") {
-                avisoCartao.style.display = "block";
-                tipoCartao.value = "credito";
-            } else {
-                avisoCartao.style.display = "none";
-                tipoCartao.value = "";
-            }
-        }
+            <input
+                type="text"
+                name="bairro_entrega"
+                id="bairro_entrega"
+                value="{{ request.POST.bairro_entrega|default:'' }}"
+                placeholder="Bairro"
+                style="width:100%;padding:12px;margin:10px 0;border-radius:12px;border:1px solid #ccc;"
+            >
 
-        function atualizarEntrega() {
-            const selecionado = document.querySelector('input[name="tipo_entrega"]:checked');
+            <input
+                type="text"
+                name="cidade_entrega"
+                id="cidade_entrega"
+                value="{{ request.POST.cidade_entrega|default:'' }}"
+                required
+                placeholder="Cidade"
+                style="width:100%;padding:12px;margin:10px 0;border-radius:12px;border:1px solid #ccc;"
+            >
 
-            if (!selecionado) return;
+            <input
+                type="text"
+                name="estado_entrega"
+                id="estado_entrega"
+                value="{{ request.POST.estado_entrega|default:'' }}"
+                required
+                placeholder="Estado"
+                style="width:100%;padding:12px;margin:10px 0;border-radius:12px;border:1px solid #ccc;"
+            >
+        </div>
 
-            if (selecionado.value === "retirada") {
-                blocoEndereco.style.display = "none";
-            } else {
-                blocoEndereco.style.display = "block";
-            }
-        }
+        <div id="info_entrega" style="display:none;background:#f0fdf4;padding:14px;border-radius:12px;margin:12px 0;border:1px solid #bbf7d0;color:#166534;line-height:1.7;">
+            Você escolheu retirar na loja. Não será cobrado frete.
+        </div>
 
-        radiosPagamento.forEach(radio => {
-            radio.addEventListener("change", atualizarPagamento);
-        });
+        <div id="status_frete" style="display:none;background:#eff6ff;padding:14px;border-radius:12px;margin:12px 0;border:1px solid #bfdbfe;color:#1d4ed8;line-height:1.7;"></div>
 
-        radiosEntrega.forEach(radio => {
-            radio.addEventListener("change", atualizarEntrega);
-        });
+        <h3 style="margin-top:22px;margin-bottom:12px;">Pagamento</h3>
 
-        atualizarPagamento();
-        atualizarEntrega();
-    </script>
-</body>
-</html>
+        <select
+            name="forma_pagamento"
+            id="forma_pagamento"
+            style="width:100%;padding:12px;margin:10px 0;border-radius:12px;border:1px solid #ccc;"
+        >
+            <option value="pix" {% if request.POST.forma_pagamento == "pix" or not request.POST.forma_pagamento %}selected{% endif %}>Pix</option>
+            <option value="cartao" {% if request.POST.forma_pagamento == "cartao" %}selected{% endif %}>Cartão</option>
+            <option value="dinheiro" {% if request.POST.forma_pagamento == "dinheiro" %}selected{% endif %}>Dinheiro</option>
+        </select>
+
+        <div id="tipo_cartao_box" style="display:none;">
+            <select
+                name="tipo_cartao"
+                id="tipo_cartao"
+                style="width:100%;padding:12px;margin:10px 0;border-radius:12px;border:1px solid #ccc;"
+            >
+                <option value="debito" {% if request.POST.tipo_cartao == "debito" or not request.POST.tipo_cartao %}selected{% endif %}>Débito</option>
+                <option value="credito" {% if request.POST.tipo_cartao == "credito" %}selected{% endif %}>Crédito</option>
+            </select>
+        </div>
+
+        <div id="info_pagamento" style="background:#f8fafc;padding:14px;border-radius:12px;margin:12px 0;border:1px solid #e5e7eb;color:#475569;line-height:1.7;">
+            Escolha a forma de pagamento.
+        </div>
+
+        <h3 style="margin-top:22px;margin-bottom:12px;">Observação</h3>
+        <textarea
+            name="observacao"
+            style="width:100%;padding:12px;margin:10px 0;border-radius:12px;border:1px solid #ccc;min-height:100px;"
+            placeholder="Se quiser, adicione alguma observação para o pedido."
+        >{{ request.POST.observacao|default:'' }}</textarea>
+
+        <hr style="margin:24px 0;">
+
+        <h3 style="margin-bottom:12px;">Resumo do pedido</h3>
+        <p style="margin-bottom:8px;">Subtotal: <strong>R$ <span id="subtotal_valor">{{ subtotal_geral }}</span></strong></p>
+        <p style="margin-bottom:8px;">Frete estimado: <strong id="frete_valor">A calcular</strong></p>
+        <h2 style="margin-top:12px;">Total estimado: R$ <span id="total_valor">{{ subtotal_geral }}</span></h2>
+
+        <button
+            type="submit"
+            id="btnConfirmarPedido"
+            style="background:#0b1220;color:white;padding:14px;width:100%;border:none;border-radius:12px;font-weight:bold;cursor:pointer;margin-top:18px;"
+        >
+            Confirmar pedido
+        </button>
+    </form>
+
+</div>
+
+<script>
+const pagamento = document.getElementById("forma_pagamento");
+const tipoCartaoBox = document.getElementById("tipo_cartao_box");
+const infoPagamento = document.getElementById("info_pagamento");
+
+const tipoEntrega = document.getElementById("tipo_entrega");
+const blocoEndereco = document.getElementById("bloco_endereco");
+const infoEntrega = document.getElementById("info_entrega");
+const statusFrete = document.getElementById("status_frete");
+
+const cep = document.getElementById("cep_entrega");
+const rua = document.getElementById("rua_entrega");
+const numero = document.getElementById("numero_entrega");
+const cidade = document.getElementById("cidade_entrega");
+const estado = document.getElementById("estado_entrega");
+const distanciaKm = document.getElementById("distancia_km");
+
+const cidadeLoja = document.getElementById("cidade_loja");
+const estadoLoja = document.getElementById("estado_loja");
+const valorMesmaCidade = document.getElementById("valor_mesma_cidade");
+const valorMesmoEstado = document.getElementById("valor_mesmo_estado");
+const valorForaEstado = document.getElementById("valor_fora_estado");
+
+const freteValor = document.getElementById("frete_valor");
+const totalValor = document.getElementById("total_valor");
+const subtotalValor = document.getElementById("subtotal_valor");
+
+function parseValor(texto) {
+    const valor = String(texto).replace("R$", "").replace(/\s/g, "").replace(",", ".");
+    const numero = parseFloat(valor);
+    return isNaN(numero) ? 0 : numero;
+}
+
+function formatarValor(valor) {
+    return Number(valor).toFixed(2).replace(".", ",");
+}
+
+function normalizarTexto(texto) {
+    return String(texto || "")
+        .trim()
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "");
+}
+
+function atualizarPagamento() {
+    if (pagamento.value === "pix") {
+        tipoCartaoBox.style.display = "none";
+        infoPagamento.innerHTML = "Você pagará via Pix após confirmar o pedido.";
+    } else if (pagamento.value === "cartao") {
+        tipoCartaoBox.style.display = "block";
+        infoPagamento.innerHTML = "O pagamento com cartão será exibido após a confirmação do pedido.";
+    } else {
+        tipoCartaoBox.style.display = "none";
+        infoPagamento.innerHTML = "O pagamento em dinheiro será tratado conforme a configuração da loja.";
+    }
+}
+
+function atualizarResumoComFrete(frete) {
+    const subtotal = parseValor(subtotalValor.textContent);
+    const total = subtotal + Number(frete || 0);
+
+    freteValor.textContent = "R$ " + formatarValor(frete || 0);
+    totalValor.textContent = formatarValor(total);
+}
+
+function calcularFreteAutomatico() {
+    if (tipoEntrega.value === "retirada") {
+        return;
+    }
+
+    const cidadeCliente = normalizarTexto(cidade.value);
+    const estadoCliente = normalizarTexto(estado.value);
+
+    const cidadeOrigem = normalizarTexto(cidadeLoja.value);
+    const estadoOrigem = normalizarTexto(estadoLoja.value);
+
+    if (!estadoCliente) {
+        freteValor.textContent = "A calcular";
+        statusFrete.style.display = "none";
+        return;
+    }
+
+    statusFrete.style.display = "block";
+    statusFrete.style.background = "#eff6ff";
+    statusFrete.style.border = "1px solid #bfdbfe";
+    statusFrete.style.color = "#1d4ed8";
+
+    let frete = 0;
+    let mensagem = "";
+
+    if (estadoCliente !== estadoOrigem) {
+        frete = parseValor(valorForaEstado.value);
+        mensagem = "Frete calculado como entrega para outro estado.";
+    } else if (cidadeCliente && cidadeOrigem && cidadeCliente === cidadeOrigem) {
+        frete = parseValor(valorMesmaCidade.value);
+        mensagem = "Frete calculado como entrega na mesma cidade da loja.";
+    } else {
+        frete = parseValor(valorMesmoEstado.value);
+        mensagem = "Frete calculado como entrega no mesmo estado, mas em cidade diferente.";
+    }
+
+    atualizarResumoComFrete(frete);
+    statusFrete.textContent = mensagem;
+    distanciaKm.value = "0";
+}
+
+function atualizarEntrega() {
+    if (tipoEntrega.value === "retirada") {
+        blocoEndereco.style.display = "none";
+        infoEntrega.style.display = "block";
+        statusFrete.style.display = "none";
+
+        cep.required = false;
+        rua.required = false;
+        numero.required = false;
+        cidade.required = false;
+        estado.required = false;
+
+        distanciaKm.value = "0";
+        atualizarResumoComFrete(0);
+    } else {
+        blocoEndereco.style.display = "block";
+        infoEntrega.style.display = "none";
+
+        cep.required = true;
+        rua.required = true;
+        numero.required = true;
+        cidade.required = true;
+        estado.required = true;
+
+        calcularFreteAutomatico();
+    }
+}
+
+pagamento.addEventListener("change", atualizarPagamento);
+tipoEntrega.addEventListener("change", atualizarEntrega);
+
+[cep, rua, numero, cidade, estado].forEach((campo) => {
+    campo.addEventListener("change", calcularFreteAutomatico);
+    campo.addEventListener("blur", calcularFreteAutomatico);
+    campo.addEventListener("input", calcularFreteAutomatico);
+});
+
+atualizarPagamento();
+atualizarEntrega();
+</script>
+
+{% endblock %}
