@@ -722,7 +722,26 @@ def checkout(request, slug=None):
             return HttpResponse("Loja não encontrada ou domínio inválido.", status=404)
 
         for produto_id, quantidade in carrinho.items():
-            produto = get_object_or_404(Produto, id=produto_id, ativo=True, loja=loja)
+            try:
+                produto_id_limpo = int(str(produto_id).replace(">", "").strip())
+            except Exception:
+                print("ERRO ID PRODUTO INVALIDO NO CARRINHO:", produto_id)
+                continue
+
+            try:
+                quantidade = int(quantidade)
+            except Exception:
+                quantidade = 1
+
+            if quantidade <= 0:
+                continue
+
+            produto = get_object_or_404(
+                Produto,
+                id=produto_id_limpo,
+                ativo=True,
+                loja=loja
+            )
 
             subtotal = produto.preco * quantidade
             subtotal_geral += subtotal
@@ -874,6 +893,7 @@ def checkout(request, slug=None):
         print("ERRO CHECKOUT:")
         print(traceback.format_exc())
         return HttpResponse(f"Erro interno no checkout: {e}", status=500)
+
 @login_required
 def pagina_pagamento(request, referencia):
     pedidos_lista = Pedido.objects.filter(
