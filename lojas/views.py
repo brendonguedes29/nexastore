@@ -702,6 +702,7 @@ def atualizar_carrinho(request):
 
     return redirect("ver_carrinho")
 
+@login_required
 def checkout(request, slug=None):
     try:
         carrinho = request.session.get("carrinho", {})
@@ -725,7 +726,6 @@ def checkout(request, slug=None):
 
         for produto_id, quantidade in carrinho.items():
             produto_id_str = str(produto_id).strip()
-
             produto_id_limpo = "".join(ch for ch in produto_id_str if ch.isdigit())
 
             if not produto_id_limpo:
@@ -774,6 +774,9 @@ def checkout(request, slug=None):
         if not itens:
             messages.warning(request, "Seu carrinho está vazio.")
             return redirect("ver_carrinho")
+
+        if not request.user.is_authenticated:
+            return redirect("login_comprador", slug=loja.slug)
 
         comprador = Comprador.objects.filter(
             usuario=request.user,
