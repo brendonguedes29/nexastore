@@ -702,7 +702,6 @@ def atualizar_carrinho(request):
 
     return redirect("ver_carrinho")
 
-@login_required
 def checkout(request, slug=None):
     try:
         carrinho = request.session.get("carrinho", {})
