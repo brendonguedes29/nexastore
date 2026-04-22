@@ -577,8 +577,8 @@
         }
 
         function iniciarCartao() {
-            tituloPagamento.textContent = "Pague com Cartão";
-            subPagamento.textContent = "Preencha os dados abaixo para finalizar o pagamento.";
+            tituloPagamento.textContent = "Pague com Cartão de crédito";
+            subPagamento.textContent = "Use um cartão de crédito para finalizar o pagamento.";
             pixArea.style.display = "none";
             cartaoArea.style.display = "block";
 
@@ -615,7 +615,7 @@
 
                         onSubmit: async function (cardFormData) {
                             try {
-                                mostrarStatus("Processando pagamento com cartão...");
+                                mostrarStatus("Processando pagamento com cartão de crédito...");
 
                                 const response = await fetch("/api/cartao/", {
                                     method: "POST",
@@ -668,24 +668,24 @@
                                     return;
                                 }
 
-                                mostrarStatus("Pagamento não aprovado. Verifique os dados e tente novamente.", "erro");
+                                mostrarStatus("Pagamento não aprovado. Tente outro cartão de crédito ou utilize Pix.", "erro");
 
                             } catch (e) {
                                 console.error(e);
-                                mostrarStatus("Erro ao enviar pagamento com cartão. Tente novamente.", "erro");
+                                mostrarStatus("Erro ao enviar pagamento com cartão de crédito. Tente novamente.", "erro");
                             }
                         },
 
                         onError: function (error) {
                             console.error("ERRO NO BRICK:", error);
-                            mostrarStatus("Erro ao iniciar pagamento com cartão.", "erro");
+                            mostrarStatus("Erro ao iniciar pagamento com cartão de crédito.", "erro");
                         }
                     }
                 });
 
             } catch (e) {
                 console.error("ERRO AO INICIAR MP:", e);
-                mostrarStatus("Erro ao iniciar pagamento com cartão.", "erro");
+                mostrarStatus("Erro ao iniciar pagamento com cartão de crédito.", "erro");
             }
         }
 
