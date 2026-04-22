@@ -703,86 +703,78 @@ def atualizar_carrinho(request):
     return redirect("ver_carrinho")
 
 def checkout(request, slug=None):
-    carrinho = request.session.get("carrinho", {})
-    itens = []
-    subtotal_geral = Decimal("0.00")
+    try:
+        carrinho = request.session.get("carrinho", {})
+        itens = []
+        subtotal_geral = Decimal("0.00")
 
-    loja = request.loja
+        loja = getattr(request, "loja", None)
 
-    if not loja and slug:
-        from .models import Loja
-        loja = Loja.objects.filter(slug=slug).first()
+        if not loja and slug:
+            loja = Loja.objects.filter(slug=slug).first()
 
-    if not loja:
-        return HttpResponse("Loja não encontrada ou domínio inválido.", status=404)
+        if not loja:
+            slug_sessao = request.session.get("ultima_loja_slug")
+            if slug_sessao:
+                loja = Loja.objects.filter(slug=slug_sessao).first()
 
-    for produto_id, quantidade in carrinho.items():
-        produto = get_object_or_404(Produto, id=produto_id, ativo=True, loja=loja)
+        if not loja:
+            return HttpResponse("Loja não encontrada ou domínio inválido.", status=404)
 
-        subtotal = produto.preco * quantidade
-        subtotal_geral += subtotal
+        for produto_id, quantidade in carrinho.items():
+            produto = get_object_or_404(Produto, id=produto_id, ativo=True, loja=loja)
 
-        itens.append({
-            "produto": produto,
-            "quantidade": quantidade,
-            "subtotal": subtotal,
-        })
+            subtotal = produto.preco * quantidade
+            subtotal_geral += subtotal
 
-    if not itens:
-        messages.warning(request, "Seu carrinho está vazio.")
-        return redirect("ver_carrinho", slug=loja.slug)
-
-    comprador = Comprador.objects.filter(
-        usuario=request.user,
-        loja=loja,
-        ativo=True
-    ).first()
-
-    if not comprador:
-        return redirect("login_comprador", slug=loja.slug)
-
-    config_frete, _ = ConfigFrete.objects.get_or_create(loja=loja)
-
-    frete = Decimal("0.00")
-    total_geral = subtotal_geral
-
-    if request.method == "POST":
-        nome_cliente = request.POST.get("nome_cliente", "").strip()
-        telefone = request.POST.get("telefone", "").strip()
-        forma_pagamento = request.POST.get("forma_pagamento", "pix").strip().lower()
-        tipo_cartao = request.POST.get("tipo_cartao", "").strip().lower()
-        observacao = request.POST.get("observacao", "").strip()
-
-        cep_entrega = request.POST.get("cep_entrega", "").strip()
-        rua_entrega = request.POST.get("rua_entrega", "").strip()
-        numero_entrega = request.POST.get("numero_entrega", "").strip()
-        complemento_entrega = request.POST.get("complemento_entrega", "").strip()
-        bairro_entrega = request.POST.get("bairro_entrega", "").strip()
-        cidade_entrega = request.POST.get("cidade_entrega", "").strip()
-        estado_entrega = request.POST.get("estado_entrega", "").strip()
-
-        tipo_entrega = request.POST.get("tipo_entrega", "entrega").strip().lower()
-        retirada_na_loja = tipo_entrega == "retirada"
-
-        if forma_pagamento != "cartao":
-            tipo_cartao = ""
-
-        if not nome_cliente or not telefone:
-            return render(request, "checkout.html", {
-                "erro": "Preencha nome e telefone.",
-                "itens": itens,
-                "subtotal_geral": subtotal_geral,
-                "frete": frete,
-                "total": total_geral,
-                "loja": loja,
-                "comprador": comprador,
-                "config_frete": config_frete,
+            itens.append({
+                "produto": produto,
+                "quantidade": quantidade,
+                "subtotal": subtotal,
             })
 
-        if forma_pagamento == "cartao":
-            if not config_frete.mp_connected or not config_frete.mp_access_token or not config_frete.mp_public_key:
+        if not itens:
+            messages.warning(request, "Seu carrinho está vazio.")
+            return redirect("ver_carrinho")
+
+        comprador = Comprador.objects.filter(
+            usuario=request.user,
+            loja=loja,
+            ativo=True
+        ).first()
+
+        if not comprador:
+            return redirect("login_comprador", slug=loja.slug)
+
+        config_frete, _ = ConfigFrete.objects.get_or_create(loja=loja)
+
+        frete = Decimal("0.00")
+        total_geral = subtotal_geral
+
+        if request.method == "POST":
+            nome_cliente = request.POST.get("nome_cliente", "").strip()
+            telefone = request.POST.get("telefone", "").strip()
+            forma_pagamento = request.POST.get("forma_pagamento", "pix").strip().lower()
+            tipo_cartao = request.POST.get("tipo_cartao", "").strip().lower()
+            observacao = request.POST.get("observacao", "").strip()
+
+            cep_entrega = request.POST.get("cep_entrega", "").strip()
+            rua_entrega = request.POST.get("rua_entrega", "").strip()
+            numero_entrega = request.POST.get("numero_entrega", "").strip()
+            complemento_entrega = request.POST.get("complemento_entrega", "").strip()
+            bairro_entrega = request.POST.get("bairro_entrega", "").strip()
+            cidade_entrega = request.POST.get("cidade_entrega", "").strip()
+            estado_entrega = request.POST.get("estado_entrega", "").strip()
+
+            tipo_entrega = request.POST.get("tipo_entrega", "entrega").strip().lower()
+            retirada_na_loja = tipo_entrega == "retirada"
+
+            if forma_pagamento != "cartao":
+                tipo_cartao = ""
+
+            if not nome_cliente or not telefone:
                 return render(request, "checkout.html", {
-                    "erro": "Esta loja ainda não configurou pagamento com cartão.",
+                    "erro": "Preencha nome e telefone.",
                     "itens": itens,
                     "subtotal_geral": subtotal_geral,
                     "frete": frete,
@@ -792,78 +784,96 @@ def checkout(request, slug=None):
                     "config_frete": config_frete,
                 })
 
-        if forma_pagamento == "pix":
-            if not config_frete.mp_connected or not config_frete.mp_access_token:
-                return render(request, "checkout.html", {
-                    "erro": "Esta loja ainda não configurou pagamento via Pix.",
-                    "itens": itens,
-                    "subtotal_geral": subtotal_geral,
-                    "frete": frete,
-                    "total": total_geral,
-                    "loja": loja,
-                    "comprador": comprador,
-                    "config_frete": config_frete,
-                })
+            if forma_pagamento == "cartao":
+                if not config_frete.mp_connected or not config_frete.mp_access_token or not config_frete.mp_public_key:
+                    return render(request, "checkout.html", {
+                        "erro": "Esta loja ainda não configurou pagamento com cartão.",
+                        "itens": itens,
+                        "subtotal_geral": subtotal_geral,
+                        "frete": frete,
+                        "total": total_geral,
+                        "loja": loja,
+                        "comprador": comprador,
+                        "config_frete": config_frete,
+                    })
 
-        if not retirada_na_loja:
-            if not all([rua_entrega, numero_entrega, cidade_entrega, estado_entrega]):
-                return render(request, "checkout.html", {
-                    "erro": "Preencha todos os campos obrigatórios de entrega.",
-                    "itens": itens,
-                    "subtotal_geral": subtotal_geral,
-                    "frete": frete,
-                    "total": total_geral,
-                    "loja": loja,
-                    "comprador": comprador,
-                    "config_frete": config_frete,
-                })
+            if forma_pagamento == "pix":
+                if not config_frete.mp_connected or not config_frete.mp_access_token:
+                    return render(request, "checkout.html", {
+                        "erro": "Esta loja ainda não configurou pagamento via Pix.",
+                        "itens": itens,
+                        "subtotal_geral": subtotal_geral,
+                        "frete": frete,
+                        "total": total_geral,
+                        "loja": loja,
+                        "comprador": comprador,
+                        "config_frete": config_frete,
+                    })
 
-            frete = calcular_frete_checkout(
-                loja=loja,
-                estado_entrega=estado_entrega,
-                cidade_entrega=cidade_entrega,
-                retirada_na_loja=False,
-            )
-        else:
-            frete = Decimal("0.00")
+            if not retirada_na_loja:
+                if not all([rua_entrega, numero_entrega, cidade_entrega, estado_entrega]):
+                    return render(request, "checkout.html", {
+                        "erro": "Preencha todos os campos obrigatórios de entrega.",
+                        "itens": itens,
+                        "subtotal_geral": subtotal_geral,
+                        "frete": frete,
+                        "total": total_geral,
+                        "loja": loja,
+                        "comprador": comprador,
+                        "config_frete": config_frete,
+                    })
 
-        total_geral = subtotal_geral + frete
+                frete = calcular_frete_checkout(
+                    loja=loja,
+                    estado_entrega=estado_entrega,
+                    cidade_entrega=cidade_entrega,
+                    retirada_na_loja=False,
+                )
+            else:
+                frete = Decimal("0.00")
 
-        referencia_pagamento = uuid4().hex[:20].upper()
+            total_geral = subtotal_geral + frete
 
-        for item in itens:
-            Pedido.objects.create(
-                produto=item["produto"],
-                loja=loja,
-                comprador=comprador,
-                nome_cliente=nome_cliente,
-                telefone=telefone,
-                endereco="",
-                forma_pagamento=forma_pagamento,
-                tipo_cartao=tipo_cartao,
-                observacao=observacao,
-                valor_frete=frete,
-                valor_total=item["subtotal"] + frete,
-                status_pagamento="aguardando",
-                referencia_pagamento=referencia_pagamento,
-                quantidade=item["quantidade"],
-                status="pendente",
-            )
+            referencia_pagamento = uuid4().hex[:20].upper()
 
-        request.session["carrinho"] = {}
-        request.session.modified = True
+            for item in itens:
+                Pedido.objects.create(
+                    produto=item["produto"],
+                    loja=loja,
+                    comprador=comprador,
+                    nome_cliente=nome_cliente,
+                    telefone=telefone,
+                    endereco="",
+                    forma_pagamento=forma_pagamento,
+                    tipo_cartao=tipo_cartao,
+                    observacao=observacao,
+                    valor_frete=frete,
+                    valor_total=item["subtotal"] + frete,
+                    status_pagamento="aguardando",
+                    referencia_pagamento=referencia_pagamento,
+                    quantidade=item["quantidade"],
+                    status="pendente",
+                )
 
-        return redirect("pagina_pagamento", referencia=referencia_pagamento)
+            request.session["carrinho"] = {}
+            request.session.modified = True
 
-    return render(request, "checkout.html", {
-        "itens": itens,
-        "subtotal_geral": subtotal_geral,
-        "frete": frete,
-        "total": total_geral,
-        "loja": loja,
-        "comprador": comprador,
-        "config_frete": config_frete,
-    })
+            return redirect("pagina_pagamento", referencia=referencia_pagamento)
+
+        return render(request, "checkout.html", {
+            "itens": itens,
+            "subtotal_geral": subtotal_geral,
+            "frete": frete,
+            "total": total_geral,
+            "loja": loja,
+            "comprador": comprador,
+            "config_frete": config_frete,
+        })
+
+    except Exception as e:
+        print("ERRO CHECKOUT:")
+        print(traceback.format_exc())
+        return HttpResponse(f"Erro interno no checkout: {e}", status=500)
 @login_required
 def pagina_pagamento(request, referencia):
     pedidos_lista = Pedido.objects.filter(
