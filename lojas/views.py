@@ -721,11 +721,21 @@ def checkout(request, slug=None):
         if not loja:
             return HttpResponse("Loja não encontrada ou domínio inválido.", status=404)
 
+        carrinho_corrigido = {}
+
         for produto_id, quantidade in carrinho.items():
-            try:
-                produto_id_limpo = int(str(produto_id).replace(">", "").strip())
-            except Exception:
+            produto_id_str = str(produto_id).strip()
+
+            produto_id_limpo = "".join(ch for ch in produto_id_str if ch.isdigit())
+
+            if not produto_id_limpo:
                 print("ERRO ID PRODUTO INVALIDO NO CARRINHO:", produto_id)
+                continue
+
+            try:
+                produto_id_int = int(produto_id_limpo)
+            except Exception:
+                print("ERRO AO CONVERTER ID PRODUTO:", produto_id)
                 continue
 
             try:
@@ -736,12 +746,18 @@ def checkout(request, slug=None):
             if quantidade <= 0:
                 continue
 
-            produto = get_object_or_404(
-                Produto,
-                id=produto_id_limpo,
-                ativo=True,
-                loja=loja
-            )
+            try:
+                produto = get_object_or_404(
+                    Produto,
+                    id=produto_id_int,
+                    ativo=True,
+                    loja=loja
+                )
+            except Exception:
+                print("PRODUTO NÃO ENCONTRADO NO CHECKOUT:", produto_id_int)
+                continue
+
+            carrinho_corrigido[str(produto_id_int)] = quantidade
 
             subtotal = produto.preco * quantidade
             subtotal_geral += subtotal
@@ -751,6 +767,9 @@ def checkout(request, slug=None):
                 "quantidade": quantidade,
                 "subtotal": subtotal,
             })
+
+        request.session["carrinho"] = carrinho_corrigido
+        request.session.modified = True
 
         if not itens:
             messages.warning(request, "Seu carrinho está vazio.")
