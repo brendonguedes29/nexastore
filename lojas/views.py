@@ -869,6 +869,18 @@ def checkout(request, slug=None):
                     cidade_entrega=cidade_entrega,
                     retirada_na_loja=False,
                 )
+
+                if frete is None:
+                    return render(request, "checkout.html", {
+                        "erro": "Não foi possível calcular o frete para essa entrega. Verifique a cidade/estado informados ou configure o frete da loja.",
+                        "itens": itens,
+                        "subtotal_geral": subtotal_geral,
+                        "frete": Decimal("0.00"),
+                        "total": subtotal_geral,
+                        "loja": loja,
+                        "comprador": comprador,
+                        "config_frete": config_frete,
+                    })
             else:
                 frete = Decimal("0.00")
 
