@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recuperar acesso - NexaStore</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #02122c, #0b1f48, #0ea5e9);
+            color: #fff;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+        }
+        .box {
+            width: 100%;
+            max-width: 640px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 24px;
+            padding: 32px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+            backdrop-filter: blur(8px);
+        }
+        h1 {
+            margin-top: 0;
+            font-size: 34px;
+            margin-bottom: 12px;
+        }
+        p {
+            font-size: 18px;
+            line-height: 1.6;
+            color: #e5eefc;
+        }
+        .info {
+            background: rgba(255,255,255,0.08);
+            border-radius: 16px;
+            padding: 16px 18px;
+            margin: 20px 0;
+        }
+        .label {
+            font-weight: bold;
+            color: #ffffff;
+        }
+        .link-box {
+            margin-top: 24px;
+            padding: 18px;
+            border-radius: 16px;
+            background: #ffffff;
+            color: #111827;
+            word-break: break-all;
+        }
+        a.link {
+            color: #0ea5e9;
+            font-weight: bold;
+            text-decoration: none;
+        }
+        .btn {
+            display: inline-block;
+            margin-top: 24px;
+            background: #22c55e;
+            color: #fff;
+            text-decoration: none;
+            padding: 14px 22px;
+            border-radius: 14px;
+            font-weight: bold;
+        }
+        .btn-login {
+            background: #38bdf8;
+            margin-left: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="box">
+        <h1>Recuperação de acesso</h1>
+        <p>Geramos o link de redefinição de senha manualmente para você continuar sem depender de e-mail.</p>
+
+        <div class="info">
+            <div><span class="label">E-mail informado:</span> {{ email }}</div>
+        </div>
+
+        <div class="link-box">
+            <div><strong>Link de redefinição:</strong></div>
+            <div style="margin-top: 10px;">
+                <a class="link" href="{{ link_recuperacao }}">{{ link_recuperacao }}</a>
+            </div>
+        </div>
+
+        <a class="btn" href="{{ link_recuperacao }}">Redefinir minha senha</a>
+        <a class="btn btn-login" href="/login/">Ir para o login</a>
+    </div>
+</body>
+</html>

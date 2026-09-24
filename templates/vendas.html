@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vendas</title>
+    <style>
+        body{
+            font-family:Arial,sans-serif;
+            background:#f4f6fb;
+            margin:0;
+            color:#1f2937;
+        }
+
+        .topo{
+            background:#0f172a;
+            color:white;
+            padding:20px 0;
+        }
+
+        .wrap{
+            width:92%;
+            max-width:1200px;
+            margin:0 auto;
+        }
+
+        .box{
+            background:white;
+            margin-top:30px;
+            padding:24px;
+            border-radius:18px;
+            box-shadow:0 8px 24px rgba(15,23,42,0.06);
+        }
+
+        .botao{
+            background:#0f172a;
+            color:white;
+            text-decoration:none;
+            padding:12px 16px;
+            border-radius:10px;
+            display:inline-block;
+            margin-bottom:20px;
+            border:none;
+            cursor:pointer;
+        }
+
+        .botao-detalhe{
+            background:#2563eb;
+            color:white;
+            text-decoration:none;
+            padding:8px 12px;
+            border-radius:8px;
+            display:inline-block;
+            font-size:14px;
+            font-weight:bold;
+        }
+
+        table{
+            width:100%;
+            border-collapse:collapse;
+        }
+
+        th, td{
+            text-align:left;
+            padding:14px 10px;
+            border-bottom:1px solid #e5e7eb;
+            vertical-align:top;
+        }
+
+        .total{
+            font-size:28px;
+            font-weight:bold;
+            margin-bottom:20px;
+        }
+
+        .filtro{
+            margin-bottom:20px;
+            display:flex;
+            gap:12px;
+            align-items:end;
+            flex-wrap:wrap;
+        }
+
+        .filtro input{
+            padding:10px;
+            border:1px solid #ccc;
+            border-radius:10px;
+        }
+
+        .grupo label{
+            display:block;
+            margin-bottom:6px;
+            font-weight:bold;
+        }
+
+        .vazio{
+            padding:20px 0;
+            color:#64748b;
+            font-size:16px;
+        }
+
+        @media (max-width: 900px){
+            .box{
+                overflow-x:auto;
+            }
+
+            table{
+                min-width:900px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="topo">
+        <div class="wrap">
+            <h1>{{ loja.nome }}</h1>
+            <p>Vendas da loja</p>
+        </div>
+    </div>
+
+    <div class="wrap">
+        <div class="box">
+            <a class="botao" href="/painel/">Voltar ao painel</a>
+
+            <form method="get" class="filtro">
+                <div class="grupo">
+                    <label>Data início</label>
+                    <input type="date" name="data_inicio" value="{{ data_inicio|default:'' }}">
+                </div>
+
+                <div class="grupo">
+                    <label>Data fim</label>
+                    <input type="date" name="data_fim" value="{{ data_fim|default:'' }}">
+                </div>
+
+                <button type="submit" class="botao">Filtrar</button>
+            </form>
+
+            <div class="total">Faturamento total: R$ {{ faturamento_total }}</div>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Cliente</th>
+                        <th>Produto</th>
+                        <th>Valor</th>
+                        <th>Status</th>
+                        <th>Data</th>
+                        <th>Detalhes</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for pedido in pedidos %}
+                    <tr>
+                        <td>{{ pedido.nome_cliente }}</td>
+                        <td>{{ pedido.produto.nome }}</td>
+                        <td>R$ {{ pedido.valor_total }}</td>
+                        <td>{{ pedido.get_status_display }}</td>
+                        <td>{{ pedido.data }}</td>
+                        <td>
+                            <a href="{% url 'detalhe_pedido' pedido.id %}" class="botao-detalhe">
+                                Ver detalhes
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="vazio">Nenhuma venda ainda.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</body>
+</html>

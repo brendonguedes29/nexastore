@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Editar loja</title>
+
+<style>
+body{
+    font-family:Arial,sans-serif;
+    background:#f4f6fb;
+    margin:0;
+    color:#1f2937;
+}
+.wrap{
+    max-width:720px;
+    margin:40px auto;
+}
+.box{
+    background:white;
+    padding:30px;
+    border-radius:18px;
+    box-shadow:0 8px 24px rgba(0,0,0,0.06);
+}
+h2{
+    margin-top:0;
+    margin-bottom:20px;
+    color:#0f172a;
+}
+h3{
+    margin-top:30px;
+    margin-bottom:16px;
+    color:#0f172a;
+    font-size:20px;
+}
+label{
+    display:block;
+    font-weight:bold;
+    margin-bottom:6px;
+    color:#334155;
+}
+input, select, textarea{
+    width:100%;
+    padding:12px;
+    margin-bottom:14px;
+    border-radius:10px;
+    border:1px solid #ddd;
+    box-sizing:border-box;
+    font-size:15px;
+}
+textarea{
+    min-height:100px;
+    resize:vertical;
+}
+button{
+    background:#0f172a;
+    color:white;
+    padding:12px;
+    border:none;
+    border-radius:10px;
+    cursor:pointer;
+    width:100%;
+    font-weight:bold;
+    font-size:15px;
+}
+a{
+    display:block;
+    margin-top:10px;
+    text-align:center;
+    color:#0f172a;
+    text-decoration:none;
+}
+hr{
+    border:none;
+    border-top:1px solid #e5e7eb;
+    margin:26px 0;
+}
+</style>
+
+</head>
+<body>
+
+<div class="wrap">
+    <div class="box">
+        <h2>Editar loja</h2>
+
+        <form method="POST" enctype="multipart/form-data">
+            {% csrf_token %}
+
+            <h3>Dados da loja</h3>
+
+            {% if form.nome %}
+                <label for="{{ form.nome.id_for_label }}">Nome da loja</label>
+                {{ form.nome }}
+            {% endif %}
+
+            {% if form.slug %}
+                <label for="{{ form.slug.id_for_label }}">Slug</label>
+                {{ form.slug }}
+            {% endif %}
+
+            {% if form.descricao %}
+                <label for="{{ form.descricao.id_for_label }}">Descrição</label>
+                {{ form.descricao }}
+            {% endif %}
+
+            {% if form.telefone %}
+                <label for="{{ form.telefone.id_for_label }}">Telefone</label>
+                {{ form.telefone }}
+            {% endif %}
+
+            {% if form.logo %}
+                <label for="{{ form.logo.id_for_label }}">Logo</label>
+                {{ form.logo }}
+            {% endif %}
+
+            <hr>
+
+            <h3>Personalização da vitrine</h3>
+
+            {% if form.banner_titulo %}
+                <label for="{{ form.banner_titulo.id_for_label }}">Título do banner</label>
+                {{ form.banner_titulo }}
+            {% endif %}
+
+            {% if form.banner_subtitulo %}
+                <label for="{{ form.banner_subtitulo.id_for_label }}">Subtítulo do banner</label>
+                {{ form.banner_subtitulo }}
+            {% endif %}
+
+            {% if form.banner_botao_texto %}
+                <label for="{{ form.banner_botao_texto.id_for_label }}">Texto do botão</label>
+                {{ form.banner_botao_texto }}
+            {% endif %}
+
+            {% if form.banner_botao_link %}
+                <label for="{{ form.banner_botao_link.id_for_label }}">Link do botão</label>
+                {{ form.banner_botao_link }}
+            {% endif %}
+
+            {% if form.banner_cor_inicio %}
+                <label for="{{ form.banner_cor_inicio.id_for_label }}">Cor inicial do banner</label>
+                {{ form.banner_cor_inicio }}
+            {% endif %}
+
+            {% if form.banner_cor_fim %}
+                <label for="{{ form.banner_cor_fim.id_for_label }}">Cor final do banner</label>
+                {{ form.banner_cor_fim }}
+            {% endif %}
+
+            {% if form.texto_busca %}
+                <label for="{{ form.texto_busca.id_for_label }}">Texto da busca</label>
+                {{ form.texto_busca }}
+            {% endif %}
+
+            <button type="submit">Salvar</button>
+        </form>
+
+        <a href="/painel/minha-loja/">Voltar</a>
+    </div>
+</div>
+
+</body>
+</html>
