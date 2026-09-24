@@ -354,53 +354,10 @@ def root_view(request):
     return landing_page(request)
 
 def loja_view(request):
-    loja = getattr(request, "loja", None)
-
-    # 🔴 Proteção contra erro 500
-    if not loja:
-        return HttpResponse("Loja não encontrada ou domínio inválido.", status=404)
-
-    # 🔍 DEBUG (pode remover depois)
-    print("HOST:", request.get_host())
-    print("LOJA:", loja)
-
-    loja.verificar_licenca()
-
-    if loja.status_licenca in ["pendente", "vencida"] or not loja.ativa:
-        return HttpResponse("Loja temporariamente indisponível.", status=403)
-
-    busca = request.GET.get("busca", "").strip()
-    categoria = request.GET.get("categoria")
-    tipo = request.GET.get("tipo")
-
-    produtos = Produto.objects.filter(loja=loja, ativo=True)
-
-    if categoria:
-        produtos = produtos.filter(categoria_id=categoria)
-
-    if busca:
-        produtos = produtos.filter(nome__icontains=busca)
-
-    if tipo == "promocao":
-        produtos = produtos.filter(percentual_promocao__gt=0)
-    elif tipo == "destaque":
-        produtos = produtos.filter(em_destaque=True)
-    elif tipo == "novo":
-        produtos = produtos.filter(produto_novo=True)
-
-    categorias_lista = Categoria.objects.filter(loja=loja).order_by("nome")
-    comprador_logado = get_comprador_logado(request, loja)
-
-    return render(request, "loja.html", {
-        "loja": loja,
-        "produtos": produtos.order_by("-id"),
-        "categorias": categorias_lista,
-        "categoria_selecionada": categoria,
-        "busca": busca,
-        "tipo": tipo,
-        "comprador_logado": comprador_logado,
-        "total_itens_carrinho": total_itens_carrinho(request),
-    })
+    # O antigo storefront foi reaproveitado como Portal da Empresa.
+    # As rotas comerciais antigas continuam preservadas para compatibilidade.
+    from gestao.views import portal_empresa
+    return portal_empresa(request)
 
 def login_comprador(request, slug):
     loja = get_object_or_404(Loja, slug=slug)

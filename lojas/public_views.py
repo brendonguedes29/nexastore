@@ -45,7 +45,7 @@ def criar_loja_publica(request):
         if not nome_responsavel:
             erro = "Informe o nome do responsável."
         elif not nome_loja:
-            erro = "Informe o nome da loja."
+            erro = "Informe o nome da empresa."
         elif not email:
             erro = "Informe o e-mail."
         elif not senha:
@@ -55,7 +55,7 @@ def criar_loja_publica(request):
         elif User.objects.filter(username=email).exists():
             erro = "Já existe um usuário com esse e-mail."
         elif Loja.objects.filter(nome__iexact=nome_loja).exists():
-            erro = "Já existe uma loja com esse nome."
+            erro = "Já existe uma empresa com esse nome."
 
         if erro:
             return render(
@@ -83,13 +83,13 @@ def criar_loja_publica(request):
             ativa=False,
             valor_licenca=59.90,
             status_licenca="pendente",
-            banner_titulo="+ PRODUTOS NA SUA LOJA",
-            banner_subtitulo="Compre com praticidade e encontre tudo em um só lugar.",
-            banner_botao_texto="Comprar agora",
-            banner_botao_link="#produtos",
+            banner_titulo="Gestão que melhora todos os dias.",
+            banner_subtitulo="Processos, qualidade e melhoria contínua em um só lugar.",
+            banner_botao_texto="Conheça nossa gestão",
+            banner_botao_link="#gestao",
             banner_cor_inicio="#16a34a",
             banner_cor_fim="#2563eb",
-            texto_busca="O que você procura?",
+            texto_busca="Busque documentos e informações",
         )
 
         loja.dominio = f"{loja.slug}.nexastoreofficial.com.br"
