@@ -1,11 +1,12 @@
 from django.contrib import admin
-from django.urls import path
+from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 import lojas.views as views
 
 from lojas.admin import custom_admin_site
 from lojas.public_views import criar_loja_publica
+from gestao.views import portal_empresa
 from lojas.licenca_views import (
     financeiro_loja,
     renovar_licenca_manual,
@@ -144,7 +145,8 @@ urlpatterns = [
     path("api/cartao/", criar_pagamento_cartao, name="api_cartao"),
 
     # PAINEL LOJISTA
-    path("painel/", painel_loja, name="painel_loja"),
+    path("painel/", include("gestao.urls")),
+    path("painel-legado/", painel_loja, name="painel_loja"),
     path("painel/produtos/", lista_produtos_painel, name="lista_produtos_painel"),
     path("painel/produtos/novo/", cadastrar_produto, name="cadastrar_produto"),
     path("painel/produtos/<int:produto_id>/editar/", editar_produto, name="editar_produto"),
