@@ -1,0 +1,279 @@
+{% extends "admin/base_site.html" %}
+{% load i18n static log %}
+
+{% block extrastyle %}
+{{ block.super }}
+<style>
+    .dashboard-wrapper{
+        padding: 8px 0 24px;
+    }
+    .dashboard-grid{
+        display:grid;
+        grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+        gap:16px;
+        margin:18px 0 26px;
+    }
+    .dashboard-card{
+        background:#fff;
+        border:1px solid #e5e7eb;
+        border-radius:18px;
+        padding:18px;
+        box-shadow:0 8px 20px rgba(15,23,42,0.06);
+    }
+    .dashboard-card h3{
+        margin:0 0 10px;
+        font-size:13px;
+        color:#64748b;
+        text-transform:uppercase;
+        letter-spacing:.4px;
+    }
+    .dashboard-card .valor{
+        font-size:28px;
+        font-weight:800;
+        color:#0f172a;
+    }
+    .dashboard-duplo{
+        display:grid;
+        grid-template-columns:1fr 1fr;
+        gap:16px;
+        margin-bottom:18px;
+    }
+    .dashboard-secao{
+        background:#fff;
+        border:1px solid #e5e7eb;
+        border-radius:18px;
+        padding:18px;
+        box-shadow:0 8px 20px rgba(15,23,42,0.06);
+    }
+    .dashboard-secao h2{
+        margin:0 0 14px;
+        font-size:20px;
+        color:#0f172a;
+    }
+    .dashboard-lista{
+        margin:0;
+        padding-left:18px;
+    }
+    .dashboard-lista li{
+        margin-bottom:8px;
+    }
+    .dashboard-tabela{
+        width:100%;
+        border-collapse:collapse;
+    }
+    .dashboard-tabela th,
+    .dashboard-tabela td{
+        padding:10px 8px;
+        border-bottom:1px solid #e5e7eb;
+        text-align:left;
+    }
+    .dashboard-tabela th{
+        font-size:12px;
+        text-transform:uppercase;
+        color:#64748b;
+    }
+    .admin-modules-grid{
+        display:grid;
+        grid-template-columns:2fr 1fr;
+        gap:18px;
+        margin-top:22px;
+    }
+    .admin-box{
+        background:#fff;
+        border:1px solid #e5e7eb;
+        border-radius:18px;
+        padding:18px;
+        box-shadow:0 8px 20px rgba(15,23,42,0.06);
+    }
+    .admin-box h2{
+        margin:0 0 14px;
+        font-size:20px;
+        color:#0f172a;
+    }
+    .app-table{
+        width:100%;
+        border-collapse:collapse;
+    }
+    .app-table th,
+    .app-table td{
+        padding:10px 8px;
+        border-bottom:1px solid #e5e7eb;
+        text-align:left;
+    }
+    .app-table th{
+        font-size:12px;
+        text-transform:uppercase;
+        color:#64748b;
+    }
+    .actionlist{
+        margin:0;
+        padding-left:18px;
+    }
+    .actionlist li{
+        margin-bottom:8px;
+    }
+    @media (max-width: 900px){
+        .dashboard-duplo,
+        .admin-modules-grid{
+            grid-template-columns:1fr;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-wrapper">
+    <div class="dashboard-grid">
+        <div class="dashboard-card">
+            <h3>Total de lojas</h3>
+            <div class="valor">{{ dashboard_total_lojas }}</div>
+        </div>
+
+        <div class="dashboard-card">
+            <h3>Lojas ativas</h3>
+            <div class="valor">{{ dashboard_lojas_ativas }}</div>
+        </div>
+
+        <div class="dashboard-card">
+            <h3>Lojas pendentes</h3>
+            <div class="valor">{{ dashboard_lojas_pendentes }}</div>
+        </div>
+
+        <div class="dashboard-card">
+            <h3>Lojas vencidas</h3>
+            <div class="valor">{{ dashboard_lojas_vencidas }}</div>
+        </div>
+
+        <div class="dashboard-card">
+            <h3>Recebido no mês</h3>
+            <div class="valor">R$ {{ dashboard_total_recebido_mes|floatformat:2 }}</div>
+        </div>
+
+        <div class="dashboard-card">
+            <h3>Pendente de recebimento</h3>
+            <div class="valor">R$ {{ dashboard_total_pendente|floatformat:2 }}</div>
+        </div>
+
+        <div class="dashboard-card">
+            <h3>Usuários cadastrados</h3>
+            <div class="valor">{{ dashboard_total_usuarios }}</div>
+        </div>
+
+        <div class="dashboard-card">
+            <h3>Membros da equipe</h3>
+            <div class="valor">{{ dashboard_total_staff }}</div>
+        </div>
+    </div>
+
+    <div class="dashboard-duplo">
+        <div class="dashboard-secao">
+            <h2>Lojas com licença pendente</h2>
+            {% if dashboard_lojas_pendentes_lista %}
+                <ul class="dashboard-lista">
+                    {% for loja in dashboard_lojas_pendentes_lista %}
+                        <li>{{ loja.nome }} — {{ loja.dono }}</li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p>Nenhuma loja pendente no momento.</p>
+            {% endif %}
+        </div>
+
+        <div class="dashboard-secao">
+            <h2>Lojas com licença vencida</h2>
+            {% if dashboard_lojas_vencidas_lista %}
+                <ul class="dashboard-lista">
+                    {% for loja in dashboard_lojas_vencidas_lista %}
+                        <li>{{ loja.nome }} — vencimento em {{ loja.data_vencimento_licenca }}</li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p>Nenhuma loja vencida no momento.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="dashboard-secao">
+        <h2>Pagamentos recentes</h2>
+        {% if dashboard_pagamentos_recentes %}
+            <table class="dashboard-tabela">
+                <thead>
+                    <tr>
+                        <th>Loja</th>
+                        <th>Tipo</th>
+                        <th>Valor</th>
+                        <th>Status</th>
+                        <th>Data</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in dashboard_pagamentos_recentes %}
+                        <tr>
+                            <td>{{ item.loja.nome }}</td>
+                            <td>{{ item.get_tipo_pagamento_display }}</td>
+                            <td>R$ {{ item.valor|floatformat:2 }}</td>
+                            <td>{{ item.get_status_display }}</td>
+                            <td>{{ item.data_criacao }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p>Nenhum pagamento recente encontrado.</p>
+        {% endif %}
+    </div>
+
+    <div class="admin-modules-grid">
+        <div class="admin-box">
+            <h2>Módulos do sistema</h2>
+            {% if app_list %}
+                <table class="app-table">
+                    <thead>
+                        <tr>
+                            <th>Módulo</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for app in app_list %}
+                            {% for model in app.models %}
+                                <tr>
+                                    <td>{{ model.name }}</td>
+                                    <td>
+                                        {% if model.admin_url %}
+                                            <a href="{{ model.admin_url }}">Gerenciar</a>
+                                        {% endif %}
+                                        {% if model.add_url %}
+                                            {% if model.admin_url %} | {% endif %}
+                                            <a href="{{ model.add_url }}">Adicionar</a>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <p>Nenhum módulo disponível.</p>
+            {% endif %}
+        </div>
+
+        <div class="admin-box">
+            <h2>Ações recentes</h2>
+            {% get_admin_log 10 as admin_log for_user user %}
+            {% if admin_log %}
+                <ul class="actionlist">
+                    {% for entry in admin_log %}
+                        <li>
+                            {{ entry.object_repr }}<br>
+                            <small>{{ entry.content_type.name }}</small>
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p>Nenhuma ação recente.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

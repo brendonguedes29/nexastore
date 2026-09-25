@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Entrar</title>
+    <style>
+        *{
+            margin:0;
+            padding:0;
+            box-sizing:border-box;
+        }
+
+        body{
+            font-family:Arial, sans-serif;
+            background:#f4f6fb;
+            color:#1f2937;
+        }
+
+        .wrap{
+            min-height:100vh;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            padding:20px;
+        }
+
+        .card{
+            width:100%;
+            max-width:420px;
+            background:white;
+            border-radius:20px;
+            padding:28px;
+            box-shadow:0 10px 30px rgba(15,23,42,0.08);
+        }
+
+        h1{
+            margin-bottom:8px;
+            font-size:30px;
+        }
+
+        p{
+            color:#64748b;
+            margin-bottom:20px;
+        }
+
+        input{
+            width:100%;
+            padding:12px 14px;
+            border:1px solid #d1d5db;
+            border-radius:12px;
+            margin-bottom:12px;
+            font-size:15px;
+        }
+
+        button{
+            width:100%;
+            padding:12px 14px;
+            border:none;
+            border-radius:12px;
+            background:#0b1220;
+            color:white;
+            font-weight:bold;
+            cursor:pointer;
+        }
+
+        .voltar{
+            display:inline-block;
+            margin-top:16px;
+            text-decoration:none;
+            color:#0b1220;
+            font-weight:bold;
+        }
+
+        .erro{
+            background:#fee2e2;
+            color:#991b1b;
+            padding:10px 12px;
+            border-radius:10px;
+            margin-bottom:14px;
+            font-size:14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="wrap">
+        <div class="card">
+            <h1>Entrar</h1>
+            <p>Acesse a área da loja.</p>
+
+            {% if form.errors %}
+                <div class="erro">Usuário ou senha inválidos.</div>
+            {% endif %}
+
+            <form method="post">
+                {% csrf_token %}
+                <input type="text" name="username" placeholder="Usuário" required>
+                <input type="password" name="password" placeholder="Senha" required>
+                <button type="submit">Entrar</button>
+            </form>
+
+            <a href="{% url 'home' %}" class="voltar">Voltar ao início</a>
+        </div>
+    </div>
+</body>
+</html>

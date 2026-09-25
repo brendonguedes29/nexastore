@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Compradores da Loja</title>
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:Arial,sans-serif;background:#f4f6fb;color:#1f2937;}
+.layout{display:flex;min-height:100vh;}
+.sidebar{width:270px;background:#0f172a;color:white;padding:24px 18px;}
+.logo{font-size:28px;font-weight:bold;margin-bottom:8px;}
+.sublogo{color:#94a3b8;font-size:14px;margin-bottom:30px;}
+.menu-titulo{color:#94a3b8;font-size:12px;text-transform:uppercase;margin:22px 0 10px;letter-spacing:1px;}
+.menu a{display:block;color:#e2e8f0;text-decoration:none;padding:12px 14px;border-radius:10px;margin-bottom:8px;transition:.2s;}
+.menu a:hover,.menu a.ativo{background:#1e293b;}
+.principal{flex:1;padding:28px;}
+.topo{display:flex;justify-content:space-between;align-items:center;margin-bottom:28px;gap:16px;flex-wrap:wrap;}
+.topo h1{font-size:32px;}
+.topo p{color:#64748b;}
+.botao-sair{background:white;color:#111827;text-decoration:none;padding:10px 14px;border-radius:10px;border:1px solid #e5e7eb;cursor:pointer;font-size:15px;}
+.box{background:white;padding:22px;border-radius:18px;box-shadow:0 8px 24px rgba(15,23,42,.06);}
+table{width:100%;border-collapse:collapse;}
+th,td{text-align:left;padding:14px 10px;border-bottom:1px solid #e5e7eb;vertical-align:middle;}
+th{color:#64748b;font-size:14px;}
+.badge-ativo{display:inline-block;background:#dcfce7;color:#166534;padding:6px 10px;border-radius:999px;font-size:12px;font-weight:bold;}
+.badge-inativo{display:inline-block;background:#fee2e2;color:#991b1b;padding:6px 10px;border-radius:999px;font-size:12px;font-weight:bold;}
+.botao{background:#0f172a;color:white;text-decoration:none;padding:10px 14px;border-radius:10px;display:inline-block;}
+.botao-sec{background:#e5e7eb;color:#111827;text-decoration:none;padding:10px 14px;border-radius:10px;display:inline-block;}
+.acoes{display:flex;gap:10px;flex-wrap:wrap;}
+.vazio{padding:18px;color:#64748b;}
+
+@media (max-width:980px){
+    .sidebar{display:none;}
+    .principal{padding:18px;}
+    table,thead,tbody,tr,th,td{display:block;width:100%;}
+    thead{display:none;}
+    tr{border-bottom:1px solid #e5e7eb;padding:12px 0;}
+    td{border:none;padding:8px 0;}
+}
+</style>
+</head>
+
+<body>
+<div class="layout">
+
+<aside class="sidebar">
+    <div class="logo">{{ loja.nome }}</div>
+    <div class="sublogo">Painel da loja</div>
+
+    <div class="menu">
+        <div class="menu-titulo">Principal</div>
+        <a href="{% url 'painel_loja' %}">Dashboard</a>
+        <a href="{% url 'cadastrar_produto' %}">Novo produto</a>
+        <a href="{% url 'lista_produtos_painel' %}">Produtos</a>
+        <a href="{% url 'categorias' %}">Categorias</a>
+        <a href="{% url 'pedidos' %}">Pedidos</a>
+        <a href="{% url 'clientes' %}">Clientes</a>
+        <a href="{% url 'compradores_painel' %}" class="ativo">Compradores</a>
+
+        <div class="menu-titulo">Financeiro</div>
+        <a href="{% url 'vendas' %}">Vendas</a>
+        <a href="{% url 'entradas_saidas' %}">Entradas e saídas</a>
+        <a href="{% url 'relatorios' %}">Relatórios</a>
+
+        <div class="menu-titulo">Configurações</div>
+        <a href="{% url 'minha_loja' %}">Minha loja</a>
+
+        <form method="post" action="{% url 'logout_loja' %}" style="margin-top:8px;">
+            {% csrf_token %}
+            <button type="submit" style="width:100%;background:#1e293b;color:#e2e8f0;border:none;padding:12px 14px;border-radius:10px;text-align:left;cursor:pointer;">
+                Sair
+            </button>
+        </form>
+    </div>
+</aside>
+
+<main class="principal">
+    <div class="topo">
+        <div>
+            <h1>Compradores</h1>
+            <p>Gerencie os compradores cadastrados na sua loja</p>
+        </div>
+
+        <div class="acoes">
+            <a href="{% url 'painel_loja' %}" class="botao-sec">Voltar ao dashboard</a>
+            <form method="post" action="{% url 'logout_loja' %}" style="margin:0;">
+                {% csrf_token %}
+                <button type="submit" class="botao-sair">Sair</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="box">
+        {% if compradores %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Nome</th>
+                    <th>Usuário</th>
+                    <th>Telefone</th>
+                    <th>Status</th>
+                    <th>Ação</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for comprador in compradores %}
+                <tr>
+                    <td>{{ comprador.usuario.first_name|default:"Sem nome" }}</td>
+                    <td>{{ comprador.usuario.username }}</td>
+                    <td>{{ comprador.telefone|default:"-" }}</td>
+                    <td>
+                        {% if comprador.ativo %}
+                            <span class="badge-ativo">Ativo</span>
+                        {% else %}
+                            <span class="badge-inativo">Inativo</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <a href="{% url 'alterar_status_comprador' comprador.id %}" class="botao">
+                            {% if comprador.ativo %}Desativar{% else %}Ativar{% endif %}
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+            <div class="vazio">Nenhum comprador cadastrado ainda.</div>
+        {% endif %}
+    </div>
+</main>
+
+</div>
+</body>
+</html>
