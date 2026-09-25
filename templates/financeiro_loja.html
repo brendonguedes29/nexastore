@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Financeiro da licença</title>
+    <title>Plano & Financeiro</title>
 
     <style>
         *{
@@ -453,31 +453,31 @@
     <div class="container">
 
         <div class="topo">
-            <h1>Financeiro da licença</h1>
+            <h1>Plano & Financeiro</h1>
 
             <div class="topo-acoes">
-                <a href="{% url 'painel_loja' %}" class="botao botao-cinza">Voltar ao painel</a>
-                <a href="{% url 'minha_loja' %}" class="botao botao-escuro">Minha loja</a>
+                <a href="{% url 'gestao_dashboard' %}" class="botao botao-cinza">Voltar ao painel</a>
+                <a href="{% url 'gestao_dashboard' %}" class="botao botao-escuro">Minha empresa</a>
             </div>
         </div>
 
         {% if loja.status_licenca == "ativa" %}
             <div class="alerta alerta-verde">
-                Sua licença está ativa e sua loja está liberada para uso.
+                Seu plano está ativo e a empresa está liberada para uso.
             </div>
         {% elif loja.status_licenca == "vencida" %}
             <div class="alerta alerta-vermelho">
-                Sua licença está vencida. Gere um novo pagamento para reativar automaticamente sua loja.
+                Seu plano está vencido. Gere um novo pagamento para reativar automaticamente o acesso da empresa.
             </div>
         {% else %}
             <div class="alerta alerta-amarelo">
-                Sua licença está pendente. Gere o pagamento abaixo. Assim que o Mercado Pago reconhecer a aprovação, a licença será ativada automaticamente.
+                Seu plano está pendente. Gere o pagamento abaixo. Assim que o Mercado Pago reconhecer a aprovação, a licença será ativada automaticamente.
             </div>
         {% endif %}
 
         <div class="grid-cards">
             <div class="card">
-                <h3>Status da licença</h3>
+                <h3>Status do plano</h3>
                 <div class="valor">
                     {% if loja.status_licenca == "ativa" %}
                         <span class="status-badge status-ativa">ATIVA</span>
@@ -490,7 +490,7 @@
             </div>
 
             <div class="card">
-                <h3>Valor da licença</h3>
+                <h3>Valor do plano</h3>
                 <div class="valor">R$ {{ loja.valor_licenca|floatformat:2 }}</div>
             </div>
 
@@ -501,10 +501,10 @@
         </div>
 
         <div class="bloco">
-            <h2>Resumo da licença</h2>
+            <h2>Resumo do plano</h2>
 
             <div class="linha-info">
-                <strong>Nome da loja</strong>
+                <strong>Empresa</strong>
                 <span>{{ loja.nome }}</span>
             </div>
 
@@ -525,7 +525,7 @@
             </div>
 
             <div class="linha-info">
-                <strong>Vencimento da licença</strong>
+                <strong>Vencimento do plano</strong>
                 <span>
                     {% if loja.data_vencimento_licenca %}
                         {{ loja.data_vencimento_licenca|date:"d/m/Y" }}
