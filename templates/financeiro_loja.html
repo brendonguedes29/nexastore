@@ -1,0 +1,1150 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Plano & Financeiro</title>
+
+    <style>
+        *{
+            margin:0;
+            padding:0;
+            box-sizing:border-box;
+        }
+
+        body{
+            font-family:Arial, sans-serif;
+            background:#f4f6fb;
+            color:#1f2937;
+        }
+
+        .container{
+            width:94%;
+            max-width:1200px;
+            margin:30px auto;
+        }
+
+        .topo{
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+            gap:16px;
+            flex-wrap:wrap;
+            margin-bottom:24px;
+        }
+
+        .topo h1{
+            font-size:32px;
+            color:#111827;
+        }
+
+        .topo-acoes{
+            display:flex;
+            gap:12px;
+            flex-wrap:wrap;
+        }
+
+        .botao{
+            display:inline-flex;
+            align-items:center;
+            justify-content:center;
+            padding:12px 18px;
+            border-radius:12px;
+            text-decoration:none;
+            font-weight:700;
+            border:none;
+            cursor:pointer;
+            font-size:14px;
+        }
+
+        .botao-escuro{
+            background:#111827;
+            color:white;
+        }
+
+        .botao-cinza{
+            background:#e5e7eb;
+            color:#111827;
+        }
+
+        .botao-azul{
+            background:#2563eb;
+            color:white;
+        }
+
+        .botao-cyan{
+            background:#06b6d4;
+            color:#082f49;
+        }
+
+        .botao-whatsapp{
+            background:#25d366;
+            color:white;
+        }
+
+        .botao-verde{
+            background:#16a34a;
+            color:white;
+        }
+
+        .botao-vermelho{
+            background:#dc2626;
+            color:white;
+        }
+
+        .grid-cards{
+            display:grid;
+            grid-template-columns:repeat(auto-fit, minmax(240px, 1fr));
+            gap:18px;
+            margin-bottom:24px;
+        }
+
+        .card{
+            background:white;
+            border-radius:20px;
+            padding:22px;
+            box-shadow:0 8px 24px rgba(15,23,42,0.08);
+            border:1px solid #e5e7eb;
+        }
+
+        .card h3{
+            font-size:14px;
+            color:#6b7280;
+            margin-bottom:10px;
+            text-transform:uppercase;
+            letter-spacing:.5px;
+        }
+
+        .card .valor{
+            font-size:28px;
+            font-weight:800;
+            color:#111827;
+        }
+
+        .status-badge{
+            display:inline-block;
+            padding:10px 14px;
+            border-radius:999px;
+            font-weight:800;
+            font-size:13px;
+        }
+
+        .status-ativa{
+            background:#dcfce7;
+            color:#166534;
+        }
+
+        .status-vencida{
+            background:#fee2e2;
+            color:#991b1b;
+        }
+
+        .status-pendente{
+            background:#fef3c7;
+            color:#92400e;
+        }
+
+        .status-assinatura-ativa{
+            background:#dcfce7;
+            color:#166534;
+        }
+
+        .status-assinatura-inativa{
+            background:#fee2e2;
+            color:#991b1b;
+        }
+
+        .status-assinatura-pendente{
+            background:#dbeafe;
+            color:#1d4ed8;
+        }
+
+        .alerta{
+            margin-bottom:24px;
+            padding:18px 20px;
+            border-radius:16px;
+            font-weight:600;
+            line-height:1.5;
+        }
+
+        .alerta-vermelho{
+            background:#fee2e2;
+            color:#991b1b;
+            border:1px solid #fecaca;
+        }
+
+        .alerta-amarelo{
+            background:#fef3c7;
+            color:#92400e;
+            border:1px solid #fde68a;
+        }
+
+        .alerta-verde{
+            background:#dcfce7;
+            color:#166534;
+            border:1px solid #bbf7d0;
+        }
+
+        .bloco{
+            background:white;
+            border-radius:22px;
+            padding:24px;
+            box-shadow:0 8px 24px rgba(15,23,42,0.08);
+            border:1px solid #e5e7eb;
+            margin-bottom:24px;
+        }
+
+        .bloco h2{
+            font-size:24px;
+            margin-bottom:18px;
+            color:#111827;
+        }
+
+        .linha-info{
+            display:grid;
+            grid-template-columns:220px 1fr;
+            gap:12px;
+            padding:12px 0;
+            border-bottom:1px solid #f1f5f9;
+        }
+
+        .linha-info:last-child{
+            border-bottom:none;
+        }
+
+        .linha-info strong{
+            color:#374151;
+        }
+
+        .linha-info span{
+            color:#111827;
+            word-break:break-word;
+        }
+
+        .acoes-pagamento{
+            display:flex;
+            gap:12px;
+            flex-wrap:wrap;
+            margin-top:18px;
+        }
+
+        .status-caixa{
+            margin-top:18px;
+            background:#eff6ff;
+            border:1px solid #bfdbfe;
+            color:#1d4ed8;
+            padding:14px 16px;
+            border-radius:14px;
+            font-weight:700;
+            line-height:1.5;
+            display:none;
+            white-space:pre-wrap;
+        }
+
+        .pix-area{
+            display:none;
+            margin-top:20px;
+        }
+
+        .pix-box{
+            background:#f8fafc;
+            border:1px solid #dbeafe;
+            border-radius:16px;
+            padding:16px;
+            margin-top:18px;
+        }
+
+        .pix-box h3{
+            margin-bottom:14px;
+            font-size:18px;
+            color:#1e3a8a;
+        }
+
+        .pix-grid{
+            display:grid;
+            grid-template-columns:260px 1fr;
+            gap:20px;
+            align-items:start;
+        }
+
+        .pix-grid img{
+            width:100%;
+            max-width:260px;
+            height:auto;
+            border-radius:14px;
+            background:white;
+            padding:10px;
+            border:1px solid #d1d5db;
+            display:block;
+            object-fit:contain;
+        }
+
+        .codigo-pix{
+            width:100%;
+            min-height:140px;
+            resize:vertical;
+            border:1px solid #cbd5e1;
+            border-radius:12px;
+            padding:12px;
+            font-size:14px;
+            color:#111827;
+            background:white;
+        }
+
+        .observacoes{
+            margin-top:16px;
+            background:#f9fafb;
+            border:1px solid #e5e7eb;
+            border-radius:16px;
+            padding:16px;
+            color:#374151;
+            line-height:1.6;
+        }
+
+        .sem-opcoes{
+            background:#fff7ed;
+            border:1px solid #fed7aa;
+            color:#9a3412;
+            padding:16px;
+            border-radius:14px;
+            margin-top:18px;
+            font-weight:600;
+        }
+
+        .tabela{
+            width:100%;
+            border-collapse:collapse;
+        }
+
+        .tabela th,
+        .tabela td{
+            text-align:left;
+            padding:14px 12px;
+            border-bottom:1px solid #e5e7eb;
+        }
+
+        .tabela th{
+            font-size:13px;
+            color:#64748b;
+            text-transform:uppercase;
+            letter-spacing:.5px;
+        }
+
+        .texto-suave{
+            color:#4b5563;
+            line-height:1.6;
+        }
+
+        .faixa-plano{
+            background:#111827;
+            color:white;
+            padding:18px;
+            border-radius:16px;
+            margin-bottom:18px;
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+            flex-wrap:wrap;
+            gap:12px;
+        }
+
+        .faixa-plano .principal{
+            font-size:15px;
+            font-weight:700;
+            color:white;
+        }
+
+        .faixa-plano .secundario{
+            font-size:13px;
+            color:#9ca3af;
+        }
+
+        .urgencia-licenca{
+            margin-top:16px;
+            background:#fef3c7;
+            border:1px solid #fde68a;
+            color:#92400e;
+            padding:14px 16px;
+            border-radius:12px;
+            font-weight:600;
+            line-height:1.5;
+        }
+
+        .assinatura-box{
+            background:linear-gradient(135deg,#eff6ff 0%, #f8fafc 100%);
+            border:1px solid #bfdbfe;
+            border-radius:18px;
+            padding:18px;
+            margin-bottom:18px;
+        }
+
+        .assinatura-head{
+            display:flex;
+            align-items:center;
+            justify-content:space-between;
+            flex-wrap:wrap;
+            gap:12px;
+            margin-bottom:12px;
+        }
+
+        .assinatura-head h3{
+            font-size:18px;
+            color:#111827;
+            margin:0;
+        }
+
+        .assinatura-grid{
+            display:grid;
+            grid-template-columns:repeat(auto-fit, minmax(220px, 1fr));
+            gap:14px;
+            margin-top:14px;
+        }
+
+        .assinatura-mini{
+            background:white;
+            border:1px solid #dbeafe;
+            border-radius:14px;
+            padding:14px;
+        }
+
+        .assinatura-mini strong{
+            display:block;
+            font-size:13px;
+            color:#475569;
+            margin-bottom:6px;
+        }
+
+        .assinatura-mini span{
+            display:block;
+            font-size:14px;
+            color:#111827;
+            font-weight:700;
+            word-break:break-word;
+        }
+
+        @media (max-width:900px){
+            .pix-grid{
+                grid-template-columns:1fr;
+            }
+
+            .pix-grid img{
+                max-width:220px;
+                margin:0 auto;
+            }
+        }
+
+        @media (max-width:700px){
+            .linha-info{
+                grid-template-columns:1fr;
+                gap:6px;
+            }
+
+            .topo h1{
+                font-size:26px;
+            }
+
+            .card .valor{
+                font-size:24px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+
+        <div class="topo">
+            <h1>Plano & Financeiro</h1>
+
+            <div class="topo-acoes">
+                <a href="{% url 'gestao_dashboard' %}" class="botao botao-cinza">Voltar ao painel</a>
+                <a href="{% url 'gestao_dashboard' %}" class="botao botao-escuro">Minha empresa</a>
+            </div>
+        </div>
+
+        {% if loja.status_licenca == "ativa" %}
+            <div class="alerta alerta-verde">
+                Seu plano está ativo e a empresa está liberada para uso.
+            </div>
+        {% elif loja.status_licenca == "vencida" %}
+            <div class="alerta alerta-vermelho">
+                Seu plano está vencido. Gere um novo pagamento para reativar automaticamente o acesso da empresa.
+            </div>
+        {% else %}
+            <div class="alerta alerta-amarelo">
+                Seu plano está pendente. Gere o pagamento abaixo. Assim que o Mercado Pago reconhecer a aprovação, a licença será ativada automaticamente.
+            </div>
+        {% endif %}
+
+        <div class="grid-cards">
+            <div class="card">
+                <h3>Status do plano</h3>
+                <div class="valor">
+                    {% if loja.status_licenca == "ativa" %}
+                        <span class="status-badge status-ativa">ATIVA</span>
+                    {% elif loja.status_licenca == "vencida" %}
+                        <span class="status-badge status-vencida">VENCIDA</span>
+                    {% else %}
+                        <span class="status-badge status-pendente">PENDENTE</span>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>Valor do plano</h3>
+                <div class="valor">R$ {{ loja.valor_licenca|floatformat:2 }}</div>
+            </div>
+
+            <div class="card">
+                <h3>Dias restantes</h3>
+                <div class="valor">{{ loja.dias_restantes_licenca }}</div>
+            </div>
+        </div>
+
+        <div class="bloco">
+            <h2>Resumo do plano</h2>
+
+            <div class="linha-info">
+                <strong>Empresa</strong>
+                <span>{{ loja.nome }}</span>
+            </div>
+
+            <div class="linha-info">
+                <strong>Valor</strong>
+                <span>R$ {{ loja.valor_licenca|floatformat:2 }}</span>
+            </div>
+
+            <div class="linha-info">
+                <strong>Último pagamento</strong>
+                <span>
+                    {% if loja.data_ultimo_pagamento %}
+                        {{ loja.data_ultimo_pagamento|date:"d/m/Y" }}
+                    {% else %}
+                        Ainda não registrado
+                    {% endif %}
+                </span>
+            </div>
+
+            <div class="linha-info">
+                <strong>Vencimento do plano</strong>
+                <span>
+                    {% if loja.data_vencimento_licenca %}
+                        {{ loja.data_vencimento_licenca|date:"d/m/Y" }}
+                    {% else %}
+                        Ainda não definido
+                    {% endif %}
+                </span>
+            </div>
+
+            <div class="linha-info">
+                <strong>Situação de acesso</strong>
+                <span>
+                    {% if licenca_bloqueada %}
+                        Acesso bloqueado até a regularização
+                    {% else %}
+                        Acesso liberado
+                    {% endif %}
+                </span>
+            </div>
+        </div>
+
+        <div class="bloco">
+            <h2>Cobrança automática</h2>
+
+            <p class="texto-suave" style="margin-bottom:16px;">
+                Ative a cobrança automática no cartão para renovar a licença mensalmente sem precisar gerar um novo pagamento manual.
+            </p>
+
+            <div class="assinatura-box">
+                <div class="assinatura-head">
+                    <h3>Assinatura automática da licença</h3>
+
+                    {% if loja.cobranca_automatica_ativa %}
+                        <span class="status-badge status-assinatura-ativa">ATIVA</span>
+                    {% elif loja.mp_preapproval_id %}
+                        <span class="status-badge status-assinatura-pendente">PENDENTE</span>
+                    {% else %}
+                        <span class="status-badge status-assinatura-inativa">INATIVA</span>
+                    {% endif %}
+                </div>
+
+                <div class="assinatura-grid">
+                    <div class="assinatura-mini">
+                        <strong>Status da assinatura</strong>
+                        <span id="statusAssinaturaTexto">
+                            {% if loja.cobranca_automatica_ativa %}
+                                Ativa
+                            {% elif loja.mp_preapproval_status %}
+                                {{ loja.mp_preapproval_status }}
+                            {% else %}
+                                Inativa
+                            {% endif %}
+                        </span>
+                    </div>
+
+                    <div class="assinatura-mini">
+                        <strong>ID da assinatura</strong>
+                        <span id="assinaturaIdTexto">
+                            {% if loja.mp_preapproval_id %}
+                                {{ loja.mp_preapproval_id }}
+                            {% else %}
+                                Ainda não gerado
+                            {% endif %}
+                        </span>
+                    </div>
+
+                    <div class="assinatura-mini">
+                        <strong>Modelo</strong>
+                        <span>R$ {{ loja.valor_licenca|floatformat:2 }} / mês</span>
+                    </div>
+                </div>
+
+                <div class="acoes-pagamento">
+                    {% if not loja.cobranca_automatica_ativa %}
+                        <button type="button" id="btnAtivarAssinatura" class="botao botao-verde">
+                            Ativar cobrança automática
+                        </button>
+                    {% endif %}
+
+                    {% if loja.mp_preapproval_id %}
+                        <button type="button" id="btnConsultarAssinatura" class="botao botao-cinza">
+                            Atualizar status da assinatura
+                        </button>
+                    {% endif %}
+
+                    {% if loja.mp_preapproval_id and loja.cobranca_automatica_ativa %}
+                        <button type="button" id="btnCancelarAssinatura" class="botao botao-vermelho">
+                            Cancelar cobrança automática
+                        </button>
+                    {% endif %}
+                </div>
+
+                <div id="statusAssinaturaBox" class="status-caixa"></div>
+            </div>
+        </div>
+
+        <div class="bloco">
+            <h2>Ative o plano da sua empresa</h2>
+
+            <p class="texto-suave" style="margin-bottom:16px;">
+                Para manter os recursos de gestão da sua empresa disponíveis para a equipe, é necessário manter a licença ativa.
+            </p>
+
+            <div class="faixa-plano">
+                <div class="principal">
+                    💳 <strong>Plano único:</strong> R$ {{ loja.valor_licenca|floatformat:2 }} / mês
+                </div>
+
+                <div class="secundario">
+                    Liberação imediata após pagamento
+                </div>
+            </div>
+
+            <p class="texto-suave" style="margin-bottom:16px;">
+                Gere o pagamento da licença diretamente por aqui. Após a aprovação no Mercado Pago, a licença será ativada automaticamente.
+            </p>
+
+            <div class="acoes-pagamento">
+                <button type="button" id="btnGerarPixLicenca" class="botao botao-cyan">
+                    Pagar agora via Pix
+                </button>
+
+                <button type="button" id="btnGerarCheckoutLicenca" class="botao botao-azul">
+                    Pagar agora com cartão
+                </button>
+
+                {% if loja.aceitar_whatsapp_financeiro and loja.whatsapp_financeiro %}
+                    <a
+                        href="https://wa.me/55{{ loja.whatsapp_financeiro|cut:'('|cut:')'|cut:'-'|cut:' ' }}?text=Olá%2C%20preciso%20de%20ajuda%20com%20o%20pagamento%20da%20licença%20da%20minha%20loja%20{{ loja.nome|urlencode }}"
+                        target="_blank"
+                        class="botao botao-whatsapp"
+                    >
+                        Falar com o financeiro
+                    </a>
+                {% endif %}
+            </div>
+
+            <div class="urgencia-licenca">
+                ⚠️ Sua loja pode ficar indisponível caso a licença não seja regularizada.
+            </div>
+
+            <div id="statusPagamento" class="status-caixa"></div>
+
+            <div id="pixArea" class="pix-area">
+                <div class="pix-box">
+                    <h3>Pix da licença</h3>
+
+                    <div class="pix-grid">
+                        <div>
+                            <img id="pixQrImage" src="" alt="QR Code Pix">
+                        </div>
+
+                        <div>
+                            <textarea id="pixCode" class="codigo-pix" readonly></textarea>
+
+                            <div style="margin-top:12px; display:flex; gap:12px; flex-wrap:wrap;">
+                                <button type="button" id="btnCopiarPix" class="botao botao-escuro">
+                                    Copiar código Pix
+                                </button>
+
+                                <a
+                                    id="pixTicketLink"
+                                    href="#"
+                                    target="_blank"
+                                    class="botao botao-cinza"
+                                    style="display:none;"
+                                >
+                                    Abrir comprovante
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {% if pagamento_pendente %}
+                <div class="observacoes">
+                    <strong>Pagamento pendente encontrado:</strong><br>
+                    Existe um pagamento de licença em aberto. Se ele for aprovado, a página será atualizada automaticamente.
+                </div>
+            {% endif %}
+        </div>
+
+        <div class="bloco">
+            <h2>Formas manuais de contingência</h2>
+
+            <p class="texto-suave" style="margin-bottom:16px;">
+                Caso prefira, você pode realizar o pagamento via Pix usando a chave exibida no campo e, em seguida, enviar o comprovante para a central do financeiro.
+            </p>
+
+            <div class="acoes-pagamento">
+                {% if loja.aceitar_cartao and loja.link_pagamento %}
+                    <a href="{{ loja.link_pagamento }}" target="_blank" class="botao botao-azul">
+                        Link manual de pagamento
+                    </a>
+                {% endif %}
+            </div>
+
+            {% if loja.aceitar_pix and loja.pix_copia_cola %}
+                <div class="pix-box">
+                    <h3>Pix copia e cola manual</h3>
+                    <textarea class="codigo-pix" readonly>{{ loja.pix_copia_cola }}</textarea>
+                </div>
+            {% elif loja.aceitar_pix and loja.chave_pix %}
+                <div class="pix-box">
+                    <h3>Chave Pix manual</h3>
+                    <textarea class="codigo-pix" readonly>{{ loja.chave_pix }}</textarea>
+                </div>
+            {% endif %}
+
+            {% if loja.nome_recebedor %}
+                <div class="linha-info" style="margin-top:18px;">
+                    <strong>Recebedor</strong>
+                    <span>{{ loja.nome_recebedor }}</span>
+                </div>
+            {% endif %}
+
+            {% if loja.observacoes_licenca %}
+                <div class="observacoes">
+                    <strong>Observações:</strong><br>
+                    Ativação após a confirmação do pagamento.
+                </div>
+            {% endif %}
+
+            {% if not loja.pagamento_disponivel %}
+                <div class="sem-opcoes">
+                    Ainda não há uma forma manual de pagamento configurada para esta loja.
+                </div>
+            {% endif %}
+        </div>
+
+        <div class="bloco">
+            <h2>Histórico de pagamentos da licença</h2>
+
+            {% if historico_pagamentos %}
+                <table class="tabela">
+                    <thead>
+                        <tr>
+                            <th>Data</th>
+                            <th>Tipo</th>
+                            <th>Valor</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in historico_pagamentos %}
+                            <tr>
+                                <td>{{ item.data_criacao|date:"d/m/Y H:i" }}</td>
+                                <td>{{ item.get_tipo_pagamento_display }}</td>
+                                <td>R$ {{ item.valor|floatformat:2 }}</td>
+                                <td>{{ item.get_status_display }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <p class="texto-suave">Nenhum pagamento de licença foi gerado ainda.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            let pagamentoLicencaId = {% if pagamento_pendente %}{{ pagamento_pendente.id }}{% else %}null{% endif %};
+            const licencaAtiva = "{{ loja.status_licenca }}" === "ativa";
+            const diasRestantes = {{ loja.dias_restantes_licenca|default:0 }};
+
+            const btnPix = document.getElementById("btnGerarPixLicenca");
+            const btnCheckout = document.getElementById("btnGerarCheckoutLicenca");
+            const btnCopiarPix = document.getElementById("btnCopiarPix");
+
+            const btnAtivarAssinatura = document.getElementById("btnAtivarAssinatura");
+            const btnConsultarAssinatura = document.getElementById("btnConsultarAssinatura");
+            const btnCancelarAssinatura = document.getElementById("btnCancelarAssinatura");
+
+            function mostrarStatus(texto) {
+                const box = document.getElementById("statusPagamento");
+                if (!box) return;
+                box.style.display = "block";
+                box.innerText = texto;
+            }
+
+            function mostrarStatusAssinatura(texto) {
+                const box = document.getElementById("statusAssinaturaBox");
+                if (!box) return;
+                box.style.display = "block";
+                box.innerText = texto;
+            }
+
+            function confirmarNovaCompraLicenca() {
+                if (!licencaAtiva) {
+                    return true;
+                }
+
+                return confirm(
+                    "Sua licença já está ativa" +
+                    (diasRestantes > 0 ? " e ainda possui " + diasRestantes + " dia(s) restante(s)." : "") +
+                    "\n\nDeseja adicionar mais 30 dias ao período atual da licença?"
+                );
+            }
+
+            function mostrarPix(qrBase64, qrCode, ticketUrl) {
+                const pixArea = document.getElementById("pixArea");
+                const qrImage = document.getElementById("pixQrImage");
+                const pixCode = document.getElementById("pixCode");
+                const ticketLink = document.getElementById("pixTicketLink");
+
+                if (!pixArea || !qrImage || !pixCode || !ticketLink) {
+                    mostrarStatus("Erro: elementos do Pix não encontrados na página.");
+                    return;
+                }
+
+                qrImage.src = "data:image/png;base64," + qrBase64;
+                pixCode.value = qrCode || "";
+                pixArea.style.display = "block";
+
+                if (ticketUrl) {
+                    ticketLink.href = ticketUrl;
+                    ticketLink.style.display = "inline-flex";
+                } else {
+                    ticketLink.style.display = "none";
+                }
+            }
+
+            function copiarPix() {
+                const pixCode = document.getElementById("pixCode");
+                if (!pixCode) return;
+
+                pixCode.select();
+                pixCode.setSelectionRange(0, 99999);
+                document.execCommand("copy");
+                mostrarStatus("Código Pix copiado com sucesso.");
+            }
+
+            async function gerarPixLicenca() {
+                if (!confirmarNovaCompraLicenca()) {
+                    mostrarStatus("Nova cobrança cancelada.");
+                    return;
+                }
+
+                try {
+                    mostrarStatus("Gerando Pix da licença...");
+
+                    const response = await fetch("{% url 'gerar_pix_licenca' %}", {
+                        method: "GET",
+                        headers: {
+                            "X-Requested-With": "XMLHttpRequest"
+                        }
+                    });
+
+                    const data = await response.json();
+
+                    if (!data.ok) {
+                        mostrarStatus(
+                            (data.erro || "Não foi possível gerar o Pix.") +
+                            (data.resposta_mp ? "\n\n" + JSON.stringify(data.resposta_mp) : "")
+                        );
+                        return;
+                    }
+
+                    if (data.ja_pago) {
+                        mostrarStatus(data.mensagem || "A licença já foi paga.");
+                        setTimeout(function () {
+                            window.location.reload();
+                        }, 1200);
+                        return;
+                    }
+
+                    pagamentoLicencaId = data.pagamento_id;
+                    mostrarPix(data.qr_code_base64, data.qr_code, data.ticket_url);
+
+                    if (licencaAtiva) {
+                        mostrarStatus("Pix gerado com sucesso. Após a aprovação, serão adicionados mais 30 dias à sua licença.");
+                    } else {
+                        mostrarStatus("Pix gerado com sucesso. Após o pagamento, a licença será ativada automaticamente.");
+                    }
+                } catch (e) {
+                    console.error("erro pix:", e);
+                    mostrarStatus("Erro ao gerar Pix da licença: " + e);
+                }
+            }
+
+            async function gerarCheckoutLicenca() {
+                if (!confirmarNovaCompraLicenca()) {
+                    mostrarStatus("Nova cobrança cancelada.");
+                    return;
+                }
+
+                try {
+                    if (licencaAtiva) {
+                        mostrarStatus("Gerando novo pagamento para adicionar mais 30 dias...");
+                    } else {
+                        mostrarStatus("Gerando checkout de cartão...");
+                    }
+
+                    const response = await fetch("{% url 'gerar_checkout_licenca' %}", {
+                        method: "GET",
+                        headers: {
+                            "X-Requested-With": "XMLHttpRequest"
+                        }
+                    });
+
+                    const data = await response.json();
+
+                    if (!data.ok) {
+                        mostrarStatus(
+                            (data.erro || "Não foi possível gerar o checkout.") +
+                            (data.resposta_mp ? "\n\n" + JSON.stringify(data.resposta_mp) : "")
+                        );
+                        return;
+                    }
+
+                    if (!data.checkout_url) {
+                        mostrarStatus("Erro: checkout_url não veio da view.");
+                        return;
+                    }
+
+                    pagamentoLicencaId = data.pagamento_id || null;
+                    mostrarStatus("Redirecionando para o pagamento...");
+                    window.location.href = data.checkout_url;
+                } catch (e) {
+                    console.error("erro checkout:", e);
+                    mostrarStatus("Erro ao gerar checkout da licença: " + e);
+                }
+            }
+
+            async function verificarStatusLicenca() {
+                if (!pagamentoLicencaId) {
+                    return;
+                }
+
+                try {
+                    const response = await fetch("/painel/financeiro/status/" + pagamentoLicencaId + "/");
+                    const data = await response.json();
+
+                    if (data.ok && data.status === "aprovado") {
+                        let mensagem = "Pagamento aprovado com sucesso.";
+
+                        if (data.dias_restantes) {
+                            mensagem += " Sua licença agora possui " + data.dias_restantes + " dia(s) restante(s).";
+                        }
+
+                        mostrarStatus(mensagem);
+
+                        setTimeout(function () {
+                            window.location.reload();
+                        }, 1800);
+                    }
+                } catch (e) {
+                    console.log("Falha ao consultar status da licença.", e);
+                }
+            }
+
+            async function ativarAssinaturaAutomatica() {
+                try {
+                    mostrarStatusAssinatura("Gerando assinatura automática...");
+
+                    const response = await fetch("{% url 'criar_assinatura_automatica_licenca' %}", {
+                        method: "GET",
+                        headers: {
+                            "X-Requested-With": "XMLHttpRequest"
+                        }
+                    });
+
+                    const data = await response.json();
+
+                    if (!data.ok) {
+                        mostrarStatusAssinatura(
+                            (data.erro || "Não foi possível criar a assinatura.") +
+                            (data.resposta_mp ? "\n\n" + JSON.stringify(data.resposta_mp) : "")
+                        );
+                        return;
+                    }
+
+                    if (data.ja_existe) {
+                        mostrarStatusAssinatura(data.mensagem || "A assinatura já está ativa.");
+                        setTimeout(function () {
+                            window.location.reload();
+                        }, 1200);
+                        return;
+                    }
+
+                    if (data.checkout_url) {
+                        mostrarStatusAssinatura("Redirecionando para ativação da cobrança automática...");
+                        window.location.href = data.checkout_url;
+                        return;
+                    }
+
+                    mostrarStatusAssinatura("Assinatura criada, mas o link de ativação não foi retornado.");
+                } catch (e) {
+                    console.error("erro assinatura:", e);
+                    mostrarStatusAssinatura("Erro ao ativar cobrança automática: " + e);
+                }
+            }
+
+            async function consultarStatusAssinatura() {
+                try {
+                    mostrarStatusAssinatura("Atualizando status da assinatura...");
+
+                    const response = await fetch("{% url 'status_assinatura_automatica_licenca' %}", {
+                        method: "GET",
+                        headers: {
+                            "X-Requested-With": "XMLHttpRequest"
+                        }
+                    });
+
+                    const data = await response.json();
+
+                    if (!data.ok) {
+                        mostrarStatusAssinatura(data.erro || "Não foi possível consultar a assinatura.");
+                        return;
+                    }
+
+                    const statusTexto = document.getElementById("statusAssinaturaTexto");
+                    const assinaturaIdTexto = document.getElementById("assinaturaIdTexto");
+
+                    if (statusTexto) {
+                        statusTexto.innerText = data.status || (data.ativa ? "Ativa" : "Inativa");
+                    }
+
+                    if (assinaturaIdTexto) {
+                        assinaturaIdTexto.innerText = data.assinatura_id || "Ainda não gerado";
+                    }
+
+                    mostrarStatusAssinatura(
+                        data.ativa
+                            ? "A cobrança automática está ativa."
+                            : "A cobrança automática ainda não está ativa."
+                    );
+
+                    if (data.ativa) {
+                        setTimeout(function () {
+                            window.location.reload();
+                        }, 1200);
+                    }
+                } catch (e) {
+                    console.error("erro status assinatura:", e);
+                    mostrarStatusAssinatura("Erro ao consultar status da assinatura: " + e);
+                }
+            }
+
+            async function cancelarAssinaturaAutomatica() {
+                const confirmar = confirm("Deseja realmente cancelar a cobrança automática da licença?");
+                if (!confirmar) {
+                    return;
+                }
+
+                try {
+                    mostrarStatusAssinatura("Cancelando cobrança automática...");
+
+                    const response = await fetch("{% url 'cancelar_assinatura_automatica_licenca' %}", {
+                        method: "GET",
+                        headers: {
+                            "X-Requested-With": "XMLHttpRequest"
+                        }
+                    });
+
+                    const data = await response.json();
+
+                    if (!data.ok) {
+                        mostrarStatusAssinatura(data.erro || "Não foi possível cancelar a assinatura.");
+                        return;
+                    }
+
+                    mostrarStatusAssinatura(data.mensagem || "Assinatura cancelada com sucesso.");
+
+                    setTimeout(function () {
+                        window.location.reload();
+                    }, 1400);
+                } catch (e) {
+                    console.error("erro cancelar assinatura:", e);
+                    mostrarStatusAssinatura("Erro ao cancelar assinatura: " + e);
+                }
+            }
+
+            if (btnPix) {
+                btnPix.addEventListener("click", gerarPixLicenca);
+            }
+
+            if (btnCheckout) {
+                btnCheckout.addEventListener("click", gerarCheckoutLicenca);
+            }
+
+            if (btnCopiarPix) {
+                btnCopiarPix.addEventListener("click", copiarPix);
+            }
+
+            if (btnAtivarAssinatura) {
+                btnAtivarAssinatura.addEventListener("click", ativarAssinaturaAutomatica);
+            }
+
+            if (btnConsultarAssinatura) {
+                btnConsultarAssinatura.addEventListener("click", consultarStatusAssinatura);
+            }
+
+            if (btnCancelarAssinatura) {
+                btnCancelarAssinatura.addEventListener("click", cancelarAssinaturaAutomatica);
+            }
+
+            {% if pagamento_pendente and pagamento_pendente.qr_code and pagamento_pendente.qr_code_base64 %}
+                mostrarPix(
+                    "{{ pagamento_pendente.qr_code_base64|escapejs }}",
+                    "{{ pagamento_pendente.qr_code|escapejs }}",
+                    "{{ pagamento_pendente.ticket_url|default:''|escapejs }}"
+                );
+
+                {% if loja.status_licenca == "ativa" %}
+                    mostrarStatus("Existe um pagamento pendente. Se ele for aprovado, sua licença receberá mais 30 dias automaticamente.");
+                {% else %}
+                    mostrarStatus("Existe um pagamento pendente para esta licença. Assim que ele for aprovado, a licença será ativada automaticamente.");
+                {% endif %}
+            {% endif %}
+
+            setInterval(verificarStatusLicenca, 5000);
+
+            window.addEventListener("focus", function () {
+                verificarStatusLicenca();
+            });
+        });
+    </script>
+</body>
+</html>

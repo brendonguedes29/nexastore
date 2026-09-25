@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Produtos da loja</title>
+    <style>
+        body{font-family:Arial,sans-serif;background:#f4f6fb;margin:0;color:#1f2937;}
+        .topo{background:#0f172a;color:white;padding:20px 0;}
+        .wrap{width:92%;max-width:1200px;margin:0 auto;}
+        .box{background:white;margin-top:30px;padding:24px;border-radius:18px;box-shadow:0 8px 24px rgba(15,23,42,0.06);}
+        .topo-box{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:20px;}
+        .botao{background:#0f172a;color:white;text-decoration:none;padding:12px 16px;border-radius:10px;display:inline-block;}
+        .botao2{background:white;color:#0f172a;text-decoration:none;padding:12px 16px;border-radius:10px;border:1px solid #ddd;display:inline-block;}
+        table{width:100%;border-collapse:collapse;}
+        th,td{text-align:left;padding:14px 10px;border-bottom:1px solid #e5e7eb;}
+        th{color:#64748b;font-size:14px;}
+        .ativo{color:#15803d;font-weight:bold;}
+        .inativo{color:#b91c1c;font-weight:bold;}
+    </style>
+</head>
+<body>
+    <div class="topo">
+        <div class="wrap">
+            <h1>{{ loja.nome }}</h1>
+            <p>Lista completa de produtos</p>
+        </div>
+    </div>
+
+    <div class="wrap">
+        <div class="box">
+            <div class="topo-box">
+                <h2>Produtos</h2>
+                <div>
+                    <a class="botao2" href="/painel/">Voltar ao painel</a>
+                    <a class="botao" href="/painel/produtos/novo/">Novo produto</a>
+                </div>
+            </div>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Produto</th>
+                        <th>Categoria</th>
+                        <th>Preco</th>
+                        <th>Estoque</th>
+                        <th>Status</th>
+                        <th>Acoes</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for produto in produtos %}
+                    <tr>
+                        <td>{{ produto.nome }}</td>
+                        <td>{% if produto.categoria %}{{ produto.categoria.nome }}{% else %}-{% endif %}</td>
+                        <td>R$ {{ produto.preco }}</td>
+                        <td>{{ produto.estoque }}</td>
+                        <td>
+                            {% if produto.ativo %}
+                                <span class="ativo">Ativo</span>
+                            {% else %}
+                                <span class="inativo">Inativo</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a class="botao" href="/painel/produtos/{{ produto.id }}/editar/">Editar</a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6">Nenhum produto cadastrado.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</body>
+</html>

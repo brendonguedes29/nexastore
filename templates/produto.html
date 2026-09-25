@@ -1,0 +1,264 @@
+{% extends 'base_publico.html' %}
+{% block title %}{{ produto.nome }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .produto-box{
+        background:white;
+        border-radius:24px;
+        padding:24px;
+        box-shadow:0 12px 30px rgba(15,23,42,0.08);
+        display:grid;
+        grid-template-columns:1.1fr 1fr;
+        gap:28px;
+        align-items:start;
+    }
+
+    .galeria-box{
+        display:flex;
+        flex-direction:column;
+        gap:14px;
+    }
+
+    .imagem-box{
+        border-radius:20px;
+        overflow:hidden;
+        background:#eef2f7;
+        min-height:420px;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        border:1px solid #e5e7eb;
+    }
+
+    .imagem-box img{
+        width:100%;
+        height:100%;
+        object-fit:cover;
+    }
+
+    .miniaturas{
+        display:flex;
+        gap:10px;
+        flex-wrap:wrap;
+    }
+
+    .miniatura{
+        width:86px;
+        height:86px;
+        border-radius:14px;
+        overflow:hidden;
+        border:2px solid transparent;
+        background:#eef2f7;
+        cursor:pointer;
+        padding:0;
+        transition:.18s ease;
+    }
+
+    .miniatura img{
+        width:100%;
+        height:100%;
+        object-fit:cover;
+        display:block;
+    }
+
+    .miniatura.ativa{
+        border-color:#0f172a;
+        box-shadow:0 6px 16px rgba(15,23,42,0.12);
+    }
+
+    .sem-imagem{
+        color:#64748b;
+        font-size:15px;
+    }
+
+    .categoria{
+        font-size:13px;
+        font-weight:800;
+        text-transform:uppercase;
+        color:#64748b;
+        margin-bottom:10px;
+    }
+
+    .titulo{
+        font-size:36px;
+        font-weight:900;
+        color:#0f172a;
+        margin-bottom:10px;
+        line-height:1.1;
+    }
+
+    .preco{
+        font-size:42px;
+        font-weight:900;
+        color:#16a34a;
+        margin-bottom:14px;
+    }
+
+    .descricao{
+        color:#475569;
+        font-size:16px;
+        line-height:1.6;
+        margin-bottom:16px;
+    }
+
+    .estoque{
+        color:#334155;
+        font-size:15px;
+        margin-bottom:18px;
+    }
+
+    .campo{
+        width:100%;
+        padding:14px 16px;
+        border:1px solid #d1d5db;
+        border-radius:14px;
+        font-size:16px;
+        outline:none;
+        margin-bottom:14px;
+    }
+
+    .total{
+        font-size:18px;
+        margin-bottom:18px;
+        color:#0f172a;
+    }
+
+    .total strong{
+        font-size:22px;
+    }
+
+    .botoes{
+        display:flex;
+        gap:12px;
+        flex-wrap:wrap;
+    }
+
+    .btn{
+        border:none;
+        cursor:pointer;
+        text-decoration:none;
+        padding:14px 18px;
+        border-radius:14px;
+        font-weight:900;
+        font-size:15px;
+        display:inline-flex;
+        align-items:center;
+        justify-content:center;
+    }
+
+    .btn-dark{
+        background:#0b1220;
+        color:white;
+    }
+
+    .btn-soft{
+        background:#e5e7eb;
+        color:#111827;
+    }
+
+    @media (max-width: 920px){
+        .produto-box{
+            grid-template-columns:1fr;
+        }
+
+        .imagem-box{
+            min-height:280px;
+        }
+
+        .miniatura{
+            width:74px;
+            height:74px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="produto-box">
+    <div class="galeria-box">
+        <div class="imagem-box">
+            {% if produto.imagem %}
+                <img id="imagemPrincipal" src="{{ produto.imagem.url }}" alt="{{ produto.nome }}">
+            {% elif produto.imagens_extras.all %}
+                {% with primeira=produto.imagens_extras.all.0 %}
+                    <img id="imagemPrincipal" src="{{ primeira.imagem.url }}" alt="{{ produto.nome }}">
+                {% endwith %}
+            {% else %}
+                <div class="sem-imagem">Sem imagem</div>
+            {% endif %}
+        </div>
+
+        {% if produto.imagem or produto.imagens_extras.all %}
+        <div class="miniaturas">
+            {% if produto.imagem %}
+                <button type="button" class="miniatura ativa" onclick="trocarImagem(this, '{{ produto.imagem.url }}')">
+                    <img src="{{ produto.imagem.url }}" alt="{{ produto.nome }}">
+                </button>
+            {% endif %}
+
+            {% for foto in produto.imagens_extras.all %}
+                <button type="button" class="miniatura {% if not produto.imagem and forloop.first %}ativa{% endif %}" onclick="trocarImagem(this, '{{ foto.imagem.url }}')">
+                    <img src="{{ foto.imagem.url }}" alt="{{ produto.nome }}">
+                </button>
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+
+    <div>
+        <div class="categoria">
+            {% if produto.categoria %}
+                {{ produto.categoria.nome }}
+            {% else %}
+                Sem categoria
+            {% endif %}
+        </div>
+
+        <div class="titulo">{{ produto.nome }}</div>
+        <div class="preco">R$ {{ produto.preco }}</div>
+        <div class="descricao">{{ produto.descricao }}</div>
+        <div class="estoque">Estoque disponível: {{ produto.estoque }}</div>
+
+        <form method="post" action="{% url 'adicionar_carrinho' produto.id %}">
+            {% csrf_token %}
+            <input type="number" name="quantidade" id="quantidade" value="1" min="1" class="campo" required>
+
+            <div class="total">
+                Total: <strong id="total">R$ {{ produto.preco }}</strong>
+            </div>
+
+            <div class="botoes">
+                <button type="submit" class="btn btn-dark">🛒 Adicionar ao carrinho</button>
+                <a href="{% url 'loja' produto.loja.slug %}" class="btn btn-soft">Voltar</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+const preco = parseFloat("{{ produto.preco }}");
+const qtd = document.getElementById("quantidade");
+const total = document.getElementById("total");
+
+function atualizar(){
+    let quantidade = parseInt(qtd.value) || 1;
+    total.innerText = "R$ " + (preco * quantidade).toFixed(2);
+}
+
+function trocarImagem(botao, url){
+    const principal = document.getElementById("imagemPrincipal");
+    if (principal){
+        principal.src = url;
+    }
+
+    document.querySelectorAll(".miniatura").forEach(item => {
+        item.classList.remove("ativa");
+    });
+
+    botao.classList.add("ativa");
+}
+
+qtd.addEventListener("input", atualizar);
+</script>
+{% endblock %}
