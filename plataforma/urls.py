@@ -6,7 +6,7 @@ import lojas.views as views
 
 from lojas.admin import custom_admin_site
 from lojas.public_views import criar_loja_publica
-from gestao.views import portal_empresa, portal_empresa_publica
+from gestao.views import portal_empresa, portal_empresa_publica, cadastro_colaborador_publico
 from lojas.licenca_views import (
     financeiro_loja,
     renovar_licenca_manual,
@@ -91,6 +91,7 @@ from lojas.views import (
 
 urlpatterns = [
     path('empresa/<slug:slug>/', portal_empresa_publica, name='portal_empresa_publica'),
+    path('empresa/<slug:slug>/cadastro/', cadastro_colaborador_publico, name='cadastro_colaborador_publico'),
     path('empresa/<slug:slug>/', portal_empresa_publica, name='loja'),  # alias legado seguro
     path('empresa/<slug:slug>/', portal_empresa_publica, name='loja_view'),  # alias legado seguro
 

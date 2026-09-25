@@ -24,7 +24,7 @@ class Indicador(BaseEmpresa):
     unidade=models.CharField(max_length=30, default='%'); meta=models.DecimalField(max_digits=12,decimal_places=2,default=0)
     sentido=models.CharField(max_length=10,choices=[('maior','Maior'),('menor','Menor')],default='maior')
     periodicidade=models.CharField(max_length=20,choices=PERIOD,default='mensal'); responsavel=models.CharField(max_length=120,blank=True)
-    ativo=models.BooleanField(default=True)
+    ativo=models.BooleanField(default=True); inicio=models.DateField(null=True,blank=True); previsao_conclusao=models.DateField(null=True,blank=True); concluido_em=models.DateTimeField(null=True,blank=True)
     def __str__(self): return self.nome
 
 class MedicaoIndicador(BaseEmpresa):
@@ -102,6 +102,8 @@ class Colaborador(models.Model):
     loja=models.ForeignKey(Loja,on_delete=models.CASCADE,related_name='colaboradores_gestao'); usuario=models.OneToOneField(settings.AUTH_USER_MODEL,on_delete=models.CASCADE,related_name='perfil_colaborador')
     setor=models.ForeignKey(Setor,on_delete=models.SET_NULL,null=True,blank=True); cargo=models.CharField(max_length=120,blank=True); matricula=models.CharField(max_length=60,blank=True)
     pontos=models.PositiveIntegerField(default=0); nivel=models.PositiveIntegerField(default=1); ativo=models.BooleanField(default=True); criado_em=models.DateTimeField(auto_now_add=True)
+    cpf=models.CharField(max_length=14,blank=True); supervisor=models.ForeignKey('self',on_delete=models.SET_NULL,null=True,blank=True,related_name='supervisionados')
+    status_cadastro=models.CharField(max_length=20,choices=[('aprovado','Aprovado'),('pendente','Aguardando aprovação'),('rejeitado','Rejeitado')],default='aprovado')
     papel=models.CharField(max_length=20,choices=[('colaborador','Colaborador'),('gestor_setor','Gestor de setor'),('gestor_empresa','Gestor da empresa')],default='colaborador'); email_notificacoes=models.BooleanField(default=True)
     foto=models.ImageField(upload_to='gestao/perfis/',blank=True,null=True); bio=models.CharField(max_length=500,blank=True); titulo_perfil=models.CharField(max_length=120,blank=True)
     perfil_visivel=models.BooleanField(default=True); ranking_visivel=models.BooleanField(default=True); mostrar_conquistas=models.BooleanField(default=True)
@@ -227,3 +229,12 @@ class AlertaEnviado(BaseEmpresa):
     usuario=models.ForeignKey(settings.AUTH_USER_MODEL,on_delete=models.CASCADE); chave=models.CharField(max_length=180); canal=models.CharField(max_length=20,default='plataforma')
     enviado_em=models.DateTimeField(auto_now_add=True)
     class Meta: unique_together=[('loja','usuario','chave','canal')]
+
+class CertificadoTreinamento(BaseEmpresa):
+    colaborador=models.ForeignKey(Colaborador,on_delete=models.CASCADE,related_name='certificados')
+    treinamento=models.ForeignKey(Treinamento,on_delete=models.CASCADE,related_name='certificados')
+    codigo=models.CharField(max_length=48,unique=True)
+    emitido_em=models.DateTimeField(auto_now_add=True)
+    carga_horaria_minutos=models.PositiveIntegerField(default=30)
+    class Meta: unique_together=[('colaborador','treinamento')]
+    def __str__(self): return f'{self.treinamento} • {self.colaborador}'

@@ -12,6 +12,7 @@ from django.conf import settings
 from lojas.email_service import enviar_email
 from functools import wraps
 import hashlib
+import uuid
 from datetime import timedelta
 from django.db.models import Q
 from django.http import JsonResponse
@@ -47,7 +48,7 @@ def dashboard(request):
     hoje=timezone.localdate(); limite=hoje+timedelta(days=7)
     equipe=Colaborador.objects.filter(loja=loja,ativo=True).select_related('usuario','setor')[:8]
     proximos=Tarefa.objects.filter(loja=loja,fim__isnull=False,fim__lte=limite).exclude(status='concluida').select_related('responsavel__usuario').order_by('fim')[:8]
-    dados={'loja':loja,'licenca_ativa':ativa,'processos':Processo.objects.filter(loja=loja).count(),'ncs_abertas':NaoConformidade.objects.filter(loja=loja).exclude(status='encerrada').count(),'acoes_abertas':PlanoAcao.objects.filter(loja=loja).exclude(status='concluido').count(),'tarefas':Tarefa.objects.filter(loja=loja).exclude(status='concluida').count(),'colaboradores':Colaborador.objects.filter(loja=loja,ativo=True).count(),'setores':Setor.objects.filter(loja=loja,ativo=True).count(),'indicadores':Indicador.objects.filter(loja=loja,ativo=True)[:6],'acoes':PlanoAcao.objects.filter(loja=loja).exclude(status='concluido').order_by('quando')[:5],'notas':NotaWorkspace.objects.filter(loja=loja).order_by('-fixada','-id')[:6],'equipe':equipe,'proximos':proximos,'notificacoes_novas':Notificacao.objects.filter(loja=loja,usuario=request.user,lida=False).count(),'atividades_recentes':RegistroAuditoriaSistema.objects.filter(loja=loja).select_related('usuario').order_by('-criado_em')[:12],'analises_recentes':ProjetoQualidade.objects.filter(loja=loja).select_related('processo','setor').order_by('-criado_em')[:8]}
+    dados={'loja':loja,'licenca_ativa':ativa,'processos':Processo.objects.filter(loja=loja).count(),'ncs_abertas':NaoConformidade.objects.filter(loja=loja).exclude(status='encerrada').count(),'acoes_abertas':PlanoAcao.objects.filter(loja=loja).exclude(status='concluido').count(),'tarefas':Tarefa.objects.filter(loja=loja).exclude(status='concluida').count(),'colaboradores':Colaborador.objects.filter(loja=loja,ativo=True).count(),'setores':Setor.objects.filter(loja=loja,ativo=True).count(),'indicadores':Indicador.objects.filter(loja=loja,ativo=True)[:6],'acoes':PlanoAcao.objects.filter(loja=loja).exclude(status='concluido').order_by('quando')[:5],'notas':NotaWorkspace.objects.filter(loja=loja).order_by('-fixada','-id')[:6],'equipe':equipe,'proximos':proximos,'notificacoes_novas':Notificacao.objects.filter(loja=loja,usuario=request.user,lida=False).count(),'atividades_recentes':RegistroAuditoriaSistema.objects.filter(loja=loja).select_related('usuario').order_by('-criado_em')[:12],'analises_recentes':ProjetoQualidade.objects.filter(loja=loja).select_related('processo','setor').order_by('-criado_em')[:8],'today':hoje}
     return render(request,'gestao/dashboard.html',dados)
 
 def _crud(request, model, formcls, titulo, template='gestao/lista_form.html'):
@@ -72,20 +73,24 @@ def _crud(request, model, formcls, titulo, template='gestao/lista_form.html'):
                 perfil.pontos+=25; perfil.nivel=1+(perfil.pontos//500); perfil.save(update_fields=['pontos','nivel'])
         messages.success(request,'Registro salvo com sucesso.'); return redirect(request.path)
     registros=[]
+    hoje=timezone.localdate()
     for item in qs[:60]:
-        campos=[]
-        for field in item._meta.fields:
-            if field.name in ('id','loja','criado_em','atualizado_em'):
-                continue
-            try:
-                valor=getattr(item, 'get_%s_display' % field.name)() if field.choices else getattr(item,field.name)
-            except Exception:
-                valor=getattr(item,field.name,'')
-            if valor not in (None,'',False):
-                if hasattr(valor,'strftime'): valor=valor.strftime('%d/%m/%Y')
-                campos.append({'label':str(field.verbose_name).capitalize(),'valor':str(valor)[:220]})
-            if len(campos)>=7: break
-        registros.append({'id':item.pk,'titulo':str(item),'campos':campos,'criado_em':getattr(item,'criado_em',None),'atualizado_em':getattr(item,'atualizado_em',None)})
+        titulo_item=getattr(item,'titulo',None) or getattr(item,'nome',None) or str(item)
+        inicio=getattr(item,'inicio',None) or getattr(item,'data',None) or (getattr(item,'criado_em',None).date() if getattr(item,'criado_em',None) else None)
+        previsao=getattr(item,'previsao_conclusao',None) or getattr(item,'fim',None) or getattr(item,'prazo',None) or getattr(item,'quando',None) or getattr(item,'proxima_revisao',None)
+        conclusao=getattr(item,'concluido_em',None)
+        if hasattr(conclusao,'date'): conclusao=conclusao.date()
+        status=getattr(item,'status',None)
+        if status and hasattr(item,'get_status_display'): status_label=item.get_status_display()
+        elif hasattr(item,'ativo'): status_label='Ativo' if item.ativo else 'Inativo'
+        else: status_label='Registrado'
+        prazo_classe='neutral'
+        if conclusao: prazo_classe='done'
+        elif previsao:
+            if previsao < hoje: prazo_classe='late'
+            elif previsao <= hoje+timedelta(days=7): prazo_classe='soon'
+        responsavel=getattr(item,'responsavel',None) or getattr(item,'quem',None) or getattr(item,'auditor',None) or ''
+        registros.append({'id':item.pk,'titulo':titulo_item,'tipo':titulo,'inicio':inicio,'previsao':previsao,'conclusao':conclusao,'status':status_label,'prazo_classe':prazo_classe,'responsavel':responsavel,'criado_em':getattr(item,'criado_em',None)})
     return render(request,template,{'loja':loja,'itens':qs,'registros_detalhes':registros,'form':form,'titulo':titulo})
 
 @plano_ativo
@@ -152,7 +157,10 @@ def trilha_executar(request,pk):
         resposta=request.POST.get('resposta','').strip(); prog=ProgressoEtapa.objects.get(loja=perfil.loja,colaborador=perfil,etapa=atual); prog.resposta=resposta; prog.concluida=True; prog.concluida_em=timezone.now(); prog.save()
         PontuacaoAtividade.objects.create(loja=perfil.loja,colaborador=perfil,categoria='treinamento',ferramenta='treinamento',titulo=f'{trilha.treinamento.titulo} • {atual.titulo}',pontos=atual.pontos); perfil.pontos+=atual.pontos; perfil.nivel=1+(perfil.pontos//500); perfil.save(update_fields=['pontos','nivel']); return redirect('gestao_trilha_executar',pk=pk)
     concluidas=ProgressoEtapa.objects.filter(loja=perfil.loja,colaborador=perfil,etapa__treinamento=trilha.treinamento,concluida=True).count()
-    if etapas and concluidas>=len(etapas) and trilha.status!='concluido': trilha.status='concluido'; trilha.concluido_em=timezone.now(); trilha.save(update_fields=['status','concluido_em'])
+    if etapas and concluidas>=len(etapas) and trilha.status!='concluido':
+        trilha.status='concluido'; trilha.concluido_em=timezone.now(); trilha.save(update_fields=['status','concluido_em'])
+        cert,_=CertificadoTreinamento.objects.get_or_create(loja=perfil.loja,colaborador=perfil,treinamento=trilha.treinamento,defaults={'codigo':uuid.uuid4().hex[:16].upper(),'carga_horaria_minutos':max(30,len(etapas)*15)})
+        Notificacao.objects.create(loja=perfil.loja,usuario=request.user,titulo='Treinamento concluído',mensagem=f'{trilha.treinamento.titulo} concluído. Seu certificado virtual está disponível.',link=reverse('gestao_certificado',args=[cert.pk]))
     return render(request,'gestao/trilha_executar.html',{'loja':perfil.loja,'perfil':perfil,'trilha':trilha,'etapas':etapas,'atual':atual,'concluidas':concluidas,'total':len(etapas)})
 
 @plano_ativo
@@ -208,7 +216,7 @@ def colaboradores(request):
             messages.success(request,'Convite criado. O colaborador define a própria senha pelo link enviado ao e-mail.')
         else: messages.error(request,'Preencha nome/e-mail ou use outro e-mail.')
         return redirect('gestao_colaboradores')
-    return render(request,'gestao/colaboradores.html',{'loja':loja,'colaboradores':Colaborador.objects.filter(loja=loja).select_related('usuario','setor'),'setores':Setor.objects.filter(loja=loja),'papeis':Colaborador._meta.get_field('papel').choices})
+    return render(request,'gestao/colaboradores.html',{'loja':loja,'colaboradores':Colaborador.objects.filter(loja=loja).select_related('usuario','setor','supervisor__usuario'),'setores':Setor.objects.filter(loja=loja),'supervisores':Colaborador.objects.filter(loja=loja,ativo=True,status_cadastro='aprovado').select_related('usuario'),'papeis':Colaborador._meta.get_field('papel').choices})
 
 def ativar_colaborador(request,uidb64,token):
     try: u=User.objects.get(pk=urlsafe_base64_decode(uidb64).decode())
@@ -261,7 +269,7 @@ def portal_colaborador(request):
     perfil=getattr(request.user,'perfil_colaborador',None)
     if not perfil: return redirect('gestao_dashboard')
     loja=perfil.loja
-    return render(request,'gestao/portal_colaborador.html',{'loja':loja,'perfil':perfil,'tarefas':Tarefa.objects.filter(loja=loja,responsavel=perfil).exclude(status='concluida'),'trilhas':TrilhaColaborador.objects.filter(loja=loja,colaborador=perfil).select_related('treinamento'),'conquistas':ConquistaColaborador.objects.filter(loja=loja,colaborador=perfil).order_by('-concedida_em'),'notificacoes_novas':Notificacao.objects.filter(loja=loja,usuario=request.user,lida=False).count()})
+    return render(request,'gestao/portal_colaborador.html',{'loja':loja,'perfil':perfil,'tarefas':Tarefa.objects.filter(loja=loja,responsavel=perfil).exclude(status='concluida'),'trilhas':TrilhaColaborador.objects.filter(loja=loja,colaborador=perfil).select_related('treinamento'),'conquistas':ConquistaColaborador.objects.filter(loja=loja,colaborador=perfil).order_by('-concedida_em'),'notificacoes_novas':Notificacao.objects.filter(loja=loja,usuario=request.user,lida=False).count(),'certificados':CertificadoTreinamento.objects.filter(loja=loja,colaborador=perfil).select_related('treinamento').order_by('-emitido_em')})
 
 def portal_empresa_publica(request,slug):
     from lojas.models import Loja
@@ -343,10 +351,19 @@ def reconhecimentos(request):
 @login_required
 def notificacoes(request):
     perfil=getattr(request.user,'perfil_colaborador',None); loja=perfil.loja if perfil else _empresa(request)
-    itens=Notificacao.objects.filter(loja=loja,usuario=request.user)[:50]
-    if request.method=='POST':
-        itens.update(lida=True); return redirect('gestao_notificacoes')
-    return render(request,'gestao/notificacoes.html',{'loja':loja,'itens':itens})
+    base=Notificacao.objects.filter(loja=loja,usuario=request.user)
+    if request.method=='POST' and request.POST.get('acao')=='marcar_lidas':
+        base.filter(lida=False).update(lida=True); return redirect('gestao_notificacoes')
+    if request.method=='POST' and request.POST.get('acao')=='enviar' and not perfil:
+        titulo=request.POST.get('titulo','').strip(); mensagem=request.POST.get('mensagem','').strip(); destino=request.POST.get('destino','empresa'); alvo=request.POST.get('alvo','')
+        pessoas=Colaborador.objects.filter(loja=loja,ativo=True,status_cadastro='aprovado').select_related('usuario')
+        if destino=='setor' and alvo: pessoas=pessoas.filter(setor_id=alvo)
+        elif destino=='colaborador' and alvo: pessoas=pessoas.filter(pk=alvo)
+        if titulo:
+            for c in pessoas: Notificacao.objects.create(loja=loja,usuario=c.usuario,titulo=titulo,mensagem=mensagem,link='/painel/colaborador/')
+            messages.success(request,f'Notificação enviada para {pessoas.count()} pessoa(s).')
+        return redirect('gestao_notificacoes')
+    return render(request,'gestao/notificacoes.html',{'loja':loja,'itens':base[:50],'pode_enviar':not perfil,'setores':Setor.objects.filter(loja=loja,ativo=True),'colaboradores':Colaborador.objects.filter(loja=loja,ativo=True,status_cadastro='aprovado').select_related('usuario')})
 
 @plano_ativo
 def comentar_tarefa(request,pk):
@@ -391,3 +408,68 @@ def jogo_causa_raiz(request):
         acertos=sum(str(c)==request.POST.get(q) for q,_,_,c in etapas); pontos=acertos*25; resultado={'acertos':acertos,'total':len(etapas),'pontos':pontos}; _premiar_jogo(loja,perfil,'causa_raiz','Detetive da causa raiz',pontos,100,resultado)
         if perfil and acertos==len(etapas): ConquistaColaborador.objects.get_or_create(loja=loja,colaborador=perfil,codigo='detetive_causa',defaults={'titulo':'Detetive da Causa Raiz','descricao':'Conduziu uma investigação sem atalhos ou culpabilização.'})
     return render(request,'gestao/jogo_causa_raiz.html',{'loja':loja,'etapas':etapas,'resultado':resultado})
+
+def cadastro_colaborador_publico(request,slug):
+    from lojas.models import Loja
+    loja=get_object_or_404(Loja,slug=slug)
+    loja.verificar_licenca()
+    if not loja.ativa: return render(request,'gestao/portal_indisponivel.html',{'loja':loja},status=403)
+    setores=Setor.objects.filter(loja=loja,ativo=True)
+    supervisores=Colaborador.objects.filter(loja=loja,ativo=True,status_cadastro='aprovado').exclude(papel='colaborador').select_related('usuario')
+    if request.method=='POST':
+        nome=request.POST.get('nome','').strip(); email=request.POST.get('email','').strip().lower(); cpf=request.POST.get('cpf','').strip(); cargo=request.POST.get('cargo','').strip()
+        if not request.POST.get('privacidade'):
+            messages.error(request,'Confirme a ciência do aviso de privacidade para continuar.')
+        elif not nome or not email:
+            messages.error(request,'Informe nome e e-mail.')
+        elif User.objects.filter(username=email).exists():
+            messages.error(request,'Este e-mail já possui acesso ou solicitação cadastrada.')
+        else:
+            u=User.objects.create(username=email,email=email,first_name=nome,is_active=False); u.set_unusable_password(); u.save()
+            Colaborador.objects.create(loja=loja,usuario=u,setor_id=request.POST.get('setor') or None,cargo=cargo,cpf=cpf,supervisor_id=request.POST.get('supervisor') or None,papel='colaborador',ativo=False,status_cadastro='pendente')
+            Notificacao.objects.create(loja=loja,usuario=loja.dono,titulo='Novo colaborador aguardando aprovação',mensagem=f'{nome} solicitou acesso ao Portal da Empresa.',link='/painel/colaboradores/')
+            messages.success(request,'Cadastro enviado. O gestor da empresa precisa aprovar seu acesso antes da ativação.')
+            return redirect('cadastro_colaborador_publico',slug=slug)
+    return render(request,'gestao/cadastro_colaborador_publico.html',{'loja':loja,'setores':setores,'supervisores':supervisores})
+
+@plano_ativo
+def aprovar_colaborador(request,pk):
+    loja=_empresa(request); c=get_object_or_404(Colaborador,loja=loja,pk=pk)
+    if request.method=='POST':
+        c.status_cadastro='aprovado'; c.ativo=True; c.setor_id=request.POST.get('setor') or c.setor_id; c.cargo=request.POST.get('cargo',c.cargo); c.supervisor_id=request.POST.get('supervisor') or c.supervisor_id; c.save()
+        u=c.usuario; uid=urlsafe_base64_encode(force_bytes(u.pk)); token=default_token_generator.make_token(u); base=getattr(settings,'PLATFORM_BASE_URL','').rstrip('/'); link=base+reverse('gestao_ativar_colaborador',args=[uid,token])
+        try: enviar_email(u.email,f'Acesso aprovado em {loja.nome}',f'<h2>Seu cadastro foi aprovado</h2><p>Crie sua própria senha para acessar o portal.</p><p><a href="{link}">Ativar meu acesso</a></p>')
+        except Exception as exc: print('APROVACAO COLABORADOR:',exc)
+        messages.success(request,'Colaborador aprovado. O link para criação da senha foi enviado por e-mail.')
+    return redirect('gestao_colaboradores')
+
+@plano_ativo
+def treinamentos_nexa(request):
+    loja=_empresa(request)
+    catalogo=[
+      ('LGPD no dia a dia','Privacidade','Dados pessoais, boas práticas, incidentes e decisões seguras.',['Conceitos e princípios','Dados pessoais e sensíveis','Boas práticas no trabalho','Incidentes e resposta','Avaliação final']),
+      ('Phishing e segurança digital','Segurança','Reconheça sinais de fraude, links suspeitos e engenharia social.',['Anatomia de uma mensagem','Sinais de phishing','Links e anexos','Como reagir','Avaliação por cenários']),
+      ('Caça aos desperdícios Lean','Melhoria contínua','Aprenda a identificar os oito desperdícios em situações operacionais.',['Visão Lean','Os oito desperdícios','Exemplo industrial','Priorização','Avaliação prática']),
+      ('Detetive da causa raiz','Qualidade','Investigue problemas com fatos, 5 Porquês e Ishikawa.',['Problema x sintoma','Coleta de evidências','5 Porquês','Ishikawa 6M','Caso final']),
+      ('5W2H aplicado','Qualidade','Transforme decisões em planos de ação claros e acompanháveis.',['Conceito','Os 5W','Os 2H','Exemplo preenchido','Aplicação final']),
+      ('PDCA aplicado','Qualidade','Planeje, execute, verifique e padronize melhorias.',['PLAN','DO','CHECK','ACT','Caso prático']),
+      ('Ishikawa 6M','Qualidade','Organize hipóteses de causa com método e evidências.',['Causa x correlação','Os 6M','Montagem do diagrama','Validação','Caso prático']),
+      ('FMEA de processo','Qualidade','Antecipe modos de falha e priorize riscos.',['Modo de falha','Severidade','Ocorrência','Detecção e RPN','Plano de redução']),
+      ('Pareto 80/20','Qualidade','Priorize causas relevantes usando frequência e impacto.',['Princípio de Pareto','Preparação dos dados','Gráfico','Leitura','Caso prático']),
+      ('5S na prática','Qualidade','Organização, limpeza, padronização e disciplina no ambiente.',['Seiri','Seiton','Seiso','Seiketsu','Shitsuke']),
+    ]
+    itens=[]
+    for titulo,categoria,descricao,etapas in catalogo:
+        t,_=Treinamento.objects.get_or_create(loja=loja,titulo=titulo,defaults={'descricao':descricao,'categoria':categoria,'pontos':100,'nota_minima':70,'ativo':True})
+        if not t.etapas.exists():
+            for i,nome in enumerate(etapas,1): EtapaTreinamento.objects.create(loja=loja,treinamento=t,ordem=i,titulo=nome,descricao=f'{nome}: conteúdo conceitual, exemplo aplicado e orientação prática.',pontos=20,pergunta='Registre o principal aprendizado desta etapa.' if i==len(etapas) else '')
+        itens.append(t)
+    return render(request,'gestao/treinamentos_nexa.html',{'loja':loja,'itens':itens})
+
+@login_required
+def certificado(request,pk):
+    perfil=getattr(request.user,'perfil_colaborador',None)
+    cert=get_object_or_404(CertificadoTreinamento,pk=pk)
+    if perfil and cert.colaborador_id!=perfil.id: return redirect('portal_colaborador')
+    if not perfil and cert.loja!=_empresa(request): return redirect('gestao_dashboard')
+    return render(request,'gestao/certificado.html',{'loja':cert.loja,'cert':cert})
