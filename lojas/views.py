@@ -2854,16 +2854,21 @@ def login_loja(request):
             user = authenticate(request, username=username, password=password)
 
             if user is not None:
+                # Um único login atende administrador, gestor de setor e colaborador.
+                perfil = getattr(user, "perfil_colaborador", None)
                 loja = Loja.objects.filter(dono=user).first()
-
+                if perfil and perfil.ativo:
+                    login(request, user)
+                    perfil.loja.verificar_licenca()
+                    if perfil.papel == "colaborador":
+                        return redirect("portal_colaborador")
+                    return redirect("gestao_dashboard")
                 if loja:
                     login(request, user)
                     loja.verificar_licenca()
-                    if hasattr(user, "perfil_colaborador"):
-                        return redirect("portal_colaborador")
                     return redirect("gestao_dashboard")
 
-            erro = "Usuário ou senha inválidos."
+            erro = "E-mail/usuário ou senha inválidos."
 
     except Exception as e:
         print("ERRO LOGIN_LOJA:", str(e))

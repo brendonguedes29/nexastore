@@ -18,7 +18,7 @@ def enviar_email(destinatario, assunto, html, inline_attachments=None):
 
     payload = {
         "sender": {
-            "name": "NexaStore",
+            "name": "Nexa Gestão",
             "email": settings.DEFAULT_FROM_EMAIL,
         },
         "to": [
