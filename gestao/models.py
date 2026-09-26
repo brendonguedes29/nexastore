@@ -1,4 +1,5 @@
 from django.db import models
+from cloudinary_storage.storage import RawMediaCloudinaryStorage
 from django.conf import settings
 from lojas.models import Loja
 
@@ -52,7 +53,7 @@ class NaoConformidade(BaseEmpresa):
 class DocumentoGestao(BaseEmpresa):
     TIPO=[('politica','Política'),('procedimento','Procedimento'),('instrucao','Instrução de trabalho'),('registro','Registro'),('manual','Manual')]
     codigo=models.CharField(max_length=40,blank=True); titulo=models.CharField(max_length=180); tipo=models.CharField(max_length=20,choices=TIPO,default='procedimento')
-    versao=models.CharField(max_length=20,default='1.0'); responsavel=models.CharField(max_length=120,blank=True); arquivo=models.FileField(upload_to='gestao/documentos/',blank=True,null=True)
+    versao=models.CharField(max_length=20,default='1.0'); responsavel=models.CharField(max_length=120,blank=True); arquivo=models.FileField(upload_to='gestao/documentos/',blank=True,null=True,storage=RawMediaCloudinaryStorage())
     conteudo=models.TextField(blank=True); aprovado=models.BooleanField(default=False); proxima_revisao=models.DateField(null=True,blank=True)
     def __str__(self): return self.titulo
 
@@ -63,7 +64,9 @@ class Auditoria(BaseEmpresa):
     def __str__(self): return self.titulo
 
 class RequisitoISO(BaseEmpresa):
-    norma=models.CharField(max_length=40,default='ISO 9001:2015'); clausula=models.CharField(max_length=20); titulo=models.CharField(max_length=180)
+    norma=models.CharField(max_length=40,default='ISO 9001:2026'); clausula=models.CharField(max_length=20); titulo=models.CharField(max_length=180)
+    orientacao=models.TextField(blank=True); observacoes=models.TextField(blank=True); prazo=models.DateField(null=True,blank=True)
+    evidencia_arquivo=models.FileField(upload_to='gestao/iso_evidencias/',blank=True,null=True,storage=RawMediaCloudinaryStorage())
     status=models.CharField(max_length=20,choices=[('nao_iniciado','Não iniciado'),('andamento','Em andamento'),('conforme','Conforme'),('na','Não aplicável')],default='nao_iniciado')
     evidencia=models.TextField(blank=True); responsavel=models.CharField(max_length=120,blank=True)
     class Meta: ordering=['clausula']
@@ -71,9 +74,15 @@ class RequisitoISO(BaseEmpresa):
 class RiscoFMEA(BaseEmpresa):
     processo=models.ForeignKey(Processo,on_delete=models.CASCADE,related_name='fmeas'); modo_falha=models.CharField(max_length=180)
     efeito=models.TextField(blank=True); causa=models.TextField(blank=True); severidade=models.PositiveSmallIntegerField(default=1)
-    ocorrencia=models.PositiveSmallIntegerField(default=1); deteccao=models.PositiveSmallIntegerField(default=1); acao=models.TextField(blank=True)
+    ocorrencia=models.PositiveSmallIntegerField(default=1); deteccao=models.PositiveSmallIntegerField(default=1); controles_atuais=models.TextField(blank=True); acao=models.TextField(blank=True)
+    responsavel_acao=models.CharField(max_length=120,blank=True); prazo_acao=models.DateField(null=True,blank=True); status_acao=models.CharField(max_length=20,choices=[('aberta','Aberta'),('andamento','Em andamento'),('concluida','Concluída')],default='aberta')
+    severidade_pos=models.PositiveSmallIntegerField(null=True,blank=True); ocorrencia_pos=models.PositiveSmallIntegerField(null=True,blank=True); deteccao_pos=models.PositiveSmallIntegerField(null=True,blank=True)
     @property
     def rpn(self): return self.severidade*self.ocorrencia*self.deteccao
+    @property
+    def rpn_pos(self):
+        if None in (self.severidade_pos,self.ocorrencia_pos,self.deteccao_pos): return None
+        return self.severidade_pos*self.ocorrencia_pos*self.deteccao_pos
 
 class RegistroProducao(BaseEmpresa):
     data=models.DateField(); linha=models.CharField(max_length=120); tempo_planejado=models.DecimalField(max_digits=10,decimal_places=2,default=0)
@@ -131,6 +140,7 @@ class ProjetoQualidade(BaseEmpresa):
 
 class Treinamento(BaseEmpresa):
     titulo=models.CharField(max_length=180); descricao=models.TextField(blank=True); categoria=models.CharField(max_length=80,default='Qualidade'); conteudo=models.TextField(blank=True)
+    origem=models.CharField(max_length=20,choices=[('empresa','Empresa'),('nexa','Nexa')],default='empresa')
     pontos=models.PositiveIntegerField(default=100); obrigatorio=models.BooleanField(default=False); ativo=models.BooleanField(default=True); video_url=models.URLField(blank=True); nota_minima=models.PositiveSmallIntegerField(default=70)
     def __str__(self): return self.titulo
 
@@ -209,7 +219,7 @@ class MetaEquipe(BaseEmpresa):
 class EtapaTreinamento(BaseEmpresa):
     treinamento=models.ForeignKey(Treinamento,on_delete=models.CASCADE,related_name='etapas')
     ordem=models.PositiveIntegerField(default=1); titulo=models.CharField(max_length=180); descricao=models.TextField(blank=True)
-    video_url=models.URLField(blank=True); material=models.FileField(upload_to='gestao/treinamentos/',blank=True,null=True)
+    video_url=models.URLField(blank=True); material=models.FileField(upload_to='gestao/treinamentos/',blank=True,null=True,storage=RawMediaCloudinaryStorage())
     pergunta=models.CharField(max_length=300,blank=True); resposta_esperada=models.CharField(max_length=300,blank=True)
     pontos=models.PositiveIntegerField(default=20); obrigatoria=models.BooleanField(default=True)
     class Meta: ordering=['treinamento','ordem']; unique_together=[('treinamento','ordem')]

@@ -59,7 +59,7 @@ class Loja(models.Model):
 
     ativa = models.BooleanField(default=True)
 
-    valor_licenca = models.DecimalField(max_digits=10, decimal_places=2, default=59.90)
+    valor_licenca = models.DecimalField(max_digits=10, decimal_places=2, default=199.00)
 
     data_ultimo_pagamento = models.DateField(blank=True, null=True)
     data_vencimento_licenca = models.DateField(blank=True, null=True)

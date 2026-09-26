@@ -18,6 +18,7 @@ from datetime import timedelta
 from django.db.models import Q
 from django.http import JsonResponse
 from .services.alertas import processar_alertas
+from .services.pontos import progresso_nivel, conceder_pontos, sincronizar_nivel
 from .models import *
 from .forms import *
 
@@ -52,7 +53,7 @@ def plano_ativo(view):
 @login_required
 def dashboard(request):
     loja=_empresa(request); ativa=_licenca_ativa(loja)
-    if hasattr(request.user,'perfil_colaborador') and request.user.perfil_colaborador.papel=='colaborador': return redirect('portal_colaborador')
+    if hasattr(request.user,'perfil_colaborador') and request.user.perfil_colaborador.papel!='gestor_empresa': return redirect('portal_colaborador')
     try: processar_alertas(loja,enviar_email_alerta=False)
     except Exception as exc: print('ALERTAS DASHBOARD:',exc)
     hoje=timezone.localdate(); limite=hoje+timedelta(days=7)
@@ -62,6 +63,10 @@ def dashboard(request):
     return render(request,'gestao/dashboard.html',dados)
 
 def _crud(request, model, formcls, titulo, template='gestao/lista_form.html'):
+    perfil=getattr(request.user,'perfil_colaborador',None)
+    if perfil and perfil.papel!='gestor_empresa':
+        messages.warning(request,'Este recurso é gerencial. No seu portal você encontra apenas itens atribuídos ao seu perfil.')
+        return redirect('portal_colaborador')
     loja=_empresa(request); qs=model.objects.filter(loja=loja).order_by('-id'); obj=None
     if request.GET.get('editar'): obj=get_object_or_404(qs,pk=request.GET['editar'])
     form=formcls(request.POST or None,request.FILES or None,instance=obj)
@@ -116,17 +121,32 @@ def documentos(request): return _crud(request,DocumentoGestao,DocumentoForm,'Ges
 @plano_ativo
 def auditorias(request): return _crud(request,Auditoria,AuditoriaForm,'Auditorias')
 @plano_ativo
-def iso(request): return _crud(request,RequisitoISO,ISOForm,'ISO 9001 • Implantação e Evidências')
+def iso(request):
+    loja=_empresa(request)
+    roteiro=[
+      ('4','Contexto da organização','Mapeie contexto interno e externo, partes interessadas, escopo do SGQ e processos necessários.'),
+      ('5','Liderança','Defina responsabilidades, política da qualidade, compromisso da liderança e fortalecimento da cultura da qualidade.'),
+      ('6','Planejamento','Trate riscos e oportunidades separadamente, estabeleça objetivos da qualidade e planeje mudanças.'),
+      ('7','Suporte','Estruture recursos, competências, conscientização, comunicação, conhecimento organizacional e informação documentada.'),
+      ('8','Operação','Planeje e controle a operação, requisitos de clientes, fornecedores externos, produção/serviço e tratamento de saídas não conformes.'),
+      ('9','Avaliação de desempenho','Defina monitoramento, indicadores, análise de dados, auditorias internas e análise crítica pela direção.'),
+      ('10','Melhoria','Registre não conformidades, ações corretivas, verificação de eficácia e melhoria contínua do SGQ.'),
+    ]
+    for clausula,titulo,orientacao in roteiro:
+        RequisitoISO.objects.get_or_create(loja=loja,norma='ISO 9001:2026',clausula=clausula,defaults={'titulo':titulo,'orientacao':orientacao})
+    return _crud(request,RequisitoISO,ISOForm,'ISO 9001:2026 • Jornada de implantação','gestao/iso.html')
 @plano_ativo
-def fmea(request): return _crud(request,RiscoFMEA,FMEAForm,'FMEA • Riscos de Processo')
+def fmea(request): return _crud(request,RiscoFMEA,FMEAForm,'FMEA de Processo • Modos de falha e ações','gestao/fmea.html')
 @plano_ativo
-def producao(request): return _crud(request,RegistroProducao,ProducaoForm,'Produção e OEE')
+def producao(request): return _crud(request,RegistroProducao,ProducaoForm,'Produção e OEE','gestao/oee.html')
 @plano_ativo
 def setores(request): return _crud(request,Setor,SetorForm,'Setores e Áreas')
 @plano_ativo
 def tarefas(request): return _crud(request,Tarefa,TarefaForm,'Tarefas e Projetos','gestao/tarefas.html')
 @plano_ativo
 def treinamentos(request):
+    perfil=getattr(request.user,'perfil_colaborador',None)
+    if perfil and perfil.papel!='gestor_empresa': return redirect('portal_colaborador')
     loja=_empresa(request); form=TreinamentoForm(request.POST or None)
     if request.method=='POST' and form.is_valid():
         o=form.save(commit=False); o.loja=loja; o.save(); messages.success(request,'Treinamento criado. Agora monte as etapas da trilha.'); return redirect('gestao_treinamento_editar',pk=o.pk)
@@ -134,6 +154,8 @@ def treinamentos(request):
 
 @plano_ativo
 def treinamento_editar(request,pk):
+    perfil=getattr(request.user,'perfil_colaborador',None)
+    if perfil and perfil.papel!='gestor_empresa': return redirect('portal_colaborador')
     loja=_empresa(request); treinamento=get_object_or_404(Treinamento,loja=loja,pk=pk); form=EtapaTreinamentoForm(request.POST or None,request.FILES or None)
     if request.method=='POST' and form.is_valid():
         e=form.save(commit=False); e.loja=loja; e.treinamento=treinamento; e.save(); messages.success(request,'Etapa adicionada à trilha.'); return redirect('gestao_treinamento_editar',pk=pk)
@@ -141,6 +163,8 @@ def treinamento_editar(request,pk):
 
 @plano_ativo
 def treinamento_atribuir(request,pk):
+    perfil=getattr(request.user,'perfil_colaborador',None)
+    if perfil and perfil.papel!='gestor_empresa': return redirect('portal_colaborador')
     loja=_empresa(request); treinamento=get_object_or_404(Treinamento,loja=loja,pk=pk)
     if request.method=='POST':
         inicio=_data_post(request,'inicio'); prazo=_data_post(request,'prazo')
@@ -166,12 +190,13 @@ def trilha_executar(request,pk):
     if request.method=='POST' and atual:
         resposta=request.POST.get('resposta','').strip(); prog=ProgressoEtapa.objects.get(loja=perfil.loja,colaborador=perfil,etapa=atual); prog.resposta=resposta; prog.concluida=True; prog.concluida_em=timezone.now(); prog.save()
         chave=f'{trilha.treinamento.titulo} • {atual.titulo}'
-        if not PontuacaoAtividade.objects.filter(loja=perfil.loja,colaborador=perfil,categoria='treinamento',titulo=chave).exists():
-            PontuacaoAtividade.objects.create(loja=perfil.loja,colaborador=perfil,categoria='treinamento',ferramenta='treinamento',titulo=chave,pontos=atual.pontos)
-            perfil.pontos+=atual.pontos; perfil.nivel=1+(perfil.pontos//500); perfil.save(update_fields=['pontos','nivel'])
-            Notificacao.objects.create(loja=perfil.loja,usuario=request.user,titulo=f'Parabéns! +{atual.pontos} ⭐ pontos',mensagem=f'Você ganhou {atual.pontos} pontos por concluir a etapa “{atual.titulo}” do treinamento {trilha.treinamento.titulo}.',link=reverse('portal_colaborador'))
+        if trilha.treinamento.origem!='nexa':
+            ganhos=conceder_pontos(perfil,'treinamento','treinamento_empresa',chave,atual.pontos,{'origem':'empresa'},unico=True)
+            if ganhos: Notificacao.objects.create(loja=perfil.loja,usuario=request.user,titulo=f'Parabéns! +{ganhos} ⭐ pontos',mensagem=f'Você ganhou {ganhos} pontos por concluir a etapa “{atual.titulo}” do treinamento {trilha.treinamento.titulo}.',link=reverse('portal_colaborador'))
         return redirect('gestao_trilha_executar',pk=pk)
     concluidas=ProgressoEtapa.objects.filter(loja=perfil.loja,colaborador=perfil,etapa__treinamento=trilha.treinamento,concluida=True).count()
+    if etapas and concluidas>=len(etapas) and trilha.status!='concluido' and trilha.treinamento.origem=='nexa':
+        return redirect('gestao_treinamento_nexa_avaliacao',pk=trilha.pk)
     if etapas and concluidas>=len(etapas) and trilha.status!='concluido':
         trilha.status='concluido'; trilha.concluido_em=timezone.now(); trilha.save(update_fields=['status','concluido_em'])
         cert,_=CertificadoTreinamento.objects.get_or_create(loja=perfil.loja,colaborador=perfil,treinamento=trilha.treinamento,defaults={'codigo':uuid.uuid4().hex[:16].upper(),'carga_horaria_minutos':max(30,len(etapas)*15)})
@@ -275,7 +300,7 @@ def jogo_phishing(request):
     if request.method=='POST':
         acertos=sum(1 for q in questoes if request.POST.get(q['id'])==q['correta']); pontos=acertos*20; resultado={'acertos':acertos,'total':len(questoes),'pontos':pontos}
         if perfil:
-            TentativaJogo.objects.create(loja=loja,colaborador=perfil,jogo='phishing',pontuacao=pontos,total=100,detalhes={'acertos':acertos}); PontuacaoAtividade.objects.create(loja=loja,colaborador=perfil,categoria='jogo',ferramenta='phishing',titulo='Simulação Phishing ou legítimo?',pontos=pontos,detalhes={'acertos':acertos,'total':len(questoes)}); perfil.pontos+=pontos; perfil.nivel=1+(perfil.pontos//500); perfil.save(update_fields=['pontos','nivel']);
+            TentativaJogo.objects.create(loja=loja,colaborador=perfil,jogo='phishing',pontuacao=pontos,total=100,detalhes={'acertos':acertos}); conceder_pontos(perfil,'jogo','phishing','Simulação Caixa de Entrada Segura',pontos,{'acertos':acertos,'total':len(questoes)},unico=True);
             if acertos==len(questoes): ConquistaColaborador.objects.get_or_create(loja=loja,colaborador=perfil,codigo='phishing_perfeito',defaults={'titulo':'Radar Antiphishing','descricao':'Acertou 100% em uma simulação de phishing.'})
     return render(request,'gestao/jogo_phishing.html',{'loja':loja,'questoes':questoes,'resultado':resultado})
 
@@ -295,8 +320,10 @@ def lgpd(request):
 def portal_colaborador(request):
     perfil=getattr(request.user,'perfil_colaborador',None)
     if not perfil: return redirect('gestao_dashboard')
-    loja=perfil.loja
-    return render(request,'gestao/portal_colaborador.html',{'loja':loja,'perfil':perfil,'tarefas':Tarefa.objects.filter(loja=loja,responsavel=perfil).exclude(status='concluida'),'trilhas':TrilhaColaborador.objects.filter(loja=loja,colaborador=perfil).select_related('treinamento'),'conquistas':ConquistaColaborador.objects.filter(loja=loja,colaborador=perfil).order_by('-concedida_em'),'notificacoes_novas':Notificacao.objects.filter(loja=loja,usuario=request.user,lida=False).count(),'certificados':CertificadoTreinamento.objects.filter(loja=loja,colaborador=perfil).select_related('treinamento').order_by('-emitido_em'),'historico_pontos':PontuacaoAtividade.objects.filter(loja=loja,colaborador=perfil).order_by('-criado_em')[:12],'meus_indicadores':Indicador.objects.filter(loja=loja,ativo=True,responsavel_colaborador=perfil).prefetch_related('medicoes')[:8]})
+    loja=perfil.loja; sincronizar_nivel(perfil)
+    ranking_ids=list(Colaborador.objects.filter(loja=loja,ativo=True,ranking_visivel=True).order_by('-pontos','criado_em').values_list('id',flat=True))
+    posicao=(ranking_ids.index(perfil.id)+1) if perfil.id in ranking_ids else None
+    return render(request,'gestao/portal_colaborador.html',{'loja':loja,'perfil':perfil,'nivel_info':progresso_nivel(perfil.pontos),'posicao_ranking':posicao,'tarefas':Tarefa.objects.filter(loja=loja,responsavel=perfil).exclude(status='concluida'),'trilhas':TrilhaColaborador.objects.filter(loja=loja,colaborador=perfil).select_related('treinamento'),'conquistas':ConquistaColaborador.objects.filter(loja=loja,colaborador=perfil).order_by('-concedida_em'),'notificacoes_novas':Notificacao.objects.filter(loja=loja,usuario=request.user,lida=False).count(),'certificados':CertificadoTreinamento.objects.filter(loja=loja,colaborador=perfil).select_related('treinamento').order_by('-emitido_em'),'historico_pontos':PontuacaoAtividade.objects.filter(loja=loja,colaborador=perfil).order_by('-criado_em')[:12],'meus_indicadores':Indicador.objects.filter(loja=loja,ativo=True,responsavel_colaborador=perfil).prefetch_related('medicoes')[:8]})
 
 def portal_empresa_publica(request,slug):
     from lojas.models import Loja
@@ -349,7 +376,7 @@ def meu_perfil(request):
     if request.method=='POST' and form.is_valid(): form.save(); messages.success(request,'Perfil atualizado.'); return redirect('gestao_meu_perfil')
     historico=PontuacaoAtividade.objects.filter(loja=perfil.loja,colaborador=perfil).order_by('-criado_em')[:20]
     conquistas=ConquistaColaborador.objects.filter(loja=perfil.loja,colaborador=perfil).order_by('-concedida_em')
-    return render(request,'gestao/perfil.html',{'loja':perfil.loja,'perfil':perfil,'form':form,'historico':historico,'conquistas':conquistas})
+    sincronizar_nivel(perfil); return render(request,'gestao/perfil.html',{'loja':perfil.loja,'perfil':perfil,'nivel_info':progresso_nivel(perfil.pontos),'form':form,'historico':historico,'conquistas':conquistas})
 
 @login_required
 def perfil_publico(request,pk):
@@ -361,12 +388,12 @@ def perfil_publico(request,pk):
 @login_required
 def ranking(request):
     perfil=getattr(request.user,'perfil_colaborador',None); loja=perfil.loja if perfil else _empresa(request)
-    pessoas=Colaborador.objects.filter(loja=loja,ativo=True,ranking_visivel=True,papel='colaborador').select_related('usuario','setor').order_by('-pontos','usuario__first_name')
+    pessoas=Colaborador.objects.filter(loja=loja,ativo=True,ranking_visivel=True).select_related('usuario','setor').order_by('-pontos','usuario__first_name')
     ferramenta=request.GET.get('ferramenta','')
     ranking_ferramenta=[]
     if ferramenta:
         from django.db.models import Sum
-        ranking_ferramenta=PontuacaoAtividade.objects.filter(loja=loja,ferramenta=ferramenta,colaborador__ranking_visivel=True,colaborador__papel='colaborador').values('colaborador','colaborador__usuario__first_name','colaborador__usuario__username').annotate(total=Sum('pontos')).order_by('-total')[:50]
+        ranking_ferramenta=PontuacaoAtividade.objects.filter(loja=loja,ferramenta=ferramenta,colaborador__ranking_visivel=True).values('colaborador','colaborador__usuario__first_name','colaborador__usuario__username').annotate(total=Sum('pontos')).order_by('-total')[:50]
     ferramentas=PontuacaoAtividade.objects.filter(loja=loja).exclude(ferramenta='').values_list('ferramenta',flat=True).distinct()
     return render(request,'gestao/ranking.html',{'loja':loja,'pessoas':pessoas,'perfil':perfil,'ferramentas':ferramentas,'ferramenta':ferramenta,'ranking_ferramenta':ranking_ferramenta})
 
@@ -434,8 +461,7 @@ def metas_equipe(request):
 def _premiar_jogo(loja,perfil,jogo,titulo,pontos,total,detalhes):
     if not perfil:return
     TentativaJogo.objects.create(loja=loja,colaborador=perfil,jogo=jogo,pontuacao=pontos,total=total,detalhes=detalhes)
-    PontuacaoAtividade.objects.create(loja=loja,colaborador=perfil,categoria='jogo',ferramenta=jogo,titulo=titulo,pontos=pontos,detalhes=detalhes)
-    perfil.pontos+=pontos; perfil.nivel=1+(perfil.pontos//500); perfil.save(update_fields=['pontos','nivel'])
+    conceder_pontos(perfil,'jogo',jogo,titulo,pontos,detalhes,unico=True)
 
 @plano_ativo
 def jogo_lean(request):
@@ -509,11 +535,23 @@ def treinamentos_nexa(request):
     ]
     itens=[]
     for titulo,categoria,descricao,etapas in catalogo:
-        t,_=Treinamento.objects.get_or_create(loja=loja,titulo=titulo,defaults={'descricao':descricao,'categoria':categoria,'pontos':100,'nota_minima':70,'ativo':True})
+        t,_=Treinamento.objects.get_or_create(loja=loja,titulo=titulo,defaults={'descricao':descricao,'categoria':categoria,'origem':'nexa','pontos':150,'nota_minima':70,'ativo':True})
+        if t.origem!='nexa': t.origem='nexa'; t.pontos=150; t.save(update_fields=['origem','pontos'])
         if not t.etapas.exists():
-            for i,nome in enumerate(etapas,1): EtapaTreinamento.objects.create(loja=loja,treinamento=t,ordem=i,titulo=nome,descricao=f'{nome}: conteúdo conceitual, exemplo aplicado e orientação prática.',pontos=20,pergunta='Registre o principal aprendizado desta etapa.' if i==len(etapas) else '')
+            for i,nome in enumerate(etapas,1): EtapaTreinamento.objects.create(loja=loja,treinamento=t,ordem=i,titulo=nome,descricao=f'{nome}: conceito essencial, situação aplicada e decisão prática. Ao final, revise o conteúdo antes da avaliação.',pontos=30,pergunta='Registre a decisão ou aprendizado principal desta etapa.' if i==len(etapas) else '')
         itens.append(t)
-    return render(request,'gestao/treinamentos_nexa.html',{'loja':loja,'itens':itens})
+    iniciar_id=request.GET.get('iniciar','')
+    perfil=getattr(request.user,'perfil_colaborador',None)
+    if iniciar_id.isdigit() and perfil:
+        treinamento=next((x for x in itens if x.pk==int(iniciar_id)),None)
+        if treinamento:
+            trilha,_=TrilhaColaborador.objects.get_or_create(loja=loja,colaborador=perfil,treinamento=treinamento)
+            return redirect('gestao_trilha_executar',pk=trilha.pk)
+    selecionado=None
+    curso_id=request.GET.get('curso','')
+    if curso_id.isdigit():
+        selecionado=next((x for x in itens if x.pk==int(curso_id)),None)
+    return render(request,'gestao/treinamentos_nexa.html',{'loja':loja,'itens':itens,'selecionado':selecionado})
 
 @login_required
 def certificado(request,pk):
@@ -583,3 +621,34 @@ def etapa_qualidade_salvar(request,pk):
         RegistroAuditoriaSistema.objects.create(loja=loja,usuario=request.user,acao='etapa_qualidade_atualizada',objeto=f'Etapa #{e.pk}',descricao=f'{e.projeto} • {e.titulo} • {e.get_status_display()}')
         messages.success(request,'Etapa atualizada.')
     return redirect('gestao_analise_detalhe',pk=e.projeto_id)
+
+
+NEXA_AVALIACOES={
+'LGPD no dia a dia':[('Qual atitude é mais adequada ao lidar com dados pessoais?',['Coletar tudo por precaução','Usar apenas o necessário para a finalidade','Compartilhar livremente dentro da empresa'],1),('Um envio de planilha com dados ao destinatário errado deve ser tratado como:',['Possível incidente a ser reportado','Situação sem importância','Apenas erro de digitação'],0),('Senha de acesso deve ser:',['Compartilhada com a equipe','Única e protegida','Anotada em local público'],1)],
+'Phishing e segurança digital':[('Uma mensagem urgente pedindo senha é:',['Sinal de alerta','Rotina normal','Garantia de autenticidade'],0),('Mudança de conta bancária de fornecedor deve ser:',['Validada por outro canal','Aceita pelo link recebido','Ignorada para sempre'],0),('Link encurtado inesperado exige:',['Cautela e validação','Clique imediato','Encaminhamento geral'],0)],
+'Caça aos desperdícios Lean':[('Produzir antes da demanda é:',['Superprodução','Espera','Defeito'],0),('Movimentação desnecessária de pessoas é:',['Movimentação','Estoque','Processamento'],0),('Retrabalho está ligado a:',['Defeitos','Transporte','Espera'],0)],
+'Detetive da causa raiz':[('A análise de causa deve começar por:',['Fatos e problema bem definido','Culpado provável','Solução favorita'],0),('5 Porquês serve para:',['Aprofundar relações de causa','Calcular OEE','Organizar estoque'],0),('Ishikawa ajuda a:',['Estruturar hipóteses de causa','Emitir nota fiscal','Medir férias'],0)],
+'5W2H aplicado':[('Who define:',['Responsável','Prazo','Custo'],0),('When define:',['Prazo','Método','Motivo'],0),('How much trata de:',['Custo/recursos','Local','Responsável'],0)],
+'PDCA aplicado':[('PLAN corresponde a:',['Planejar','Executar','Padronizar'],0),('CHECK corresponde a:',['Verificar resultados','Executar ação','Definir cargo'],0),('ACT busca:',['Agir sobre resultados e padronizar','Ignorar desvios','Somente coletar dados'],0)],
+'Ishikawa 6M':[('O diagrama organiza:',['Hipóteses de causa','Folha de pagamento','Contratos'],0),('Máquina é uma categoria dos:',['6M','5W','4P'],0),('Uma hipótese deve depois ser:',['Validada com evidências','Assumida como causa','Apagada'],0)],
+'FMEA de processo':[('FMEA busca principalmente:',['Antecipar modos de falha e riscos','Registrar ponto','Criar organograma'],0),('Severidade avalia:',['Impacto do efeito','Frequência apenas','Facilidade de detectar apenas'],0),('Após priorizar risco, deve-se:',['Planejar e acompanhar ações','Encerrar sem ação','Excluir o registro'],0)],
+'Pareto 80/20':[('Pareto ajuda a:',['Priorizar causas relevantes','Criar senha','Medir temperatura'],0),('Antes do gráfico é importante:',['Validar e categorizar dados','Escolher a causa preferida','Excluir ocorrências altas'],0),('Após ações, recomenda-se:',['Medir novamente','Nunca revisar','Trocar categorias sem dados'],0)],
+'5S na prática':[('Seiri trata de:',['Utilização','Ordenação','Disciplina'],0),('Seiton trata de:',['Ordenação','Limpeza','Utilização'],0),('Shitsuke reforça:',['Disciplina e sustentação','Descarte apenas','Compra de equipamentos'],0)],
+}
+
+@login_required
+def treinamento_nexa_avaliacao(request,pk):
+    perfil=getattr(request.user,'perfil_colaborador',None)
+    if not perfil: return redirect('gestao_dashboard')
+    trilha=get_object_or_404(TrilhaColaborador,pk=pk,colaborador=perfil,loja=perfil.loja,treinamento__origem='nexa')
+    questoes=NEXA_AVALIACOES.get(trilha.treinamento.titulo,[]); resultado=None
+    if request.method=='POST' and questoes:
+        acertos=sum(1 for i,q in enumerate(questoes) if request.POST.get(f'q{i}')==str(q[2]))
+        nota=round(acertos/len(questoes)*100,2); pontos=round(trilha.treinamento.pontos*acertos/len(questoes))
+        trilha.nota=nota; trilha.status='concluido'; trilha.concluido_em=timezone.now(); trilha.save(update_fields=['nota','status','concluido_em'])
+        ganhos=conceder_pontos(perfil,'treinamento','treinamento_nexa',f'Nexa • {trilha.treinamento.titulo}',pontos,{'acertos':acertos,'total':len(questoes),'nota':nota},unico=True)
+        if nota>=trilha.treinamento.nota_minima:
+            CertificadoTreinamento.objects.get_or_create(loja=perfil.loja,colaborador=perfil,treinamento=trilha.treinamento,defaults={'codigo':uuid.uuid4().hex[:16].upper(),'carga_horaria_minutos':max(30,trilha.treinamento.etapas.count()*15)})
+        if ganhos: Notificacao.objects.create(loja=perfil.loja,usuario=request.user,titulo=f'Treinamento Nexa concluído • +{ganhos} ⭐',mensagem=f'{trilha.treinamento.titulo}: {acertos}/{len(questoes)} acertos, nota {nota:.0f}%.',link=reverse('portal_colaborador'))
+        resultado={'acertos':acertos,'total':len(questoes),'nota':nota,'pontos':ganhos,'aprovado':nota>=trilha.treinamento.nota_minima}
+    return render(request,'gestao/treinamento_nexa_avaliacao.html',{'loja':perfil.loja,'perfil':perfil,'trilha':trilha,'questoes':questoes,'resultado':resultado})

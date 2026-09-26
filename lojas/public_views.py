@@ -81,7 +81,7 @@ def criar_loja_publica(request):
             email_comercial=email,
             telefone=telefone,
             ativa=False,
-            valor_licenca=59.90,
+            valor_licenca=199.00,
             status_licenca="pendente",
             banner_titulo="Gestão que melhora todos os dias.",
             banner_subtitulo="Processos, qualidade e melhoria contínua em um só lugar.",
@@ -113,7 +113,7 @@ def criar_loja_publica(request):
         try:
             enviar_email(
                 email,
-                "Ative sua conta na NexaStore",
+                "Ative sua conta na Nexa Gestão",
                 html_body,
             )
 
