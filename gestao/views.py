@@ -4,6 +4,7 @@ from django.contrib.auth.models import User
 from django.db.models import Sum
 from django.shortcuts import render, redirect, get_object_or_404
 from django.utils import timezone
+from django.utils.dateparse import parse_date
 from django.contrib.auth.tokens import default_token_generator
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.utils.encoding import force_bytes
@@ -24,6 +25,15 @@ from .forms import *
 def _empresa(request):
     if hasattr(request.user,'perfil_colaborador'): return request.user.perfil_colaborador.loja
     return request.user.loja
+
+def _data_post(request, nome):
+    valor=request.POST.get(nome,'').strip()
+    return parse_date(valor) if valor else None
+
+def _fk_empresa(model, loja, valor):
+    if not valor: return None
+    try: return model.objects.filter(loja=loja,pk=valor).first()
+    except (TypeError, ValueError): return None
 
 def _licenca_ativa(loja):
     loja.verificar_licenca(); return bool(loja.ativa and loja.status_licenca not in ['pendente','vencida'])
@@ -133,7 +143,7 @@ def treinamento_editar(request,pk):
 def treinamento_atribuir(request,pk):
     loja=_empresa(request); treinamento=get_object_or_404(Treinamento,loja=loja,pk=pk)
     if request.method=='POST':
-        inicio=request.POST.get('inicio') or None; prazo=request.POST.get('prazo') or None
+        inicio=_data_post(request,'inicio'); prazo=_data_post(request,'prazo')
         ids=request.POST.getlist('colaboradores')
         for c in Colaborador.objects.filter(loja=loja,pk__in=ids):
             trilha,_=TrilhaColaborador.objects.get_or_create(loja=loja,colaborador=c,treinamento=treinamento)
@@ -187,9 +197,11 @@ def ferramentas(request):
     if request.method=='POST':
         ferramenta=request.POST.get('ferramenta'); titulo=request.POST.get('titulo','').strip(); problema=request.POST.get('problema','').strip()
         campos={k:v for k,v in request.POST.items() if k not in ['csrfmiddlewaretoken','ferramenta','titulo','problema','processo','setor','inicio','fim','status'] and isinstance(v,str) and v.strip()}
-        if ferramenta and titulo:
+        if ferramenta in dict(ProjetoQualidade.FERRAMENTAS) and titulo:
             status=request.POST.get('status','andamento')
-            projeto=ProjetoQualidade.objects.create(loja=loja,ferramenta=ferramenta,titulo=titulo,problema=problema,responsavel=request.user.get_full_name() or request.user.username,dados=campos,status=status,processo_id=request.POST.get('processo') or None,setor_id=request.POST.get('setor') or None,inicio=request.POST.get('inicio') or None,fim=request.POST.get('fim') or None,concluido_em=timezone.now() if status=='concluido' else None)
+            if status not in dict(ProjetoQualidade._meta.get_field('status').choices): status='andamento'
+            processo=_fk_empresa(Processo,loja,request.POST.get('processo')); setor=_fk_empresa(Setor,loja,request.POST.get('setor'))
+            projeto=ProjetoQualidade.objects.create(loja=loja,ferramenta=ferramenta,titulo=titulo,problema=problema,responsavel=request.user.get_full_name() or request.user.username,dados=campos,status=status,processo=processo,setor=setor,inicio=_data_post(request,'inicio'),fim=_data_post(request,'fim'),concluido_em=timezone.now() if status=='concluido' else None)
             _criar_etapas_metodologicas(projeto)
             RegistroAuditoriaSistema.objects.create(loja=loja,usuario=request.user,acao='analise_criada',objeto=f'{projeto.get_ferramenta_display()} #{projeto.id}',descricao=f'{projeto.titulo} • {projeto.processo or "Sem processo"} • {projeto.setor or "Sem setor"}')
             perfil=getattr(request.user,'perfil_colaborador',None)
@@ -211,7 +223,8 @@ def processo_rapido(request):
     if request.method!='POST': return JsonResponse({'ok':False,'erro':'Método inválido'},status=405)
     loja=_empresa(request); nome=request.POST.get('nome','').strip()
     if not nome: return JsonResponse({'ok':False,'erro':'Informe o nome do processo.'},status=400)
-    processo=Processo.objects.create(loja=loja,nome=nome,codigo=request.POST.get('codigo','').strip(),objetivo=request.POST.get('objetivo','').strip(),responsavel=request.POST.get('responsavel','').strip(),setor_id=request.POST.get('setor') or None)
+    setor=_fk_empresa(Setor,loja,request.POST.get('setor'))
+    processo=Processo.objects.create(loja=loja,nome=nome,codigo=request.POST.get('codigo','').strip(),objetivo=request.POST.get('objetivo','').strip(),responsavel=request.POST.get('responsavel','').strip(),setor=setor)
     RegistroAuditoriaSistema.objects.create(loja=loja,usuario=request.user,acao='processo_criado',objeto=f'Processo #{processo.id}',descricao=processo.nome)
     return JsonResponse({'ok':True,'id':processo.id,'nome':processo.nome})
 
@@ -219,10 +232,11 @@ def processo_rapido(request):
 def colaboradores(request):
     loja=_empresa(request)
     if request.method=='POST':
-        nome=request.POST.get('nome','').strip(); email=request.POST.get('email','').strip().lower(); setor_id=request.POST.get('setor')
+        nome=request.POST.get('nome','').strip(); email=request.POST.get('email','').strip().lower(); setor=_fk_empresa(Setor,loja,request.POST.get('setor')); papel=request.POST.get('papel','colaborador')
+        if papel not in dict(Colaborador._meta.get_field('papel').choices): papel='colaborador'
         if nome and email and not User.objects.filter(username=email).exists():
             u=User.objects.create(username=email,email=email,first_name=nome,is_active=False); u.set_unusable_password(); u.save()
-            Colaborador.objects.create(loja=loja,usuario=u,setor_id=setor_id or None,cargo=request.POST.get('cargo',''),papel=request.POST.get('papel','colaborador'))
+            Colaborador.objects.create(loja=loja,usuario=u,setor=setor,cargo=request.POST.get('cargo',''),papel=papel)
             uid=urlsafe_base64_encode(force_bytes(u.pk)); token=default_token_generator.make_token(u); base=getattr(settings,'PLATFORM_BASE_URL','').rstrip('/'); link=base+reverse('gestao_ativar_colaborador',args=[uid,token])
             try: enviar_email(email,f'Convite para {loja.nome} na Nexa Gestão',f'<h2>{loja.nome} convidou você</h2><p>Ative seu acesso e crie sua própria senha.</p><p><a href="{link}">Ativar meu acesso</a></p>')
             except Exception as exc: print('CONVITE COLABORADOR:',exc)
@@ -301,7 +315,10 @@ def portal_empresa(request):
 @plano_ativo
 def tarefa_status(request):
     if request.method!='POST': return redirect('gestao_tarefas')
-    loja=_empresa(request); t=get_object_or_404(Tarefa,loja=loja,pk=request.POST.get('id'))
+    loja=_empresa(request); tarefa_id=request.POST.get('id','')
+    if not tarefa_id.isdigit():
+        messages.error(request,'Tarefa inválida.'); return redirect('gestao_tarefas')
+    t=get_object_or_404(Tarefa,loja=loja,pk=int(tarefa_id))
     status=request.POST.get('status')
     if status in dict(Tarefa.STATUS):
         mudou=t.status!=status; t.status=status; t.save(update_fields=['status','atualizado_em'])
@@ -372,10 +389,12 @@ def notificacoes(request):
     if request.method=='POST' and request.POST.get('acao')=='enviar' and not perfil:
         titulo=request.POST.get('titulo','').strip(); mensagem=request.POST.get('mensagem','').strip(); destino=request.POST.get('destino','empresa'); alvo=request.POST.get('alvo','')
         pessoas=Colaborador.objects.filter(loja=loja,ativo=True,status_cadastro='aprovado').select_related('usuario')
-        if destino=='setor' and alvo: pessoas=pessoas.filter(setor_id=alvo)
-        elif destino=='colaborador' and alvo: pessoas=pessoas.filter(pk=alvo)
+        if destino=='setor' and alvo:
+            setor=_fk_empresa(Setor,loja,alvo); pessoas=pessoas.filter(setor=setor) if setor else pessoas.none()
+        elif destino=='colaborador' and alvo:
+            colaborador=_fk_empresa(Colaborador,loja,alvo); pessoas=pessoas.filter(pk=colaborador.pk) if colaborador else pessoas.none()
         if titulo:
-            for c in pessoas: Notificacao.objects.create(loja=loja,usuario=c.usuario,titulo=titulo,mensagem=mensagem,link='/painel/colaborador/')
+            for c in pessoas: Notificacao.objects.create(loja=loja,usuario=c.usuario,titulo=titulo,mensagem=mensagem,link=reverse('portal_colaborador'))
             messages.success(request,f'Notificação enviada para {pessoas.count()} pessoa(s).')
         return redirect('gestao_notificacoes')
     return render(request,'gestao/notificacoes.html',{'loja':loja,'itens':base[:50],'pode_enviar':not perfil,'setores':Setor.objects.filter(loja=loja,ativo=True),'colaboradores':Colaborador.objects.filter(loja=loja,ativo=True,status_cadastro='aprovado').select_related('usuario')})
@@ -389,6 +408,8 @@ def notificacao_abrir(request,pk):
     destino=n.link or ''
     if destino in ['/gestao/colaborador/','/painel/colaborador/']:
         destino=reverse('portal_colaborador')
+    if destino and not destino.startswith('/'):
+        destino=''
     return redirect(destino or ('portal_colaborador' if perfil else 'gestao_dashboard'))
 
 @plano_ativo
@@ -398,7 +419,7 @@ def comentar_tarefa(request,pk):
         ComentarioTarefa.objects.create(loja=loja,tarefa=tarefa,autor=request.user,texto=request.POST['texto'].strip())
         RegistroAuditoriaSistema.objects.create(loja=loja,usuario=request.user,acao='comentario',objeto=f'Tarefa #{tarefa.id}',descricao='Comentário adicionado à tarefa.')
         if tarefa.responsavel and tarefa.responsavel.usuario_id!=request.user.id:
-            Notificacao.objects.create(loja=loja,usuario=tarefa.responsavel.usuario,titulo='Novo comentário em tarefa',mensagem=tarefa.titulo,link='/gestao/tarefas/')
+            Notificacao.objects.create(loja=loja,usuario=tarefa.responsavel.usuario,titulo='Novo comentário em tarefa',mensagem=tarefa.titulo,link=reverse('gestao_tarefas'))
     return redirect('gestao_tarefas')
 
 @plano_ativo
@@ -452,8 +473,9 @@ def cadastro_colaborador_publico(request,slug):
             messages.error(request,'Este e-mail já possui acesso ou solicitação cadastrada.')
         else:
             u=User.objects.create(username=email,email=email,first_name=nome,is_active=False); u.set_unusable_password(); u.save()
-            Colaborador.objects.create(loja=loja,usuario=u,setor_id=request.POST.get('setor') or None,cargo=cargo,cpf=cpf,supervisor_id=request.POST.get('supervisor') or None,papel='colaborador',ativo=False,status_cadastro='pendente')
-            Notificacao.objects.create(loja=loja,usuario=loja.dono,titulo='Novo colaborador aguardando aprovação',mensagem=f'{nome} solicitou acesso ao Portal da Empresa.',link='/painel/colaboradores/')
+            setor=_fk_empresa(Setor,loja,request.POST.get('setor')); supervisor=_fk_empresa(Colaborador,loja,request.POST.get('supervisor'))
+            Colaborador.objects.create(loja=loja,usuario=u,setor=setor,cargo=cargo,cpf=cpf,supervisor=supervisor,papel='colaborador',ativo=False,status_cadastro='pendente')
+            Notificacao.objects.create(loja=loja,usuario=loja.dono,titulo='Novo colaborador aguardando aprovação',mensagem=f'{nome} solicitou acesso ao Portal da Empresa.',link=reverse('gestao_colaboradores'))
             messages.success(request,'Cadastro enviado. O gestor da empresa precisa aprovar seu acesso antes da ativação.')
             return redirect('cadastro_colaborador_publico',slug=slug)
     return render(request,'gestao/cadastro_colaborador_publico.html',{'loja':loja,'setores':setores,'supervisores':supervisores})
@@ -462,7 +484,8 @@ def cadastro_colaborador_publico(request,slug):
 def aprovar_colaborador(request,pk):
     loja=_empresa(request); c=get_object_or_404(Colaborador,loja=loja,pk=pk)
     if request.method=='POST':
-        c.status_cadastro='aprovado'; c.ativo=True; c.setor_id=request.POST.get('setor') or c.setor_id; c.cargo=request.POST.get('cargo',c.cargo); c.supervisor_id=request.POST.get('supervisor') or c.supervisor_id; c.save()
+        setor=_fk_empresa(Setor,loja,request.POST.get('setor')); supervisor=_fk_empresa(Colaborador,loja,request.POST.get('supervisor'))
+        c.status_cadastro='aprovado'; c.ativo=True; c.setor=setor or c.setor; c.cargo=request.POST.get('cargo',c.cargo); c.supervisor=supervisor or c.supervisor; c.save()
         u=c.usuario; uid=urlsafe_base64_encode(force_bytes(u.pk)); token=default_token_generator.make_token(u); base=getattr(settings,'PLATFORM_BASE_URL','').rstrip('/'); link=base+reverse('gestao_ativar_colaborador',args=[uid,token])
         try: enviar_email(u.email,f'Acesso aprovado em {loja.nome}',f'<h2>Seu cadastro foi aprovado</h2><p>Crie sua própria senha para acessar o portal.</p><p><a href="{link}">Ativar meu acesso</a></p>')
         except Exception as exc: print('APROVACAO COLABORADOR:',exc)
@@ -533,7 +556,8 @@ def etapa_qualidade_nova(request,pk):
     loja=_empresa(request); projeto=get_object_or_404(ProjetoQualidade,loja=loja,pk=pk)
     if request.method=='POST':
         ultima=projeto.etapas_cronograma.order_by('-ordem').first()
-        e=EtapaProjetoQualidade.objects.create(loja=loja,projeto=projeto,ordem=(ultima.ordem+1 if ultima else 1),titulo=request.POST.get('titulo','Nova etapa').strip() or 'Nova etapa',descricao=request.POST.get('descricao','').strip(),responsavel_id=request.POST.get('responsavel') or None,inicio=request.POST.get('inicio') or None,previsao=request.POST.get('previsao') or None,observacoes=request.POST.get('observacoes','').strip())
+        responsavel=_fk_empresa(Colaborador,loja,request.POST.get('responsavel'))
+        e=EtapaProjetoQualidade.objects.create(loja=loja,projeto=projeto,ordem=(ultima.ordem+1 if ultima else 1),titulo=request.POST.get('titulo','Nova etapa').strip() or 'Nova etapa',descricao=request.POST.get('descricao','').strip(),responsavel=responsavel,inicio=_data_post(request,'inicio'),previsao=_data_post(request,'previsao'),observacoes=request.POST.get('observacoes','').strip())
         _notificar_etapa(e)
         messages.success(request,'Etapa adicionada ao cronograma.')
     return redirect('gestao_analise_detalhe',pk=pk)
@@ -543,7 +567,9 @@ def etapa_qualidade_salvar(request,pk):
     loja=_empresa(request); e=get_object_or_404(EtapaProjetoQualidade,loja=loja,pk=pk)
     if request.method=='POST':
         anterior=e.responsavel_id; status_anterior=e.status
-        e.titulo=request.POST.get('titulo',e.titulo).strip() or e.titulo; e.descricao=request.POST.get('descricao','').strip(); e.responsavel_id=request.POST.get('responsavel') or None; e.inicio=request.POST.get('inicio') or None; e.previsao=request.POST.get('previsao') or None; e.status=request.POST.get('status',e.status); e.observacoes=request.POST.get('observacoes','').strip()
+        responsavel=_fk_empresa(Colaborador,loja,request.POST.get('responsavel')); novo_status=request.POST.get('status',e.status)
+        if novo_status not in dict(EtapaProjetoQualidade.STATUS): novo_status=e.status
+        e.titulo=request.POST.get('titulo',e.titulo).strip() or e.titulo; e.descricao=request.POST.get('descricao','').strip(); e.responsavel=responsavel; e.inicio=_data_post(request,'inicio'); e.previsao=_data_post(request,'previsao'); e.status=novo_status; e.observacoes=request.POST.get('observacoes','').strip()
         if request.FILES.get('evidencia'): e.evidencia=request.FILES['evidencia']
         if e.status=='concluida' and status_anterior!='concluida': e.concluido_em=timezone.now()
         elif e.status!='concluida': e.concluido_em=None
