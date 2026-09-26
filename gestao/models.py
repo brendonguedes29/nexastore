@@ -126,9 +126,12 @@ class Tarefa(BaseEmpresa):
     def __str__(self): return self.titulo
 
 class NotaWorkspace(BaseEmpresa):
+    CORES=[('amarelo','Amarelo'),('azul','Azul'),('verde','Verde'),('vermelho','Vermelho'),('cinza','Cinza')]
+    STATUS=[('aberta','Aberta'),('andamento','Em andamento'),('concluida','Concluída')]
     titulo=models.CharField(max_length=120,blank=True); conteudo=models.TextField(); setor=models.ForeignKey(Setor,on_delete=models.SET_NULL,null=True,blank=True)
-    cor=models.CharField(max_length=20,default='amarelo'); autor=models.ForeignKey(settings.AUTH_USER_MODEL,on_delete=models.SET_NULL,null=True,blank=True)
-    fixada=models.BooleanField(default=False)
+    cor=models.CharField(max_length=20,choices=CORES,default='amarelo'); autor=models.ForeignKey(settings.AUTH_USER_MODEL,on_delete=models.SET_NULL,null=True,blank=True)
+    fixada=models.BooleanField(default=False); inicio=models.DateField(null=True,blank=True); previsao=models.DateField(null=True,blank=True)
+    status=models.CharField(max_length=20,choices=STATUS,default='aberta'); concluido_em=models.DateTimeField(null=True,blank=True)
 
 class ProjetoQualidade(BaseEmpresa):
     FERRAMENTAS=[('pdca','PDCA'),('5w2h','5W2H'),('ishikawa','Ishikawa'),('5porques','5 Porquês'),('pareto','Pareto'),('sipoc','SIPOC'),('masp','MASP'),('5s','5S')]

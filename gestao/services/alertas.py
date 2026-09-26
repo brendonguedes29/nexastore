@@ -1,7 +1,7 @@
 from datetime import timedelta
 from django.utils import timezone
 from django.urls import reverse
-from gestao.models import Tarefa, PlanoAcao, NaoConformidade, Auditoria, DocumentoGestao, TrilhaColaborador, Notificacao, AlertaEnviado, Colaborador, EtapaProjetoQualidade, RequisitoISO, RiscoFMEA, ProjetoQualidade, Indicador
+from gestao.models import Tarefa, PlanoAcao, NaoConformidade, Auditoria, DocumentoGestao, TrilhaColaborador, Notificacao, AlertaEnviado, Colaborador, EtapaProjetoQualidade, RequisitoISO, RiscoFMEA, ProjetoQualidade, Indicador, NotaWorkspace
 from lojas.email_service import enviar_email
 
 
@@ -61,4 +61,5 @@ def processar_alertas(loja=None, enviar_email_alerta=True):
     tratar(RiscoFMEA.objects.filter(**f).exclude(status_acao='concluida'),'prazo_acao','Ação FMEA',reverse('gestao_fmea'))
     tratar(ProjetoQualidade.objects.filter(**f).exclude(status='concluido'),'fim','Ferramenta da qualidade',reverse('gestao_ferramentas'))
     tratar(Indicador.objects.filter(**f,ativo=True,concluido_em__isnull=True),'previsao_conclusao','Indicador',reverse('gestao_indicadores'),'responsavel_colaborador')
+    tratar(NotaWorkspace.objects.filter(**f).exclude(status='concluida'),'previsao','Nota / Workspace',reverse('gestao_workspace'))
     return total

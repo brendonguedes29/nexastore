@@ -35,7 +35,13 @@ class SetorForm(StyledModelForm):
 class TarefaForm(StyledModelForm):
     class Meta: model=Tarefa; exclude=['loja']
 class NotaForm(StyledModelForm):
-    class Meta: model=NotaWorkspace; exclude=['loja','autor']
+    class Meta:
+        model=NotaWorkspace; exclude=['loja','autor','concluido_em']
+        labels={'titulo':'Título','conteudo':'Nota','setor':'Setor','cor':'Cor do marcador','fixada':'Fixar nota','inicio':'Data de início','previsao':'Previsão de conclusão','status':'Status'}
+    def __init__(self,*a,**kw):
+        super().__init__(*a,**kw)
+        self.fields['cor'].widget=forms.Select(choices=NotaWorkspace.CORES,attrs={'class':'field'})
+
 class ProjetoQualidadeForm(StyledModelForm):
     class Meta: model=ProjetoQualidade; exclude=['loja','dados']
 class TreinamentoForm(StyledModelForm):

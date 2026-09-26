@@ -2,6 +2,7 @@ from django.contrib import messages
 from django.contrib.auth.models import User
 from django.contrib.auth.tokens import default_token_generator
 from django.db import transaction
+import re
 from django.shortcuts import redirect, render
 from django.template.loader import render_to_string
 from django.urls import reverse
@@ -48,6 +49,8 @@ def criar_loja_publica(request):
             erro = "Informe o nome da empresa."
         elif not email:
             erro = "Informe o e-mail."
+        elif telefone and not re.fullmatch(r'\d{10,11}', re.sub(r'\D','',telefone)):
+            erro = "Informe um telefone válido com DDD (10 ou 11 dígitos)."
         elif not senha:
             erro = "Informe uma senha."
         elif senha != confirmar_senha:

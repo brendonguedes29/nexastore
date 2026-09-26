@@ -212,10 +212,15 @@ def trilha_executar(request,pk):
 
 @plano_ativo
 def workspace(request):
-    loja=_empresa(request); form=NotaForm(request.POST or None)
+    loja=_empresa(request); instancia=None; editar=request.GET.get('editar','')
+    if editar.isdigit(): instancia=NotaWorkspace.objects.filter(loja=loja,pk=int(editar)).first()
+    form=NotaForm(request.POST or None,instance=instancia)
     if request.method=='POST' and form.is_valid():
-        n=form.save(commit=False); n.loja=loja; n.autor=request.user; n.save(); return redirect('gestao_workspace')
-    return render(request,'gestao/workspace.html',{'loja':loja,'form':form,'notas':NotaWorkspace.objects.filter(loja=loja).order_by('-fixada','-id')})
+        n=form.save(commit=False); n.loja=loja; n.autor=n.autor or request.user
+        if n.status=='concluida' and not n.concluido_em: n.concluido_em=timezone.now()
+        elif n.status!='concluida': n.concluido_em=None
+        n.save(); return redirect('gestao_workspace')
+    return render(request,'gestao/workspace.html',{'loja':loja,'form':form,'notas':NotaWorkspace.objects.filter(loja=loja).order_by('-fixada','-id'),'today':timezone.localdate()})
 
 @plano_ativo
 def ferramentas(request):
@@ -243,6 +248,26 @@ def analise_detalhe(request,pk):
     loja=_empresa(request); projeto=get_object_or_404(ProjetoQualidade,loja=loja,pk=pk)
     _criar_etapas_metodologicas(projeto)
     return render(request,'gestao/analise_detalhe.html',{'loja':loja,'projeto':projeto,'etapas':projeto.etapas_cronograma.select_related('responsavel__usuario'),'colaboradores':Colaborador.objects.filter(loja=loja,ativo=True,status_cadastro='aprovado').select_related('usuario')})
+
+@plano_ativo
+def analise_salvar(request,pk):
+    loja=_empresa(request); projeto=get_object_or_404(ProjetoQualidade,loja=loja,pk=pk)
+    if request.method=='POST':
+        anterior=projeto.status; novo=request.POST.get('status',projeto.status)
+        if novo not in dict(ProjetoQualidade._meta.get_field('status').choices): novo=projeto.status
+        projeto.inicio=_data_post(request,'inicio'); projeto.fim=_data_post(request,'fim'); projeto.status=novo
+        if novo=='concluido' and anterior!='concluido': projeto.concluido_em=timezone.now()
+        elif novo!='concluido': projeto.concluido_em=None
+        projeto.save(update_fields=['inicio','fim','status','concluido_em','atualizado_em'])
+        RegistroAuditoriaSistema.objects.create(loja=loja,usuario=request.user,acao='analise_atualizada',objeto=f'{projeto.get_ferramenta_display()} #{projeto.id}',descricao=f'Status: {projeto.get_status_display()}')
+        perfil=getattr(request.user,'perfil_colaborador',None)
+        if novo=='concluido' and anterior!='concluido' and perfil:
+            chave=f'Aplicação concluída {projeto.get_ferramenta_display()} #{projeto.id}'
+            if not PontuacaoAtividade.objects.filter(loja=loja,colaborador=perfil,titulo=chave).exists():
+                PontuacaoAtividade.objects.create(loja=loja,colaborador=perfil,categoria='qualidade',ferramenta=projeto.ferramenta,titulo=chave,pontos=25)
+                perfil.pontos+=25; perfil.nivel=1+(perfil.pontos//500); perfil.save(update_fields=['pontos','nivel'])
+        messages.success(request,'Plano atualizado no mesmo registro.')
+    return redirect('gestao_analise_detalhe',pk=pk)
 
 @plano_ativo
 def processo_rapido(request):
@@ -377,32 +402,17 @@ def minhas_notas(request):
     perfil = getattr(request.user, 'perfil_colaborador', None)
     if not perfil:
         return redirect('gestao_dashboard')
-
-    if request.method == 'POST':
-        conteudo = request.POST.get('conteudo', '').strip()
-        if conteudo:
-            NotaWorkspace.objects.create(
-                loja=perfil.loja,
-                autor=request.user,
-                setor=perfil.setor,
-                titulo=request.POST.get('titulo', '').strip(),
-                conteudo=conteudo,
-                cor=request.POST.get('cor', 'amarelo'),
-            )
-            messages.success(request, 'Nota salva.')
-            return redirect('gestao_minhas_notas')
-
-    notas = NotaWorkspace.objects.filter(
-        loja=perfil.loja,
-        autor=request.user
-    ).order_by('-fixada', '-atualizado_em')
-
-    return render(request, 'gestao/minhas_notas.html', {
-        'loja': perfil.loja,
-        'perfil': perfil,
-        'notas': notas,
-    })
-
+    instancia=None
+    editar=request.GET.get('editar','')
+    if editar.isdigit(): instancia=NotaWorkspace.objects.filter(loja=perfil.loja,autor=request.user,pk=int(editar)).first()
+    form=NotaForm(request.POST or None,instance=instancia)
+    if request.method == 'POST' and form.is_valid():
+        n=form.save(commit=False); n.loja=perfil.loja; n.autor=request.user
+        if n.status=='concluida' and not n.concluido_em: n.concluido_em=timezone.now()
+        elif n.status!='concluida': n.concluido_em=None
+        n.save(); messages.success(request, 'Nota salva.'); return redirect('gestao_minhas_notas')
+    notas=NotaWorkspace.objects.filter(loja=perfil.loja,autor=request.user).order_by('-fixada','-atualizado_em')
+    return render(request,'gestao/minhas_notas.html',{'loja':perfil.loja,'perfil':perfil,'form':form,'notas':notas,'today':timezone.localdate()})
 
 def portal_empresa_publica(request,slug):
     from lojas.models import Loja
@@ -599,36 +609,91 @@ def aprovar_colaborador(request,pk):
 def treinamentos_nexa(request):
     loja=_empresa(request)
     catalogo=[
-      ('LGPD no dia a dia','Privacidade','Dados pessoais, boas práticas, incidentes e decisões seguras.',['Conceitos e princípios','Dados pessoais e sensíveis','Boas práticas no trabalho','Incidentes e resposta','Avaliação final']),
-      ('Phishing e segurança digital','Segurança','Reconheça sinais de fraude, links suspeitos e engenharia social.',['Anatomia de uma mensagem','Sinais de phishing','Links e anexos','Como reagir','Avaliação por cenários']),
-      ('Caça aos desperdícios Lean','Melhoria contínua','Aprenda a identificar os oito desperdícios em situações operacionais.',['Visão Lean','Os oito desperdícios','Exemplo industrial','Priorização','Avaliação prática']),
-      ('Detetive da causa raiz','Qualidade','Investigue problemas com fatos, 5 Porquês e Ishikawa.',['Problema x sintoma','Coleta de evidências','5 Porquês','Ishikawa 6M','Caso final']),
-      ('5W2H aplicado','Qualidade','Transforme decisões em planos de ação claros e acompanháveis.',['Conceito','Os 5W','Os 2H','Exemplo preenchido','Aplicação final']),
-      ('PDCA aplicado','Qualidade','Planeje, execute, verifique e padronize melhorias.',['PLAN','DO','CHECK','ACT','Caso prático']),
-      ('Ishikawa 6M','Qualidade','Organize hipóteses de causa com método e evidências.',['Causa x correlação','Os 6M','Montagem do diagrama','Validação','Caso prático']),
-      ('FMEA de processo','Qualidade','Antecipe modos de falha e priorize riscos.',['Modo de falha','Severidade','Ocorrência','Detecção e RPN','Plano de redução']),
-      ('Pareto 80/20','Qualidade','Priorize causas relevantes usando frequência e impacto.',['Princípio de Pareto','Preparação dos dados','Gráfico','Leitura','Caso prático']),
-      ('5S na prática','Qualidade','Organização, limpeza, padronização e disciplina no ambiente.',['Seiri','Seiton','Seiso','Seiketsu','Shitsuke']),
+      ('LGPD no dia a dia','Privacidade','Dados pessoais, boas práticas, incidentes e decisões seguras.',[
+       ('Conceitos e princípios','A LGPD organiza como dados pessoais devem ser tratados durante todo o ciclo de vida. Dado pessoal é qualquer informação relacionada a uma pessoa identificada ou identificável. No trabalho, isso inclui nome, CPF, telefone, e-mail, matrícula, imagem e diversos registros digitais. O ponto central não é apenas guardar dados com segurança: é ter finalidade definida, usar somente o necessário, limitar acessos e manter transparência sobre o tratamento.\n\nNa prática, antes de coletar ou compartilhar uma informação, pergunte: para qual finalidade ela é necessária, quem realmente precisa acessá-la e por quanto tempo deve ser mantida?'),
+       ('Dados pessoais e sensíveis','Dados pessoais sensíveis exigem cuidado reforçado porque podem gerar discriminação ou impactos relevantes. Exemplos incluem dados de saúde, biometria e informações sobre origem racial ou étnica. A classificação correta ajuda a empresa a definir controles proporcionais ao risco.\n\nEvite copiar bases inteiras quando apenas alguns campos são necessários. Compartilhamentos por planilhas, mensageiros e e-mail também fazem parte do tratamento e precisam seguir as mesmas regras de necessidade e acesso.'),
+       ('Boas práticas no trabalho','Bloqueie a tela ao se afastar, confirme destinatários antes de enviar arquivos, não reutilize senhas e não deixe documentos pessoais expostos. Use somente canais autorizados pela empresa. Ao receber pedido de dados, confirme identidade, finalidade e autorização antes de responder.\n\nPrivacidade funciona melhor quando vira rotina operacional: menos cópias desnecessárias, acessos compatíveis com a função e descarte adequado reduzem risco sem depender apenas de tecnologia.'),
+       ('Incidentes e resposta','Um incidente pode envolver envio ao destinatário errado, perda de equipamento, credencial comprometida, acesso indevido ou exposição de documentos. A prioridade é conter o evento, preservar evidências e comunicar rapidamente o canal responsável. Não apague rastros nem tente resolver silenciosamente.\n\nRegistre o que aconteceu, quando foi percebido, quais dados podem estar envolvidos e quais medidas imediatas foram tomadas. Essas informações permitem avaliar impacto e resposta.'),
+       ('Avaliação final','Revise os princípios: finalidade, necessidade, acesso adequado, segurança e resposta a incidentes. Em cada cenário, identifique primeiro quais dados estão envolvidos, quem deveria acessá-los e qual é a ação mais segura. A avaliação final verifica aplicação prática, não memorização de termos.')]),
+      ('Phishing e segurança digital','Segurança','Reconheça sinais de fraude, links suspeitos e engenharia social.',[
+       ('Anatomia de uma mensagem','Uma mensagem legítima deve ser analisada pelo conjunto: remetente real, domínio, contexto, linguagem, links, anexos e ação solicitada. O nome exibido pode ser falsificado; por isso, observe o endereço completo. Ataques costumam imitar marcas, gestores ou fornecedores e explorar hábitos reais da empresa.\n\nAntes de clicar, compare o pedido com o processo normal. Uma cobrança inesperada, mudança de conta bancária ou solicitação de senha merece validação por outro canal.'),
+       ('Sinais de phishing','Urgência artificial, ameaça de bloqueio, promessa incomum, erro de domínio, pedido de credencial e mudança repentina de procedimento são sinais importantes. Nenhum sinal isolado prova fraude, mas vários sinais combinados elevam o risco.\n\nEngenharia social tenta reduzir seu tempo de análise. Quando a mensagem força uma decisão imediata, interrompa o impulso e valide identidade, contexto e destino do link.'),
+       ('Links e anexos','Passe o cursor sobre links para conferir o destino antes de abrir. Domínios parecidos podem trocar letras, usar subdomínios enganosos ou encurtadores. Anexos inesperados — especialmente executáveis, arquivos compactados ou documentos pedindo habilitação de conteúdo — exigem cautela.\n\nSe a tarefa puder ser feita entrando diretamente no site oficial, prefira abrir o endereço conhecido em vez de usar o link recebido.'),
+       ('Como reagir','Não responda ao possível atacante, não encaminhe a mensagem para colegas como alerta informal e não teste o link. Use o mecanismo oficial de denúncia ou acione a equipe responsável. Se já clicou ou informou credenciais, comunique imediatamente; rapidez permite trocar senhas, encerrar sessões e reduzir impacto.\n\nRelatar um engano rapidamente é mais útil do que tentar escondê-lo.'),
+       ('Avaliação por cenários','Agora aplique o método: contexto → remetente → domínio/link → solicitação → decisão. Em cada cenário, escolha entre confiar, validar por outro canal, reportar ou excluir. A meta é justificar a decisão pelos sinais observados, e não apenas marcar uma alternativa.')]),
+      ('Caça aos desperdícios Lean','Melhoria contínua','Aprenda a identificar os oito desperdícios em situações operacionais.',[
+       ('Visão Lean','Lean busca maximizar valor para o cliente reduzindo atividades que consomem recurso sem agregar valor. O primeiro passo é observar o fluxo real, não o procedimento imaginado. Tempo parado, deslocamentos, estoques e retrabalho escondem capacidade e aumentam lead time.'),
+       ('Os oito desperdícios','Os oito desperdícios são defeitos, superprodução, espera, talento não utilizado, transporte, estoque, movimento e processamento excessivo. Eles podem aparecer juntos: produzir antes da necessidade gera estoque, que exige transporte e espaço e pode aumentar perdas.'),
+       ('Exemplo industrial','Imagine um operador caminhando repetidamente para buscar etiquetas enquanto lotes aguardam liberação. Há movimento desnecessário e espera. Se o lote é produzido antes da demanda, também existe superprodução. Identificar o desperdício correto ajuda a atacar a causa e não apenas acelerar a pessoa.'),
+       ('Priorização','Observe frequência, tempo perdido, impacto no cliente, segurança e custo. Priorize desperdícios relevantes e mensuráveis. Uma melhoria pequena e recorrente pode gerar mais resultado do que uma ocorrência rara e chamativa.'),
+       ('Avaliação prática','Na simulação, procure evidências no cenário, classifique o desperdício e explique por que ele não agrega valor. Depois escolha uma contramedida que simplifique o fluxo em vez de apenas transferir o problema.')]),
+      ('Detetive da causa raiz','Qualidade','Investigue problemas com fatos, 5 Porquês e Ishikawa.',[
+       ('Problema x sintoma','Sintoma é o efeito percebido; causa é o mecanismo que contribui para produzi-lo. “Máquina parou” descreve o evento, mas não explica por que ocorreu. Uma boa definição informa o que aconteceu, onde, quando, frequência e impacto.'),
+       ('Coleta de evidências','Antes de perguntar por quê, reúna registros, medições, horários, lotes, padrões e observação no local. Compare quando o problema ocorre e quando não ocorre. Evidência reduz a chance de transformar opinião em causa.'),
+       ('5 Porquês','Cada resposta deve sustentar a pergunta seguinte. Não é obrigatório chegar exatamente ao quinto porquê. Pare quando alcançar uma causa verificável e tratável ou quando faltar evidência. Evite respostas baseadas em culpa, como “falta de atenção”, sem investigar condições do processo.'),
+       ('Ishikawa 6M','Organize hipóteses em Método, Máquina, Mão de obra, Material, Meio ambiente e Medição. O diagrama amplia a investigação, mas não confirma causas. Depois do brainstorming, teste as hipóteses com fatos.'),
+       ('Caso final','Construa uma linha lógica: problema bem definido → evidências → hipóteses → validação → causa provável → ação → verificação de eficácia. A solução deve atuar sobre a causa validada e ter indicador para confirmar o resultado.')]),
+      ('5W2H aplicado','Qualidade','Transforme decisões em planos de ação claros e acompanháveis.',[
+       ('Conceito','5W2H transforma uma intenção em plano verificável por sete perguntas. O objetivo não é preencher campos por obrigação, mas eliminar ambiguidades sobre entrega, motivo, local, prazo, responsabilidade, método e custo.'),
+       ('Os 5W','What define a entrega concreta; Why registra a razão e o resultado esperado; Where delimita onde a ação ocorre; When estabelece a previsão; Who identifica quem responde pela execução. Evite verbos vagos como “melhorar” sem critério observável.'),
+       ('Os 2H','How descreve como a ação será executada, incluindo método, recursos ou sequência. How much registra custo estimado ou informa que não há custo adicional. Esses campos ajudam a avaliar viabilidade antes da execução.'),
+       ('Exemplo preenchido','Exemplo: revisar checklist de expedição para reduzir erro de separação; aplicar na Expedição; responsável Ana; início em 01/10 e previsão em 10/10; revisar itens com operadores, testar por três dias e aprovar nova versão; custo estimado zero. A conclusão real só é registrada quando o status muda para Concluído.'),
+       ('Aplicação final','Depois de criar o plano, acompanhe as etapas, responsáveis, previsão, evidências e status. Alterações atualizam o mesmo plano. Um novo registro só deve existir quando houver um novo plano 5W2H.')]),
+      ('PDCA aplicado','Qualidade','Planeje, execute, verifique e padronize melhorias.',[
+       ('PLAN','Defina problema, situação atual, meta, causas e plano. Uma meta útil contém indicador e prazo. Planejar não é escolher uma solução rapidamente; é entender a lacuna e formular uma intervenção verificável.'),
+       ('DO','Execute o plano em escala controlada quando possível. Registre quem fez, quando, evidências e desvios. Mudanças durante a execução precisam ficar visíveis para que o resultado possa ser interpretado corretamente.'),
+       ('CHECK','Compare resultado com a linha de base e a meta usando dados equivalentes. Pergunte se a mudança realmente produziu o efeito e se surgiram consequências indesejadas. CHECK não é apenas marcar “feito”.'),
+       ('ACT','Se a melhoria foi eficaz, incorpore-a ao padrão, treinamento e documentação. Se não foi, registre o aprendizado, ajuste hipóteses e inicie novo ciclo. ACT fecha o aprendizado e evita retorno ao estado anterior.'),
+       ('Caso prático','Em um caso de retrabalho, acompanhe percentual antes e depois, volume produzido e período. Só padronize quando a comparação sustentar a melhoria. Se o resultado variar sem estabilidade, investigue antes de concluir.')]),
+      ('Ishikawa 6M','Qualidade','Organize hipóteses de causa com método e evidências.',[
+       ('Causa x correlação','Dois eventos ocorrerem juntos não prova causalidade. O Ishikawa organiza hipóteses para investigação. Cada causa relevante deve poder ser testada por observação, dado ou experimento.'),
+       ('Os 6M','Método: padrões e sequência. Máquina: equipamentos e ferramentas. Mão de obra: capacitação, carga e ergonomia. Material: especificação e variação. Meio ambiente: temperatura, iluminação e organização. Medição: instrumento, método e qualidade do dado.'),
+       ('Montagem do diagrama','Escreva o efeito de forma específica e reúna hipóteses por categoria. Aprofunde causas secundárias quando necessário. Evite preencher categorias apenas para completar o desenho.'),
+       ('Validação','Priorize hipóteses plausíveis e procure evidências que possam confirmá-las ou refutá-las. Compare turnos, lotes, equipamentos ou condições. Uma hipótese não validada continua sendo hipótese.'),
+       ('Caso prático','Para “etiqueta ilegível”, por exemplo, investigue impressora, configuração, material da etiqueta, limpeza, treinamento e método de inspeção. A ação final deve estar ligada à causa que os dados sustentarem.')]),
+      ('FMEA de processo','Qualidade','Antecipe modos de falha e priorize riscos.',[
+       ('Modo de falha','Modo de falha descreve como uma etapa pode deixar de cumprir sua função. Seja específico: “etiqueta com código incorreto” é mais útil do que “erro na etiqueta”. Um mesmo processo pode ter vários modos de falha.'),
+       ('Severidade','Severidade estima o impacto do efeito caso a falha ocorra. Use uma escala definida pela empresa e critérios consistentes. Severidade alta merece atenção mesmo quando outros índices são baixos.'),
+       ('Ocorrência','Ocorrência representa a probabilidade ou frequência da causa/falha. Baseie a nota em histórico, dados ou critério acordado, evitando escolher valores apenas por percepção.'),
+       ('Detecção e RPN','Detecção avalia a capacidade dos controles atuais identificarem a falha antes do efeito. No modelo clássico, RPN = S × O × D. O número auxilia priorização, mas não substitui análise de severidade e contexto.'),
+       ('Plano de redução','Defina ação, responsável e prazo para reduzir ocorrência, melhorar detecção ou, quando possível, reduzir severidade. Após implementar, reavalie S/O/D e registre evidências para demonstrar a mudança do risco.')]),
+      ('Pareto 80/20','Qualidade','Priorize causas relevantes usando frequência e impacto.',[
+       ('Princípio de Pareto','Pareto ordena categorias da maior para a menor contribuição para evidenciar concentração. A regra 80/20 é uma referência, não uma lei: os percentuais reais dependem dos dados.'),
+       ('Preparação dos dados','Defina período, unidade e categorias mutuamente compreensíveis. Evite misturar causas, sintomas e tipos de ocorrência na mesma classificação. Dados inconsistentes geram prioridades enganosas.'),
+       ('Gráfico','Ordene valores de forma decrescente e calcule participação acumulada. As barras mostram contribuição individual; a curva acumulada ajuda a visualizar quanto do total é explicado pelas primeiras categorias.'),
+       ('Leitura','Comece pelas categorias de maior impacto quando houver capacidade de ação. Pareto mostra onde concentrar investigação, mas não prova por que o problema ocorre.'),
+       ('Caso prático','Se três categorias representam 72% das reclamações, elas são candidatas à investigação prioritária. Depois das ações, repita o Pareto em período comparável para verificar se o perfil mudou.')]),
+      ('5S na prática','Qualidade','Organização, limpeza, padronização e disciplina no ambiente.',[
+       ('Seiri','Utilização: separar o necessário do desnecessário. Defina critérios para retirar excessos sem descartar itens importantes. O resultado esperado é liberar espaço e reduzir procura e confusão.'),
+       ('Seiton','Ordenação: definir local, identificação e quantidade adequada para cada item. O objetivo é tornar fácil encontrar, usar e devolver, reduzindo movimento e tempo perdido.'),
+       ('Seiso','Limpeza e inspeção: limpar enquanto se observa a origem de sujeira, vazamento, desgaste e anomalias. Não é apenas estética; é uma forma de inspeção do processo.'),
+       ('Seiketsu','Padronização: transformar os três primeiros sensos em rotinas visuais, critérios, frequência e responsabilidades. Um padrão simples e visível facilita perceber desvios.'),
+       ('Shitsuke','Disciplina: sustentar o padrão por comportamento, auditoria e melhoria. O objetivo não é punir, mas tornar o novo modo de trabalho parte da rotina e corrigir causas de reincidência.')]),
     ]
     itens=[]
     for titulo,categoria,descricao,etapas in catalogo:
         t,_=Treinamento.objects.get_or_create(loja=loja,titulo=titulo,defaults={'descricao':descricao,'categoria':categoria,'origem':'nexa','pontos':150,'nota_minima':70,'ativo':True})
-        if t.origem!='nexa': t.origem='nexa'; t.pontos=150; t.save(update_fields=['origem','pontos'])
-        if not t.etapas.exists():
-            for i,nome in enumerate(etapas,1): EtapaTreinamento.objects.create(loja=loja,treinamento=t,ordem=i,titulo=nome,descricao=f'{nome}: conceito essencial, situação aplicada e decisão prática. Ao final, revise o conteúdo antes da avaliação.',pontos=30,pergunta='Registre a decisão ou aprendizado principal desta etapa.' if i==len(etapas) else '')
+        alter=[]
+        if t.origem!='nexa': t.origem='nexa'; alter.append('origem')
+        if t.pontos!=150: t.pontos=150; alter.append('pontos')
+        if t.descricao!=descricao: t.descricao=descricao; alter.append('descricao')
+        if alter: t.save(update_fields=alter)
+        existentes={e.ordem:e for e in t.etapas.all()}
+        for i,(nome,conteudo) in enumerate(etapas,1):
+            e=existentes.get(i)
+            pergunta='Explique com suas palavras como você aplicaria este conteúdo em uma situação real.' if i==len(etapas) else ''
+            if e:
+                e.titulo=nome; e.descricao=conteudo; e.pontos=30; e.pergunta=pergunta; e.save(update_fields=['titulo','descricao','pontos','pergunta'])
+            else: EtapaTreinamento.objects.create(loja=loja,treinamento=t,ordem=i,titulo=nome,descricao=conteudo,pontos=30,pergunta=pergunta)
         itens.append(t)
-    iniciar_id=request.GET.get('iniciar','')
-    perfil=getattr(request.user,'perfil_colaborador',None)
+    iniciar_id=request.GET.get('iniciar',''); perfil=getattr(request.user,'perfil_colaborador',None)
     if iniciar_id.isdigit() and perfil:
         treinamento=next((x for x in itens if x.pk==int(iniciar_id)),None)
         if treinamento:
             trilha,_=TrilhaColaborador.objects.get_or_create(loja=loja,colaborador=perfil,treinamento=treinamento)
             return redirect('gestao_trilha_executar',pk=trilha.pk)
-    selecionado=None
-    curso_id=request.GET.get('curso','')
-    if curso_id.isdigit():
-        selecionado=next((x for x in itens if x.pk==int(curso_id)),None)
-    status_trilhas={}
+    selecionado=None; curso_id=request.GET.get('curso','')
+    if curso_id.isdigit(): selecionado=next((x for x in itens if x.pk==int(curso_id)),None)
     if perfil:
         status_trilhas={x.treinamento_id:x.status for x in TrilhaColaborador.objects.filter(loja=loja,colaborador=perfil,treinamento__in=itens)}
         for t in itens: t.status_colaborador=status_trilhas.get(t.id,'nao_iniciado')
