@@ -521,7 +521,8 @@ def _notificar_etapa(etapa, anterior_id=None):
     if not c or c.pk==anterior_id: return
     link=reverse('gestao_analise_detalhe',args=[etapa.projeto_id])
     titulo=f'Nova etapa atribuída • {etapa.projeto.get_ferramenta_display()}'
-    msg=f'{etapa.titulo} — {etapa.projeto.titulo}' + (f' • prazo {etapa.previsao.strftime("%d/%m/%Y")}' if etapa.previsao else '')
+    prazo = etapa.previsao.strftime("%d/%m/%Y") if hasattr(etapa.previsao, "strftime") else str(etapa.previsao or '')
+    msg=f'{etapa.titulo} — {etapa.projeto.titulo}' + (f' • prazo {prazo}' if prazo else '')
     Notificacao.objects.create(loja=etapa.loja,usuario=c.usuario,titulo=titulo,mensagem=msg,link=link)
     if c.email_notificacoes and c.usuario.email:
         try: enviar_email(c.usuario.email,f'Nexa Gestão • {titulo}',f'<h2>{titulo}</h2><p>{msg}</p><p>Acesse a Nexa Gestão para acompanhar a etapa.</p>')
