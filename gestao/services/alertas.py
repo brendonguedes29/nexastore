@@ -1,7 +1,7 @@
 from datetime import timedelta
 from django.utils import timezone
 from django.urls import reverse
-from gestao.models import Tarefa, PlanoAcao, NaoConformidade, Auditoria, DocumentoGestao, TrilhaColaborador, Notificacao, AlertaEnviado, Colaborador
+from gestao.models import Tarefa, PlanoAcao, NaoConformidade, Auditoria, DocumentoGestao, TrilhaColaborador, Notificacao, AlertaEnviado, Colaborador, EtapaProjetoQualidade
 from lojas.email_service import enviar_email
 
 
@@ -56,4 +56,5 @@ def processar_alertas(loja=None, enviar_email_alerta=True):
     tratar(Auditoria.objects.filter(**f).exclude(status='concluida'),'data','Auditoria',reverse('gestao_auditorias'))
     tratar(DocumentoGestao.objects.filter(**f),'proxima_revisao','Revisão documental',reverse('gestao_documentos'))
     tratar(TrilhaColaborador.objects.filter(**f).exclude(status='concluido'),'prazo','Treinamento',reverse('portal_colaborador'),'colaborador')
+    tratar(EtapaProjetoQualidade.objects.filter(**f).exclude(status='concluida'),'previsao','Etapa de qualidade',reverse('gestao_ferramentas'),'responsavel')
     return total

@@ -23,7 +23,7 @@ class Indicador(BaseEmpresa):
     nome=models.CharField(max_length=160); processo=models.ForeignKey(Processo,on_delete=models.SET_NULL,null=True,blank=True)
     unidade=models.CharField(max_length=30, default='%'); meta=models.DecimalField(max_digits=12,decimal_places=2,default=0)
     sentido=models.CharField(max_length=10,choices=[('maior','Maior'),('menor','Menor')],default='maior')
-    periodicidade=models.CharField(max_length=20,choices=PERIOD,default='mensal'); responsavel=models.CharField(max_length=120,blank=True)
+    periodicidade=models.CharField(max_length=20,choices=PERIOD,default='mensal'); responsavel=models.CharField(max_length=120,blank=True); responsavel_colaborador=models.ForeignKey('Colaborador',on_delete=models.SET_NULL,null=True,blank=True,related_name='indicadores_atribuidos')
     ativo=models.BooleanField(default=True); inicio=models.DateField(null=True,blank=True); previsao_conclusao=models.DateField(null=True,blank=True); concluido_em=models.DateTimeField(null=True,blank=True)
     def __str__(self): return self.nome
 
@@ -238,3 +238,21 @@ class CertificadoTreinamento(BaseEmpresa):
     carga_horaria_minutos=models.PositiveIntegerField(default=30)
     class Meta: unique_together=[('colaborador','treinamento')]
     def __str__(self): return f'{self.treinamento} • {self.colaborador}'
+
+class EtapaProjetoQualidade(BaseEmpresa):
+    STATUS=[('nao_iniciada','Não iniciada'),('andamento','Em andamento'),('bloqueada','Bloqueada'),('concluida','Concluída')]
+    projeto=models.ForeignKey(ProjetoQualidade,on_delete=models.CASCADE,related_name='etapas_cronograma')
+    ordem=models.PositiveIntegerField(default=1)
+    titulo=models.CharField(max_length=180)
+    descricao=models.TextField(blank=True)
+    responsavel=models.ForeignKey(Colaborador,on_delete=models.SET_NULL,null=True,blank=True,related_name='etapas_qualidade')
+    inicio=models.DateField(null=True,blank=True)
+    previsao=models.DateField(null=True,blank=True)
+    concluido_em=models.DateTimeField(null=True,blank=True)
+    status=models.CharField(max_length=20,choices=STATUS,default='nao_iniciada')
+    observacoes=models.TextField(blank=True)
+    evidencia=models.FileField(upload_to='gestao/evidencias_etapas/',blank=True,null=True)
+    pontos=models.PositiveIntegerField(default=10)
+    class Meta:
+        ordering=['projeto','ordem','id']
+    def __str__(self): return f'{self.projeto} • {self.ordem}. {self.titulo}'
