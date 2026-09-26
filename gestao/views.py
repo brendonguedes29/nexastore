@@ -15,6 +15,7 @@ from functools import wraps
 import hashlib
 import uuid
 from datetime import timedelta
+from django.db.models import Max
 from django.db.models import Q
 from django.http import JsonResponse
 from .services.alertas import processar_alertas
@@ -281,10 +282,25 @@ def ativar_colaborador(request,uidb64,token):
             u.set_password(senha); u.is_active=True; u.save(update_fields=['password','is_active']); messages.success(request,'Acesso ativado. Agora você pode entrar.'); return redirect('login_loja')
     return render(request,'gestao/ativar_colaborador.html',{'usuario':u})
 
+def _ciclo_jogo(perfil, jogo):
+    """Pontuação de simulação: no máximo uma recompensa por semana ISO."""
+    hoje=timezone.localdate(); inicio=hoje-timedelta(days=hoje.weekday()); fim=inicio+timedelta(days=6)
+    chave=f'{jogo}:{inicio.isoformat()}'
+    ja=PontuacaoAtividade.objects.filter(loja=perfil.loja,colaborador=perfil,categoria='jogo',ferramenta=chave).exists() if perfil else False
+    return {'inicio':inicio,'fim':fim,'chave':chave,'pontuavel':not ja,'proxima':fim+timedelta(days=1)}
+
+def _premiar_simulacao(loja, perfil, jogo, titulo, pontos, total, detalhes):
+    if not perfil: return 0
+    ciclo=_ciclo_jogo(perfil,jogo)
+    TentativaJogo.objects.create(loja=loja,colaborador=perfil,jogo=jogo,pontuacao=pontos,total=total,detalhes={**detalhes,'ciclo':ciclo['inicio'].isoformat(),'pontuavel':ciclo['pontuavel']})
+    if not ciclo['pontuavel']: return 0
+    return conceder_pontos(perfil,'jogo',ciclo['chave'],titulo,pontos,{**detalhes,'ciclo':ciclo['inicio'].isoformat()},unico=True)
+
 @plano_ativo
 def academia(request):
     loja=_empresa(request); perfil=getattr(request.user,'perfil_colaborador',None)
-    return render(request,'gestao/academia.html',{'loja':loja,'perfil':perfil,'tentativas':TentativaJogo.objects.filter(loja=loja,colaborador=perfil).order_by('-id')[:10] if perfil else []})
+    ciclos={j:_ciclo_jogo(perfil,j) for j in ('phishing','lean','causa_raiz')} if perfil else {}
+    return render(request,'gestao/academia.html',{'loja':loja,'perfil':perfil,'tentativas':TentativaJogo.objects.filter(loja=loja,colaborador=perfil).order_by('-id')[:10] if perfil else [],'ciclos':ciclos})
 
 @plano_ativo
 def jogo_phishing(request):
@@ -300,7 +316,7 @@ def jogo_phishing(request):
     if request.method=='POST':
         acertos=sum(1 for q in questoes if request.POST.get(q['id'])==q['correta']); pontos=acertos*20; resultado={'acertos':acertos,'total':len(questoes),'pontos':pontos}
         if perfil:
-            TentativaJogo.objects.create(loja=loja,colaborador=perfil,jogo='phishing',pontuacao=pontos,total=100,detalhes={'acertos':acertos}); conceder_pontos(perfil,'jogo','phishing','Simulação Caixa de Entrada Segura',pontos,{'acertos':acertos,'total':len(questoes)},unico=True);
+            ganhos=_premiar_simulacao(loja,perfil,'phishing','Simulação Caixa de Entrada Segura',pontos,100,{'acertos':acertos,'total':len(questoes)}); resultado['ganhos']=ganhos; resultado['ciclo']=_ciclo_jogo(perfil,'phishing')
             if acertos==len(questoes): ConquistaColaborador.objects.get_or_create(loja=loja,colaborador=perfil,codigo='phishing_perfeito',defaults={'titulo':'Radar Antiphishing','descricao':'Acertou 100% em uma simulação de phishing.'})
     return render(request,'gestao/jogo_phishing.html',{'loja':loja,'questoes':questoes,'resultado':resultado})
 
@@ -324,6 +340,69 @@ def portal_colaborador(request):
     ranking_ids=list(Colaborador.objects.filter(loja=loja,ativo=True,ranking_visivel=True).order_by('-pontos','criado_em').values_list('id',flat=True))
     posicao=(ranking_ids.index(perfil.id)+1) if perfil.id in ranking_ids else None
     return render(request,'gestao/portal_colaborador.html',{'loja':loja,'perfil':perfil,'nivel_info':progresso_nivel(perfil.pontos),'posicao_ranking':posicao,'tarefas':Tarefa.objects.filter(loja=loja,responsavel=perfil).exclude(status='concluida'),'trilhas':TrilhaColaborador.objects.filter(loja=loja,colaborador=perfil).select_related('treinamento'),'conquistas':ConquistaColaborador.objects.filter(loja=loja,colaborador=perfil).order_by('-concedida_em'),'notificacoes_novas':Notificacao.objects.filter(loja=loja,usuario=request.user,lida=False).count(),'certificados':CertificadoTreinamento.objects.filter(loja=loja,colaborador=perfil).select_related('treinamento').order_by('-emitido_em'),'historico_pontos':PontuacaoAtividade.objects.filter(loja=loja,colaborador=perfil).order_by('-criado_em')[:12],'meus_indicadores':Indicador.objects.filter(loja=loja,ativo=True,responsavel_colaborador=perfil).prefetch_related('medicoes')[:8]})
+
+
+def meus_indicadores(request):
+    perfil = getattr(request.user, 'perfil_colaborador', None)
+    if not perfil:
+        return redirect('gestao_dashboard')
+    itens = Indicador.objects.filter(
+        loja=perfil.loja,
+        ativo=True,
+        responsavel_colaborador=perfil
+    ).select_related('processo').prefetch_related('medicoes')
+    return render(request, 'gestao/meus_indicadores.html', {
+        'loja': perfil.loja,
+        'perfil': perfil,
+        'itens': itens,
+    })
+
+
+def meus_treinamentos(request):
+    perfil = getattr(request.user, 'perfil_colaborador', None)
+    if not perfil:
+        return redirect('gestao_dashboard')
+    trilhas = TrilhaColaborador.objects.filter(
+        loja=perfil.loja,
+        colaborador=perfil
+    ).select_related('treinamento').order_by('status', 'prazo')
+    return render(request, 'gestao/meus_treinamentos.html', {
+        'loja': perfil.loja,
+        'perfil': perfil,
+        'trilhas': trilhas,
+    })
+
+
+def minhas_notas(request):
+    perfil = getattr(request.user, 'perfil_colaborador', None)
+    if not perfil:
+        return redirect('gestao_dashboard')
+
+    if request.method == 'POST':
+        conteudo = request.POST.get('conteudo', '').strip()
+        if conteudo:
+            NotaWorkspace.objects.create(
+                loja=perfil.loja,
+                autor=request.user,
+                setor=perfil.setor,
+                titulo=request.POST.get('titulo', '').strip(),
+                conteudo=conteudo,
+                cor=request.POST.get('cor', 'amarelo'),
+            )
+            messages.success(request, 'Nota salva.')
+            return redirect('gestao_minhas_notas')
+
+    notas = NotaWorkspace.objects.filter(
+        loja=perfil.loja,
+        autor=request.user
+    ).order_by('-fixada', '-atualizado_em')
+
+    return render(request, 'gestao/minhas_notas.html', {
+        'loja': perfil.loja,
+        'perfil': perfil,
+        'notas': notas,
+    })
+
 
 def portal_empresa_publica(request,slug):
     from lojas.models import Loja
@@ -459,9 +538,7 @@ def metas_equipe(request):
     return _crud(request,MetaEquipe,MetaEquipeForm,'Metas & Desafios de Equipe')
 
 def _premiar_jogo(loja,perfil,jogo,titulo,pontos,total,detalhes):
-    if not perfil:return
-    TentativaJogo.objects.create(loja=loja,colaborador=perfil,jogo=jogo,pontuacao=pontos,total=total,detalhes=detalhes)
-    conceder_pontos(perfil,'jogo',jogo,titulo,pontos,detalhes,unico=True)
+    return _premiar_simulacao(loja,perfil,jogo,titulo,pontos,total,detalhes)
 
 @plano_ativo
 def jogo_lean(request):
@@ -469,7 +546,7 @@ def jogo_lean(request):
     questoes=[('q1','Produzir antes da demanda real','superproducao'),('q2','Operador aguardando liberação da máquina','espera'),('q3','Levar material várias vezes entre prédios','transporte'),('q4','Refazer uma peça fora de especificação','defeitos'),('q5','Funcionário treinado sem autonomia para sugerir melhorias','talento')]
     opcoes=[('superproducao','Superprodução'),('espera','Espera'),('transporte','Transporte'),('defeitos','Defeitos'),('talento','Talento não aproveitado')]; resultado=None
     if request.method=='POST':
-        acertos=sum(request.POST.get(q)==c for q,_,c in questoes); pontos=acertos*20; resultado={'acertos':acertos,'total':len(questoes),'pontos':pontos}; _premiar_jogo(loja,perfil,'lean','Caça ao desperdício',pontos,100,resultado)
+        acertos=sum(request.POST.get(q)==c for q,_,c in questoes); pontos=acertos*20; resultado={'acertos':acertos,'total':len(questoes),'pontos':pontos}; resultado['ganhos']=_premiar_jogo(loja,perfil,'lean','Caça ao desperdício',pontos,100,resultado); resultado['ciclo']=_ciclo_jogo(perfil,'lean') if perfil else None
         if perfil and acertos==len(questoes): ConquistaColaborador.objects.get_or_create(loja=loja,colaborador=perfil,codigo='lean_perfeito',defaults={'titulo':'Olhar Lean','descricao':'Identificou todos os desperdícios do desafio.'})
     return render(request,'gestao/jogo_lean.html',{'loja':loja,'questoes':questoes,'opcoes':opcoes,'resultado':resultado})
 
@@ -478,7 +555,7 @@ def jogo_causa_raiz(request):
     loja=_empresa(request); perfil=getattr(request.user,'perfil_colaborador',None); resultado=None
     etapas=[('q1','Máquina parou durante o turno. Qual primeira pergunta é mais útil?',['Quem é culpado?','Por que a máquina parou?','Quanto custa uma nova?'],1),('q2','Parou porque superaqueceu. Próximo passo?',['Por que superaqueceu?','Reiniciar e esquecer','Trocar o operador'],0),('q3','Superaqueceu por falta de lubrificação. O que investigar?',['Por que a lubrificação não ocorreu?','Comprar outra máquina','Encerrar análise'],0),('q4','A rotina não foi executada. Melhor conclusão?',['Registrar culpado','Investigar por que o processo permitiu a falha','Punir a equipe'],1)]
     if request.method=='POST':
-        acertos=sum(str(c)==request.POST.get(q) for q,_,_,c in etapas); pontos=acertos*25; resultado={'acertos':acertos,'total':len(etapas),'pontos':pontos}; _premiar_jogo(loja,perfil,'causa_raiz','Detetive da causa raiz',pontos,100,resultado)
+        acertos=sum(str(c)==request.POST.get(q) for q,_,_,c in etapas); pontos=acertos*25; resultado={'acertos':acertos,'total':len(etapas),'pontos':pontos}; resultado['ganhos']=_premiar_jogo(loja,perfil,'causa_raiz','Detetive da causa raiz',pontos,100,resultado); resultado['ciclo']=_ciclo_jogo(perfil,'causa_raiz') if perfil else None
         if perfil and acertos==len(etapas): ConquistaColaborador.objects.get_or_create(loja=loja,colaborador=perfil,codigo='detetive_causa',defaults={'titulo':'Detetive da Causa Raiz','descricao':'Conduziu uma investigação sem atalhos ou culpabilização.'})
     return render(request,'gestao/jogo_causa_raiz.html',{'loja':loja,'etapas':etapas,'resultado':resultado})
 
@@ -551,6 +628,10 @@ def treinamentos_nexa(request):
     curso_id=request.GET.get('curso','')
     if curso_id.isdigit():
         selecionado=next((x for x in itens if x.pk==int(curso_id)),None)
+    status_trilhas={}
+    if perfil:
+        status_trilhas={x.treinamento_id:x.status for x in TrilhaColaborador.objects.filter(loja=loja,colaborador=perfil,treinamento__in=itens)}
+        for t in itens: t.status_colaborador=status_trilhas.get(t.id,'nao_iniciado')
     return render(request,'gestao/treinamentos_nexa.html',{'loja':loja,'itens':itens,'selecionado':selecionado})
 
 @login_required

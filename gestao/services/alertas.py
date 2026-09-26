@@ -1,7 +1,7 @@
 from datetime import timedelta
 from django.utils import timezone
 from django.urls import reverse
-from gestao.models import Tarefa, PlanoAcao, NaoConformidade, Auditoria, DocumentoGestao, TrilhaColaborador, Notificacao, AlertaEnviado, Colaborador, EtapaProjetoQualidade
+from gestao.models import Tarefa, PlanoAcao, NaoConformidade, Auditoria, DocumentoGestao, TrilhaColaborador, Notificacao, AlertaEnviado, Colaborador, EtapaProjetoQualidade, RequisitoISO, RiscoFMEA, ProjetoQualidade, Indicador
 from lojas.email_service import enviar_email
 
 
@@ -41,7 +41,7 @@ def processar_alertas(loja=None, enviar_email_alerta=True):
             data=getattr(obj,data_attr,None)
             if not data: continue
             dias=(data-hoje).days
-            if dias not in (7,1,0) and dias>=0: continue
+            if dias not in (10,5,2,0) and dias>=0: continue
             estado='atrasado' if dias<0 else ('hoje' if dias==0 else f'{dias}d')
             titulo=f'{titulo_prefixo} • ' + ('atrasado' if dias<0 else ('vence hoje' if dias==0 else f'vence em {dias} dia(s)'))
             msg=f'{obj} — prazo {data.strftime("%d/%m/%Y")}.'
@@ -57,4 +57,8 @@ def processar_alertas(loja=None, enviar_email_alerta=True):
     tratar(DocumentoGestao.objects.filter(**f),'proxima_revisao','Revisão documental',reverse('gestao_documentos'))
     tratar(TrilhaColaborador.objects.filter(**f).exclude(status='concluido'),'prazo','Treinamento',reverse('portal_colaborador'),'colaborador')
     tratar(EtapaProjetoQualidade.objects.filter(**f).exclude(status='concluida'),'previsao','Etapa de qualidade',reverse('gestao_ferramentas'),'responsavel')
+    tratar(RequisitoISO.objects.filter(**f).exclude(status__in=['conforme','na']),'prazo','ISO 9001',reverse('gestao_iso'))
+    tratar(RiscoFMEA.objects.filter(**f).exclude(status_acao='concluida'),'prazo_acao','Ação FMEA',reverse('gestao_fmea'))
+    tratar(ProjetoQualidade.objects.filter(**f).exclude(status='concluido'),'fim','Ferramenta da qualidade',reverse('gestao_ferramentas'))
+    tratar(Indicador.objects.filter(**f,ativo=True,concluido_em__isnull=True),'previsao_conclusao','Indicador',reverse('gestao_indicadores'),'responsavel_colaborador')
     return total
