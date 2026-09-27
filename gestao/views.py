@@ -174,14 +174,14 @@ def treinamentos(request):
     if perfil and perfil.papel!='gestor_empresa': return redirect('portal_colaborador')
     loja=_empresa(request); form=TreinamentoForm(request.POST or None)
     if request.method=='POST' and form.is_valid():
-        o=form.save(commit=False); o.loja=loja; o.save(); _garantir_etapas_treinamento(o); messages.success(request,'Treinamento criado. Agora monte as etapas da trilha.'); return redirect('gestao_treinamento_editar',pk=o.pk)
+        o=form.save(commit=False); o.loja=loja; o.save(); messages.success(request,'Treinamento criado. Agora monte as etapas da trilha.'); return redirect('gestao_treinamento_editar',pk=o.pk)
     return render(request,'gestao/treinamentos.html',{'loja':loja,'form':form,'itens':Treinamento.objects.filter(loja=loja).prefetch_related('etapas').order_by('-id')})
 
 @plano_ativo
 def treinamento_editar(request,pk):
     perfil=getattr(request.user,'perfil_colaborador',None)
     if perfil and perfil.papel!='gestor_empresa': return redirect('portal_colaborador')
-    loja=_empresa(request); treinamento=get_object_or_404(Treinamento,loja=loja,pk=pk); _garantir_etapas_treinamento(treinamento)
+    loja=_empresa(request); treinamento=get_object_or_404(Treinamento,loja=loja,pk=pk)
     if request.method=='POST':
         acao=request.POST.get('acao','')
         if acao=='dados':
@@ -195,9 +195,23 @@ def treinamento_editar(request,pk):
             EtapaTreinamento.objects.filter(loja=loja,treinamento=treinamento,pk=request.POST.get('etapa_id')).delete()
             messages.success(request,'Etapa removida.'); return redirect('gestao_treinamento_editar',pk=pk)
         elif acao=='etapa':
-            tipo=request.POST.get('tipo','texto'); alternativas=[x.strip() for x in request.POST.get('alternativas','').splitlines() if x.strip()]
+            tipo=request.POST.get('tipo','slide')
+            questoes=[]
+            if tipo in ('quiz','avaliacao'):
+                perguntas=request.POST.getlist('q_pergunta[]')
+                for i,pergunta in enumerate(perguntas):
+                    pergunta=pergunta.strip()
+                    if not pergunta: continue
+                    alts=[x.strip() for x in request.POST.getlist(f'q_alt_{i}[]') if x.strip()]
+                    try: correta=int(request.POST.get(f'q_correta_{i}','0'))
+                    except (TypeError,ValueError): correta=0
+                    if alts: correta=max(0,min(correta,len(alts)-1))
+                    questoes.append({'pergunta':pergunta,'alternativas':alts,'correta':correta,'explicacao':request.POST.get(f'q_explicacao_{i}','').strip()})
+                if not questoes:
+                    messages.error(request,'Adicione pelo menos uma pergunta ao quiz/avaliação.')
+                    return redirect('gestao_treinamento_editar',pk=pk)
             ordem=(treinamento.etapas.aggregate(m=Max('ordem'))['m'] or 0)+1
-            e=EtapaTreinamento(loja=loja,treinamento=treinamento,ordem=ordem,tipo=tipo,titulo=request.POST.get('titulo','').strip() or 'Nova etapa',descricao=request.POST.get('descricao','').strip(),video_url=request.POST.get('video_url','').strip(),pergunta=request.POST.get('pergunta','').strip(),alternativas=alternativas,resposta_esperada=request.POST.get('resposta_esperada','').strip(),explicacao=request.POST.get('explicacao','').strip(),pontos=max(0,int(request.POST.get('pontos') or 0)),nota_minima=max(0,min(100,int(request.POST.get('nota_minima') or 70))),obrigatoria=request.POST.get('obrigatoria')=='on')
+            e=EtapaTreinamento(loja=loja,treinamento=treinamento,ordem=ordem,tipo=tipo,titulo=request.POST.get('titulo','').strip() or 'Nova etapa',descricao=request.POST.get('descricao','').strip(),video_url=request.POST.get('video_url','').strip(),questoes=questoes,pontos=max(0,int(request.POST.get('pontos') or 0)),nota_minima=max(0,min(100,int(request.POST.get('nota_minima') or 70))),obrigatoria=request.POST.get('obrigatoria')=='on')
             if request.FILES.get('video_arquivo'): e.video_arquivo=request.FILES['video_arquivo']
             if request.FILES.get('material'): e.material=request.FILES['material']
             e.save(); messages.success(request,'Etapa adicionada ao treinamento.'); return redirect('gestao_treinamento_editar',pk=pk)
@@ -207,8 +221,11 @@ def treinamento_editar(request,pk):
 def treinamento_atribuir(request,pk):
     perfil=getattr(request.user,'perfil_colaborador',None)
     if perfil and perfil.papel!='gestor_empresa': return redirect('portal_colaborador')
-    loja=_empresa(request); treinamento=get_object_or_404(Treinamento,loja=loja,pk=pk); _garantir_etapas_treinamento(treinamento)
+    loja=_empresa(request); treinamento=get_object_or_404(Treinamento,loja=loja,pk=pk)
     if request.method=='POST':
+        if not treinamento.etapas.exists():
+            messages.error(request,'Adicione pelo menos uma etapa antes de atribuir o treinamento.')
+            return redirect('gestao_treinamento_editar',pk=pk)
         inicio=_data_post(request,'inicio'); prazo=_data_post(request,'prazo')
         ids=request.POST.getlist('colaboradores')
         for c in Colaborador.objects.filter(loja=loja,pk__in=ids):
@@ -223,19 +240,52 @@ def trilha_executar(request,pk):
     perfil=getattr(request.user,'perfil_colaborador',None)
     if not perfil: return redirect('gestao_dashboard')
     trilha=get_object_or_404(TrilhaColaborador,pk=pk,colaborador=perfil,loja=perfil.loja); hoje=timezone.localdate(); _garantir_etapas_treinamento(trilha.treinamento)
-    if trilha.status=='pendente': trilha.status='andamento'; trilha.save(update_fields=['status'])
     if trilha.inicio and hoje<trilha.inicio:
         messages.info(request,f'Este treinamento será liberado em {trilha.inicio.strftime("%d/%m/%Y")}.'); return redirect('portal_colaborador')
-    etapas=list(trilha.treinamento.etapas.all()); atual=None
-    for e in etapas:
-        prog,_=ProgressoEtapa.objects.get_or_create(loja=perfil.loja,colaborador=perfil,etapa=e)
-        if not prog.concluida: atual=e; break
-    erro_quiz=''
-    if request.method=='POST' and atual:
-        resposta=request.POST.get('resposta','').strip(); prog=ProgressoEtapa.objects.get(loja=perfil.loja,colaborador=perfil,etapa=atual)
-        if atual.tipo in ('quiz','avaliacao') and atual.resposta_esperada and resposta.casefold()!=atual.resposta_esperada.strip().casefold():
-            erro_quiz=atual.explicacao or 'Resposta incorreta. Revise o conteúdo e tente novamente.'
+    etapas=list(trilha.treinamento.etapas.all())
+    progressos={p.etapa_id:p for p in ProgressoEtapa.objects.filter(loja=perfil.loja,colaborador=perfil,etapa__treinamento=trilha.treinamento)}
+    concluidas=sum(1 for e in etapas if progressos.get(e.id) and progressos[e.id].concluida)
+    revisao=trilha.status=='concluido' or request.GET.get('rever')=='1'
+    atual=None
+    if revisao and etapas:
+        alvo=request.GET.get('etapa')
+        atual=next((e for e in etapas if str(e.pk)==str(alvo)),etapas[0])
+    else:
+        if trilha.status=='pendente': trilha.status='andamento'; trilha.save(update_fields=['status'])
+        atual=next((e for e in etapas if not (progressos.get(e.id) and progressos[e.id].concluida)),None)
+    erro_quiz=''; feedback_quiz=''
+    if request.method=='POST' and atual and not revisao:
+        prog,_=ProgressoEtapa.objects.get_or_create(loja=perfil.loja,colaborador=perfil,etapa=atual)
+        resposta=''
+        if atual.tipo in ('quiz','avaliacao'):
+            questoes=atual.questoes or []
+            acertos=0; erros=[]
+            if questoes:
+                for i,q in enumerate(questoes):
+                    escolha=request.POST.get(f'q_{i}')
+                    if escolha is None:
+                        erro_quiz='Responda todas as perguntas antes de concluir.'; break
+                    try: idx=int(escolha)
+                    except (TypeError,ValueError): idx=-1
+                    correta=int(q.get('correta',0)); alts=q.get('alternativas') or []
+                    if idx==correta: acertos+=1
+                    else:
+                        correta_txt=alts[correta] if 0<=correta<len(alts) else 'Alternativa indicada pelo gestor'
+                        erros.append(f'{i+1}. {q.get("pergunta","")} — correta: {correta_txt}')
+                if not erro_quiz:
+                    nota=round((acertos/max(1,len(questoes)))*100,2)
+                    if nota < atual.nota_minima:
+                        erro_quiz=f'Você acertou {acertos} de {len(questoes)} ({nota:.0f}%). Mínimo: {atual.nota_minima}%. ' + (' Revise: ' + ' | '.join(erros) if erros else '')
+                    else:
+                        resposta=f'{acertos}/{len(questoes)} ({nota:.0f}%)'
+                        feedback_quiz=f'Aprovado: {acertos} de {len(questoes)} respostas corretas.'
+            else:
+                resposta=request.POST.get('resposta','').strip()
+                if atual.resposta_esperada and resposta.casefold()!=atual.resposta_esperada.strip().casefold():
+                    erro_quiz=atual.explicacao or f'Resposta incorreta. Resposta correta: {atual.resposta_esperada}'
         else:
+            resposta=request.POST.get('resposta','').strip()
+        if not erro_quiz:
             prog.resposta=resposta; prog.concluida=True; prog.concluida_em=timezone.now(); prog.save()
             chave=f'{trilha.treinamento.titulo} • {atual.titulo}'
             if trilha.treinamento.origem!='nexa':
@@ -251,7 +301,8 @@ def trilha_executar(request,pk):
         if trilha.treinamento.emitir_certificado:
             cert,_=CertificadoTreinamento.objects.get_or_create(loja=perfil.loja,colaborador=perfil,treinamento=trilha.treinamento,defaults={'codigo':uuid.uuid4().hex[:16].upper(),'carga_horaria_minutos':max(30,len(etapas)*15)})
         Notificacao.objects.create(loja=perfil.loja,usuario=request.user,titulo='Treinamento concluído',mensagem=f'{trilha.treinamento.titulo} concluído.' + (' Seu certificado virtual está disponível.' if cert else ''),link=reverse('gestao_certificado',args=[cert.pk]) if cert else reverse('portal_colaborador'))
-    video_url=(atual.video_url if atual and atual.video_url else trilha.treinamento.video_url) if atual else ''
+        return redirect(reverse('gestao_trilha_executar',args=[pk])+'?rever=1')
+    video_url=(atual.video_url if atual and atual.video_url else '')
     video_embed=''
     if video_url:
         if 'youtu.be/' in video_url: video_embed='https://www.youtube.com/embed/'+video_url.split('youtu.be/',1)[1].split('?',1)[0]
@@ -259,7 +310,8 @@ def trilha_executar(request,pk):
         elif 'youtube.com/shorts/' in video_url: video_embed='https://www.youtube.com/embed/'+video_url.split('shorts/',1)[1].split('?',1)[0]
         elif 'youtube.com/embed/' in video_url: video_embed=video_url
     progresso_percent=int((concluidas/len(etapas))*100) if etapas else 0
-    return render(request,'gestao/trilha_executar.html',{'loja':perfil.loja,'perfil':perfil,'trilha':trilha,'etapas':etapas,'atual':atual,'concluidas':concluidas,'total':len(etapas),'progresso_percent':progresso_percent,'video_url':video_url,'video_embed':video_embed,'erro_quiz':erro_quiz})
+    cert=CertificadoTreinamento.objects.filter(loja=perfil.loja,colaborador=perfil,treinamento=trilha.treinamento).first()
+    return render(request,'gestao/trilha_executar.html',{'loja':perfil.loja,'perfil':perfil,'trilha':trilha,'etapas':etapas,'atual':atual,'concluidas':concluidas,'total':len(etapas),'progresso_percent':progresso_percent,'video_url':video_url,'video_embed':video_embed,'erro_quiz':erro_quiz,'feedback_quiz':feedback_quiz,'revisao':revisao,'cert':cert})
 
 @plano_ativo
 def workspace(request):

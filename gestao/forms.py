@@ -45,7 +45,10 @@ class NotaForm(StyledModelForm):
 class ProjetoQualidadeForm(StyledModelForm):
     class Meta: model=ProjetoQualidade; exclude=['loja','dados']
 class TreinamentoForm(StyledModelForm):
-    class Meta: model=Treinamento; exclude=['loja','certificado_empresa']
+    class Meta:
+        model=Treinamento
+        fields=['titulo','descricao','categoria','pontos','nota_minima','obrigatorio','ativo']
+        labels={'titulo':'Título','descricao':'Descrição','categoria':'Categoria','pontos':'Pontos de referência','nota_minima':'Nota mínima geral (%)','obrigatorio':'Obrigatório','ativo':'Ativo'}
 class LGPDForm(StyledModelForm):
     class Meta: model=RegistroLGPD; exclude=['loja','usuario','ip_hash']
 class AtividadeTratamentoForm(StyledModelForm):
