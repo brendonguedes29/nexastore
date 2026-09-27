@@ -146,6 +146,7 @@ class Treinamento(BaseEmpresa):
     titulo=models.CharField(max_length=180); descricao=models.TextField(blank=True); categoria=models.CharField(max_length=80,default='Qualidade'); conteudo=models.TextField(blank=True)
     origem=models.CharField(max_length=20,choices=[('empresa','Empresa'),('nexa','Nexa')],default='empresa')
     pontos=models.PositiveIntegerField(default=100); obrigatorio=models.BooleanField(default=False); ativo=models.BooleanField(default=True); video_url=models.URLField(blank=True); nota_minima=models.PositiveSmallIntegerField(default=70)
+    emitir_certificado=models.BooleanField(default=True); certificado_empresa=models.FileField(upload_to='gestao/certificados_empresa/',blank=True,null=True,storage=RawMediaCloudinaryStorage())
     def __str__(self): return self.titulo
 
 class TrilhaColaborador(BaseEmpresa):
@@ -221,10 +222,11 @@ class MetaEquipe(BaseEmpresa):
     meta_pontos=models.PositiveIntegerField(default=500); inicio=models.DateField(null=True,blank=True); fim=models.DateField(null=True,blank=True); ativa=models.BooleanField(default=True)
 
 class EtapaTreinamento(BaseEmpresa):
+    TIPOS=[('texto','Conteúdo / texto'),('slide','Slide'),('youtube','Vídeo do YouTube'),('video','Vídeo enviado'),('quiz','Quiz'),('atividade','Atividade'),('material','Material / arquivo'),('avaliacao','Avaliação final')]
     treinamento=models.ForeignKey(Treinamento,on_delete=models.CASCADE,related_name='etapas')
-    ordem=models.PositiveIntegerField(default=1); titulo=models.CharField(max_length=180); descricao=models.TextField(blank=True)
-    video_url=models.URLField(blank=True); material=models.FileField(upload_to='gestao/treinamentos/',blank=True,null=True,storage=RawMediaCloudinaryStorage())
-    pergunta=models.CharField(max_length=300,blank=True); resposta_esperada=models.CharField(max_length=300,blank=True)
+    ordem=models.PositiveIntegerField(default=1); tipo=models.CharField(max_length=20,choices=TIPOS,default='texto'); titulo=models.CharField(max_length=180); descricao=models.TextField(blank=True)
+    video_url=models.URLField(blank=True); video_arquivo=models.FileField(upload_to='gestao/videos_treinamento/',blank=True,null=True,storage=RawMediaCloudinaryStorage()); material=models.FileField(upload_to='gestao/treinamentos/',blank=True,null=True,storage=RawMediaCloudinaryStorage())
+    pergunta=models.CharField(max_length=500,blank=True); alternativas=models.JSONField(default=list,blank=True); resposta_esperada=models.CharField(max_length=300,blank=True); explicacao=models.TextField(blank=True); nota_minima=models.PositiveSmallIntegerField(default=70)
     pontos=models.PositiveIntegerField(default=20); obrigatoria=models.BooleanField(default=True)
     class Meta: ordering=['treinamento','ordem']; unique_together=[('treinamento','ordem')]
     def __str__(self): return f'{self.treinamento} • {self.ordem}. {self.titulo}'

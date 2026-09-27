@@ -45,7 +45,7 @@ class NotaForm(StyledModelForm):
 class ProjetoQualidadeForm(StyledModelForm):
     class Meta: model=ProjetoQualidade; exclude=['loja','dados']
 class TreinamentoForm(StyledModelForm):
-    class Meta: model=Treinamento; exclude=['loja']
+    class Meta: model=Treinamento; exclude=['loja','certificado_empresa']
 class LGPDForm(StyledModelForm):
     class Meta: model=RegistroLGPD; exclude=['loja','usuario','ip_hash']
 class AtividadeTratamentoForm(StyledModelForm):
