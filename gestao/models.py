@@ -228,6 +228,7 @@ class EtapaTreinamento(BaseEmpresa):
     video_url=models.URLField(blank=True); video_arquivo=models.FileField(upload_to='gestao/videos_treinamento/',blank=True,null=True,storage=RawMediaCloudinaryStorage()); material=models.FileField(upload_to='gestao/treinamentos/',blank=True,null=True,storage=RawMediaCloudinaryStorage())
     pergunta=models.CharField(max_length=500,blank=True); alternativas=models.JSONField(default=list,blank=True); resposta_esperada=models.CharField(max_length=300,blank=True); explicacao=models.TextField(blank=True); questoes=models.JSONField(default=list,blank=True); slides=models.JSONField(default=list,blank=True); nota_minima=models.PositiveSmallIntegerField(default=70)
     pontos=models.PositiveIntegerField(default=20); obrigatoria=models.BooleanField(default=True)
+    max_tentativas=models.PositiveSmallIntegerField(default=3,help_text='0 = tentativas ilimitadas')
     class Meta: ordering=['treinamento','ordem']; unique_together=[('treinamento','ordem')]
     def __str__(self): return f'{self.treinamento} • {self.ordem}. {self.titulo}'
 
@@ -236,6 +237,14 @@ class ProgressoEtapa(BaseEmpresa):
     etapa=models.ForeignKey(EtapaTreinamento,on_delete=models.CASCADE,related_name='progressos')
     concluida=models.BooleanField(default=False); resposta=models.CharField(max_length=500,blank=True); concluida_em=models.DateTimeField(null=True,blank=True)
     class Meta: unique_together=[('colaborador','etapa')]
+
+class TentativaAvaliacao(BaseEmpresa):
+    colaborador=models.ForeignKey(Colaborador,on_delete=models.CASCADE,related_name='tentativas_avaliacao')
+    etapa=models.ForeignKey(EtapaTreinamento,on_delete=models.CASCADE,related_name='tentativas_avaliacao')
+    numero=models.PositiveSmallIntegerField(default=1); nota=models.DecimalField(max_digits=5,decimal_places=2,default=0)
+    acertos=models.PositiveIntegerField(default=0); total=models.PositiveIntegerField(default=0); aprovado=models.BooleanField(default=False)
+    respostas=models.JSONField(default=dict,blank=True); realizado_em=models.DateTimeField(auto_now_add=True)
+    class Meta: ordering=['etapa','colaborador','numero']; unique_together=[('colaborador','etapa','numero')]
 
 class PreferenciaNotificacao(BaseEmpresa):
     usuario=models.OneToOneField(settings.AUTH_USER_MODEL,on_delete=models.CASCADE,related_name='preferencias_alertas')
