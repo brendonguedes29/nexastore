@@ -37,6 +37,30 @@ def _fk_empresa(model, loja, valor):
     try: return model.objects.filter(loja=loja,pk=valor).first()
     except (TypeError, ValueError): return None
 
+def _projetos_visiveis(request, loja):
+    qs=ProjetoQualidade.objects.filter(loja=loja)
+    perfil=getattr(request.user,'perfil_colaborador',None)
+    if not perfil or perfil.papel=='gestor_empresa':
+        return qs
+    # Colaborador enxerga somente o que pertence ao seu setor ou foi atribuído diretamente a ele.
+    return qs.filter(Q(setor=perfil.setor)|Q(etapas_cronograma__responsavel=perfil)).distinct()
+
+def _pode_editar_projeto(request, projeto):
+    perfil=getattr(request.user,'perfil_colaborador',None)
+    if not perfil or perfil.papel=='gestor_empresa': return True
+    return projeto.etapas_cronograma.filter(responsavel=perfil).exists()
+
+def _pode_editar_etapa(request, etapa):
+    perfil=getattr(request.user,'perfil_colaborador',None)
+    if not perfil or perfil.papel=='gestor_empresa': return True
+    return etapa.responsavel_id==perfil.id
+
+def _garantir_etapas_treinamento(treinamento):
+    if treinamento.etapas.exists(): return
+    # Treinamentos antigos sem etapas não podem aparecer como concluídos ao primeiro clique.
+    texto=treinamento.conteudo or treinamento.descricao or 'Conteúdo introdutório do treinamento.'
+    EtapaTreinamento.objects.create(loja=treinamento.loja,treinamento=treinamento,ordem=1,titulo='Conteúdo principal',descricao=texto,video_url=treinamento.video_url,pontos=treinamento.pontos)
+
 def _licenca_ativa(loja):
     loja.verificar_licenca(); return bool(loja.ativa and loja.status_licenca not in ['pendente','vencida'])
 
@@ -150,15 +174,19 @@ def treinamentos(request):
     if perfil and perfil.papel!='gestor_empresa': return redirect('portal_colaborador')
     loja=_empresa(request); form=TreinamentoForm(request.POST or None)
     if request.method=='POST' and form.is_valid():
-        o=form.save(commit=False); o.loja=loja; o.save(); messages.success(request,'Treinamento criado. Agora monte as etapas da trilha.'); return redirect('gestao_treinamento_editar',pk=o.pk)
+        o=form.save(commit=False); o.loja=loja; o.save(); _garantir_etapas_treinamento(o); messages.success(request,'Treinamento criado. Agora monte as etapas da trilha.'); return redirect('gestao_treinamento_editar',pk=o.pk)
     return render(request,'gestao/treinamentos.html',{'loja':loja,'form':form,'itens':Treinamento.objects.filter(loja=loja).prefetch_related('etapas').order_by('-id')})
 
 @plano_ativo
 def treinamento_editar(request,pk):
     perfil=getattr(request.user,'perfil_colaborador',None)
     if perfil and perfil.papel!='gestor_empresa': return redirect('portal_colaborador')
-    loja=_empresa(request); treinamento=get_object_or_404(Treinamento,loja=loja,pk=pk); form=EtapaTreinamentoForm(request.POST or None,request.FILES or None)
-    if request.method=='POST' and form.is_valid():
+    loja=_empresa(request); treinamento=get_object_or_404(Treinamento,loja=loja,pk=pk); _garantir_etapas_treinamento(treinamento)
+    if request.method=='POST' and request.POST.get('acao')=='dados':
+        tf=TreinamentoForm(request.POST,instance=treinamento)
+        if tf.is_valid(): tf.save(); messages.success(request,'Dados do treinamento atualizados.'); return redirect('gestao_treinamento_editar',pk=pk)
+    form=EtapaTreinamentoForm(request.POST or None,request.FILES or None)
+    if request.method=='POST' and request.POST.get('acao')!='dados' and form.is_valid():
         e=form.save(commit=False); e.loja=loja; e.treinamento=treinamento; e.save(); messages.success(request,'Etapa adicionada à trilha.'); return redirect('gestao_treinamento_editar',pk=pk)
     return render(request,'gestao/treinamento_editar.html',{'loja':loja,'treinamento':treinamento,'form':form,'etapas':treinamento.etapas.all(),'colaboradores':Colaborador.objects.filter(loja=loja,ativo=True)})
 
@@ -166,7 +194,7 @@ def treinamento_editar(request,pk):
 def treinamento_atribuir(request,pk):
     perfil=getattr(request.user,'perfil_colaborador',None)
     if perfil and perfil.papel!='gestor_empresa': return redirect('portal_colaborador')
-    loja=_empresa(request); treinamento=get_object_or_404(Treinamento,loja=loja,pk=pk)
+    loja=_empresa(request); treinamento=get_object_or_404(Treinamento,loja=loja,pk=pk); _garantir_etapas_treinamento(treinamento)
     if request.method=='POST':
         inicio=_data_post(request,'inicio'); prazo=_data_post(request,'prazo')
         ids=request.POST.getlist('colaboradores')
@@ -181,7 +209,8 @@ def treinamento_atribuir(request,pk):
 def trilha_executar(request,pk):
     perfil=getattr(request.user,'perfil_colaborador',None)
     if not perfil: return redirect('gestao_dashboard')
-    trilha=get_object_or_404(TrilhaColaborador,pk=pk,colaborador=perfil,loja=perfil.loja); hoje=timezone.localdate()
+    trilha=get_object_or_404(TrilhaColaborador,pk=pk,colaborador=perfil,loja=perfil.loja); hoje=timezone.localdate(); _garantir_etapas_treinamento(trilha.treinamento)
+    if trilha.status=='pendente': trilha.status='andamento'; trilha.save(update_fields=['status'])
     if trilha.inicio and hoje<trilha.inicio:
         messages.info(request,f'Este treinamento será liberado em {trilha.inicio.strftime("%d/%m/%Y")}.'); return redirect('portal_colaborador')
     etapas=list(trilha.treinamento.etapas.all()); atual=None
@@ -208,7 +237,8 @@ def trilha_executar(request,pk):
         if 'youtu.be/' in video_url: video_embed='https://www.youtube.com/embed/'+video_url.split('youtu.be/',1)[1].split('?',1)[0]
         elif 'youtube.com/watch' in video_url and 'v=' in video_url: video_embed='https://www.youtube.com/embed/'+video_url.split('v=',1)[1].split('&',1)[0]
         elif 'youtube.com/embed/' in video_url: video_embed=video_url
-    return render(request,'gestao/trilha_executar.html',{'loja':perfil.loja,'perfil':perfil,'trilha':trilha,'etapas':etapas,'atual':atual,'concluidas':concluidas,'total':len(etapas),'video_url':video_url,'video_embed':video_embed})
+    progresso_percent=int((concluidas/len(etapas))*100) if etapas else 0
+    return render(request,'gestao/trilha_executar.html',{'loja':perfil.loja,'perfil':perfil,'trilha':trilha,'etapas':etapas,'atual':atual,'concluidas':concluidas,'total':len(etapas),'progresso_percent':progresso_percent,'video_url':video_url,'video_embed':video_embed})
 
 @plano_ativo
 def workspace(request):
@@ -232,26 +262,34 @@ def ferramentas(request):
             status=request.POST.get('status','andamento')
             if status not in dict(ProjetoQualidade._meta.get_field('status').choices): status='andamento'
             processo=_fk_empresa(Processo,loja,request.POST.get('processo')); setor=_fk_empresa(Setor,loja,request.POST.get('setor'))
-            projeto=ProjetoQualidade.objects.create(loja=loja,ferramenta=ferramenta,titulo=titulo,problema=problema,responsavel=request.user.get_full_name() or request.user.username,dados=campos,status=status,processo=processo,setor=setor,inicio=_data_post(request,'inicio'),fim=_data_post(request,'fim'),concluido_em=timezone.now() if status=='concluido' else None)
+            perfil=getattr(request.user,'perfil_colaborador',None)
+            if perfil and perfil.papel!='gestor_empresa': setor=perfil.setor
+            projeto=ProjetoQualidade.objects.create(loja=loja,criado_por=request.user,ferramenta=ferramenta,titulo=titulo,problema=problema,responsavel=request.user.get_full_name() or request.user.username,dados=campos,status=status,processo=processo,setor=setor,inicio=_data_post(request,'inicio'),fim=_data_post(request,'fim'),concluido_em=timezone.now() if status=='concluido' else None)
             _criar_etapas_metodologicas(projeto)
             RegistroAuditoriaSistema.objects.create(loja=loja,usuario=request.user,acao='analise_criada',objeto=f'{projeto.get_ferramenta_display()} #{projeto.id}',descricao=f'{projeto.titulo} • {projeto.processo or "Sem processo"} • {projeto.setor or "Sem setor"}')
-            perfil=getattr(request.user,'perfil_colaborador',None)
             if perfil and status=='concluido':
                 PontuacaoAtividade.objects.create(loja=loja,colaborador=perfil,categoria='qualidade',ferramenta=ferramenta,titulo=f'Aplicação concluída {projeto.get_ferramenta_display()} #{projeto.id}',pontos=25)
                 perfil.pontos+=25; perfil.nivel=1+(perfil.pontos//500); perfil.save(update_fields=['pontos','nivel'])
             messages.success(request,f'{projeto.get_ferramenta_display()} salvo com sucesso. Ele já está visível no histórico e na Visão Geral.')
             return redirect('gestao_analise_detalhe',pk=projeto.pk)
-    return render(request,'gestao/ferramentas.html',{'loja':loja,'projetos':ProjetoQualidade.objects.filter(loja=loja).select_related('processo','setor').order_by('-id')[:30],'processos_lista':Processo.objects.filter(loja=loja,status='ativo'),'setores_lista':Setor.objects.filter(loja=loja,ativo=True)})
+    perfil=getattr(request.user,'perfil_colaborador',None); processos=Processo.objects.filter(loja=loja,status='ativo'); setores=Setor.objects.filter(loja=loja,ativo=True)
+    if perfil and perfil.papel!='gestor_empresa': processos=processos.filter(Q(setor=perfil.setor)|Q(setor__isnull=True)); setores=setores.filter(pk=perfil.setor_id)
+    return render(request,'gestao/ferramentas.html',{'loja':loja,'projetos':_projetos_visiveis(request,loja).select_related('processo','setor').order_by('-id')[:30],'processos_lista':processos,'setores_lista':setores,'perfil_colaborador':perfil})
 
 @plano_ativo
 def analise_detalhe(request,pk):
-    loja=_empresa(request); projeto=get_object_or_404(ProjetoQualidade,loja=loja,pk=pk)
-    _criar_etapas_metodologicas(projeto)
-    return render(request,'gestao/analise_detalhe.html',{'loja':loja,'projeto':projeto,'etapas':projeto.etapas_cronograma.select_related('responsavel__usuario'),'colaboradores':Colaborador.objects.filter(loja=loja,ativo=True,status_cadastro='aprovado').select_related('usuario')})
+    loja=_empresa(request); projeto=get_object_or_404(_projetos_visiveis(request,loja),pk=pk)
+    _criar_etapas_metodologicas(projeto); perfil=getattr(request.user,'perfil_colaborador',None)
+    etapas=list(projeto.etapas_cronograma.select_related('responsavel__usuario'))
+    for e in etapas:
+        e.pode_editar=(not perfil or perfil.papel=='gestor_empresa' or e.responsavel_id==perfil.id)
+        e.status_visual='atrasada' if e.status!='concluida' and e.previsao and e.previsao<timezone.localdate() else e.status
+    return render(request,'gestao/analise_detalhe.html',{'loja':loja,'projeto':projeto,'etapas':etapas,'pode_editar_projeto':_pode_editar_projeto(request,projeto),'colaboradores':Colaborador.objects.filter(loja=loja,ativo=True,status_cadastro='aprovado').select_related('usuario')})
 
 @plano_ativo
 def analise_salvar(request,pk):
-    loja=_empresa(request); projeto=get_object_or_404(ProjetoQualidade,loja=loja,pk=pk)
+    loja=_empresa(request); projeto=get_object_or_404(_projetos_visiveis(request,loja),pk=pk)
+    if not _pode_editar_projeto(request,projeto): messages.error(request,'Você pode visualizar esta análise, mas não alterar o controle geral.'); return redirect('gestao_analise_detalhe',pk=pk)
     if request.method=='POST':
         anterior=projeto.status; novo=request.POST.get('status',projeto.status)
         if novo not in dict(ProjetoQualidade._meta.get_field('status').choices): novo=projeto.status
@@ -737,7 +775,9 @@ def _notificar_etapa(etapa, anterior_id=None):
 
 @plano_ativo
 def etapa_qualidade_nova(request,pk):
-    loja=_empresa(request); projeto=get_object_or_404(ProjetoQualidade,loja=loja,pk=pk)
+    loja=_empresa(request); projeto=get_object_or_404(_projetos_visiveis(request,loja),pk=pk)
+    perfil=getattr(request.user,'perfil_colaborador',None)
+    if perfil and perfil.papel!='gestor_empresa': messages.error(request,'Somente a gestão pode adicionar etapas.'); return redirect('gestao_analise_detalhe',pk=pk)
     if request.method=='POST':
         ultima=projeto.etapas_cronograma.order_by('-ordem').first()
         responsavel=_fk_empresa(Colaborador,loja,request.POST.get('responsavel'))
@@ -749,15 +789,25 @@ def etapa_qualidade_nova(request,pk):
 @plano_ativo
 def etapa_qualidade_salvar(request,pk):
     loja=_empresa(request); e=get_object_or_404(EtapaProjetoQualidade,loja=loja,pk=pk)
+    if not _projetos_visiveis(request,loja).filter(pk=e.projeto_id).exists(): return redirect('portal_colaborador')
+    if not _pode_editar_etapa(request,e): messages.error(request,'Esta etapa está disponível para consulta, mas somente o responsável ou a gestão pode editá-la.'); return redirect('gestao_analise_detalhe',pk=e.projeto_id)
     if request.method=='POST':
         anterior=e.responsavel_id; status_anterior=e.status
-        responsavel=_fk_empresa(Colaborador,loja,request.POST.get('responsavel')); novo_status=request.POST.get('status',e.status)
+        responsavel=_fk_empresa(Colaborador,loja,request.POST.get('responsavel')); perfil=getattr(request.user,'perfil_colaborador',None)
+        if perfil and perfil.papel!='gestor_empresa': responsavel=e.responsavel
+        novo_status=request.POST.get('status',e.status)
         if novo_status not in dict(EtapaProjetoQualidade.STATUS): novo_status=e.status
-        e.titulo=request.POST.get('titulo',e.titulo).strip() or e.titulo; e.descricao=request.POST.get('descricao','').strip(); e.responsavel=responsavel; e.inicio=_data_post(request,'inicio'); e.previsao=_data_post(request,'previsao'); e.status=novo_status; e.observacoes=request.POST.get('observacoes','').strip()
+        if novo_status=='nao_iniciada' and (request.POST.get('observacoes','').strip() or _data_post(request,'inicio')): novo_status='andamento'
+        e.titulo=request.POST.get('titulo',e.titulo).strip() or e.titulo; e.descricao=request.POST.get('descricao',e.descricao).strip(); e.responsavel=responsavel; e.inicio=_data_post(request,'inicio'); e.previsao=_data_post(request,'previsao'); e.status=novo_status; e.observacoes=request.POST.get('observacoes','').strip()
         if request.FILES.get('evidencia'): e.evidencia=request.FILES['evidencia']
         if e.status=='concluida' and status_anterior!='concluida': e.concluido_em=timezone.now()
         elif e.status!='concluida': e.concluido_em=None
         e.save(); _notificar_etapa(e,anterior)
+        etapas_qs=e.projeto.etapas_cronograma.all()
+        if etapas_qs.exists():
+            if not etapas_qs.exclude(status='concluida').exists(): e.projeto.status='concluido'; e.projeto.concluido_em=e.projeto.concluido_em or timezone.now()
+            elif etapas_qs.exclude(status='nao_iniciada').exists(): e.projeto.status='andamento'; e.projeto.concluido_em=None
+            e.projeto.save(update_fields=['status','concluido_em','atualizado_em'])
         if e.status=='concluida' and status_anterior!='concluida' and e.responsavel:
             chave=f'Etapa qualidade #{e.pk}'
             if not PontuacaoAtividade.objects.filter(loja=loja,colaborador=e.responsavel,titulo=chave).exists():

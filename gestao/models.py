@@ -139,6 +139,7 @@ class ProjetoQualidade(BaseEmpresa):
     processo=models.ForeignKey(Processo,on_delete=models.SET_NULL,null=True,blank=True,related_name='analises_qualidade'); setor=models.ForeignKey('Setor',on_delete=models.SET_NULL,null=True,blank=True,related_name='analises_qualidade')
     inicio=models.DateField(null=True,blank=True); fim=models.DateField(null=True,blank=True); concluido_em=models.DateTimeField(null=True,blank=True); status=models.CharField(max_length=20,choices=[('rascunho','Rascunho'),('andamento','Em andamento'),('concluido','Concluído')],default='rascunho')
     dados=models.JSONField(default=dict,blank=True)
+    criado_por=models.ForeignKey(settings.AUTH_USER_MODEL,on_delete=models.SET_NULL,null=True,blank=True,related_name='analises_qualidade_criadas')
     def __str__(self): return f'{self.get_ferramenta_display()} • {self.titulo}'
 
 class Treinamento(BaseEmpresa):
