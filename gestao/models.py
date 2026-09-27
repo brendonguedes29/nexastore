@@ -226,7 +226,7 @@ class EtapaTreinamento(BaseEmpresa):
     treinamento=models.ForeignKey(Treinamento,on_delete=models.CASCADE,related_name='etapas')
     ordem=models.PositiveIntegerField(default=1); tipo=models.CharField(max_length=20,choices=TIPOS,default='texto'); titulo=models.CharField(max_length=180); descricao=models.TextField(blank=True)
     video_url=models.URLField(blank=True); video_arquivo=models.FileField(upload_to='gestao/videos_treinamento/',blank=True,null=True,storage=RawMediaCloudinaryStorage()); material=models.FileField(upload_to='gestao/treinamentos/',blank=True,null=True,storage=RawMediaCloudinaryStorage())
-    pergunta=models.CharField(max_length=500,blank=True); alternativas=models.JSONField(default=list,blank=True); resposta_esperada=models.CharField(max_length=300,blank=True); explicacao=models.TextField(blank=True); questoes=models.JSONField(default=list,blank=True); nota_minima=models.PositiveSmallIntegerField(default=70)
+    pergunta=models.CharField(max_length=500,blank=True); alternativas=models.JSONField(default=list,blank=True); resposta_esperada=models.CharField(max_length=300,blank=True); explicacao=models.TextField(blank=True); questoes=models.JSONField(default=list,blank=True); slides=models.JSONField(default=list,blank=True); nota_minima=models.PositiveSmallIntegerField(default=70)
     pontos=models.PositiveIntegerField(default=20); obrigatoria=models.BooleanField(default=True)
     class Meta: ordering=['treinamento','ordem']; unique_together=[('treinamento','ordem')]
     def __str__(self): return f'{self.treinamento} • {self.ordem}. {self.titulo}'

@@ -196,7 +196,20 @@ def treinamento_editar(request,pk):
             messages.success(request,'Etapa removida.'); return redirect('gestao_treinamento_editar',pk=pk)
         elif acao=='etapa':
             tipo=request.POST.get('tipo','slide')
-            questoes=[]
+            questoes=[]; slides=[]
+            if tipo=='slide':
+                titulos=request.POST.getlist('slide_titulo[]'); textos=request.POST.getlist('slide_texto[]'); imagens=request.FILES.getlist('slide_imagem[]')
+                for i in range(max(len(titulos),len(textos))):
+                    titulo=(titulos[i] if i<len(titulos) else '').strip(); texto=(textos[i] if i<len(textos) else '').strip()
+                    imagem=imagens[i] if i<len(imagens) else None
+                    if not (titulo or texto or imagem): continue
+                    item={'titulo':titulo,'texto':texto,'imagem':''}
+                    if imagem:
+                        from django.core.files.storage import default_storage
+                        nome=default_storage.save(f'gestao/treinamentos/slides/{imagem.name}',imagem); item['imagem']=default_storage.url(nome)
+                    slides.append(item)
+                if not slides:
+                    messages.error(request,'Adicione pelo menos um slide à apresentação.'); return redirect('gestao_treinamento_editar',pk=pk)
             if tipo in ('quiz','avaliacao'):
                 perguntas=request.POST.getlist('q_pergunta[]')
                 for i,pergunta in enumerate(perguntas):
@@ -208,10 +221,9 @@ def treinamento_editar(request,pk):
                     if alts: correta=max(0,min(correta,len(alts)-1))
                     questoes.append({'pergunta':pergunta,'alternativas':alts,'correta':correta,'explicacao':request.POST.get(f'q_explicacao_{i}','').strip()})
                 if not questoes:
-                    messages.error(request,'Adicione pelo menos uma pergunta ao quiz/avaliação.')
-                    return redirect('gestao_treinamento_editar',pk=pk)
+                    messages.error(request,'Adicione pelo menos uma pergunta ao quiz/avaliação.'); return redirect('gestao_treinamento_editar',pk=pk)
             ordem=(treinamento.etapas.aggregate(m=Max('ordem'))['m'] or 0)+1
-            e=EtapaTreinamento(loja=loja,treinamento=treinamento,ordem=ordem,tipo=tipo,titulo=request.POST.get('titulo','').strip() or 'Nova etapa',descricao=request.POST.get('descricao','').strip(),video_url=request.POST.get('video_url','').strip(),questoes=questoes,pontos=max(0,int(request.POST.get('pontos') or 0)),nota_minima=max(0,min(100,int(request.POST.get('nota_minima') or 70))),obrigatoria=request.POST.get('obrigatoria')=='on')
+            e=EtapaTreinamento(loja=loja,treinamento=treinamento,ordem=ordem,tipo=tipo,titulo=request.POST.get('titulo','').strip() or 'Nova etapa',descricao=request.POST.get('descricao','').strip(),video_url=request.POST.get('video_url','').strip(),questoes=questoes,slides=slides,pontos=max(0,int(request.POST.get('pontos') or 0)),nota_minima=max(0,min(100,int(request.POST.get('nota_minima') or 70))),obrigatoria=request.POST.get('obrigatoria')=='on')
             if request.FILES.get('video_arquivo'): e.video_arquivo=request.FILES['video_arquivo']
             if request.FILES.get('material'): e.material=request.FILES['material']
             e.save(); messages.success(request,'Etapa adicionada ao treinamento.'); return redirect('gestao_treinamento_editar',pk=pk)
@@ -311,7 +323,12 @@ def trilha_executar(request,pk):
         elif 'youtube.com/embed/' in video_url: video_embed=video_url
     progresso_percent=int((concluidas/len(etapas))*100) if etapas else 0
     cert=CertificadoTreinamento.objects.filter(loja=perfil.loja,colaborador=perfil,treinamento=trilha.treinamento).first()
-    return render(request,'gestao/trilha_executar.html',{'loja':perfil.loja,'perfil':perfil,'trilha':trilha,'etapas':etapas,'atual':atual,'concluidas':concluidas,'total':len(etapas),'progresso_percent':progresso_percent,'video_url':video_url,'video_embed':video_embed,'erro_quiz':erro_quiz,'feedback_quiz':feedback_quiz,'revisao':revisao,'cert':cert})
+    slides_apresentacao=[]
+    if atual and atual.tipo=='slide':
+        slides_apresentacao=atual.slides or []
+        if not slides_apresentacao and (atual.titulo or atual.descricao or atual.material):
+            slides_apresentacao=[{'titulo':atual.titulo,'texto':atual.descricao,'imagem':atual.material.url if atual.material else ''}]
+    return render(request,'gestao/trilha_executar.html',{'loja':perfil.loja,'perfil':perfil,'trilha':trilha,'etapas':etapas,'atual':atual,'concluidas':concluidas,'total':len(etapas),'progresso_percent':progresso_percent,'video_url':video_url,'video_embed':video_embed,'erro_quiz':erro_quiz,'feedback_quiz':feedback_quiz,'revisao':revisao,'cert':cert,'slides_apresentacao':slides_apresentacao})
 
 @plano_ativo
 def workspace(request):
