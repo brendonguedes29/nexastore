@@ -17,3 +17,10 @@
 <style>.compact-hero{padding:14px 18px!important;margin-bottom:12px!important}.compact-hero h1{font-size:23px!important}.dash-flow{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(280px,.85fr);gap:14px;margin-top:14px;align-items:start}.dash-stack{display:flex;flex-direction:column;gap:14px;min-width:0}.dash-stack>.card{height:auto!important;min-height:0!important}.dash-head{display:flex;justify-content:space-between;gap:12px;align-items:center}.dash-head h3{margin:0}.dash-empty{padding:11px 12px;border:1px dashed #dce4ee;border-radius:9px;background:#f8fafc;color:#718096;font-size:13px}.dash-row{display:flex;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px solid #edf1f6}.dash-row:last-child{border-bottom:0}.team-mini{display:flex;gap:10px;flex-wrap:wrap;margin:10px 0 12px}.team-mini a{text-decoration:none;color:inherit;text-align:center;width:62px}.team-mini img,.team-mini span{width:42px;height:42px;border-radius:50%;object-fit:cover;display:grid;place-items:center;margin:auto;background:#e8f0ff;font-weight:900}.team-mini small{display:block;margin-top:4px}.portal-url{padding:10px 12px;border-radius:9px;background:#f7f9fc;border:1px solid #e5ebf3;font-size:12px;font-weight:700;overflow-wrap:anywhere}@media(max-width:1050px){.dash-flow{grid-template-columns:1fr}}</style>
 <script>copyPortal?.addEventListener('click',async()=>{const t=portalUrl.textContent;try{await navigator.clipboard.writeText(t);copyMsg.textContent='Link copiado.'}catch(e){copyMsg.textContent='Selecione e copie o endereço acima.'}})</script>
 {% endblock %}
+<style id="v30-dashboard-flow-fix">
+/* Cards seguem o conteúdo; não existe coluna lateral longa deixando um vazio abaixo da outra */
+.dash-flow{display:block!important;margin-top:14px!important}
+.dash-stack{display:grid!important;grid-template-columns:repeat(auto-fit,minmax(320px,1fr))!important;gap:14px!important;margin-bottom:14px!important;align-items:start!important}
+.dash-stack>.card{height:auto!important;min-height:0!important;align-self:start!important}
+@media(max-width:760px){.dash-stack{grid-template-columns:1fr!important}}
+</style>

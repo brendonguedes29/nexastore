@@ -48,12 +48,12 @@ def _projetos_visiveis(request, loja):
 def _pode_editar_projeto(request, projeto):
     perfil=getattr(request.user,'perfil_colaborador',None)
     if not perfil or perfil.papel=='gestor_empresa': return True
-    return projeto.etapas_cronograma.filter(responsavel=perfil).exists()
+    return projeto.criado_por_id==request.user.id or projeto.etapas_cronograma.filter(responsavel=perfil).exists()
 
 def _pode_editar_etapa(request, etapa):
     perfil=getattr(request.user,'perfil_colaborador',None)
     if not perfil or perfil.papel=='gestor_empresa': return True
-    return etapa.responsavel_id==perfil.id
+    return etapa.responsavel_id==perfil.id or etapa.projeto.criado_por_id==request.user.id
 
 def _garantir_etapas_treinamento(treinamento):
     if treinamento.etapas.exists(): return
@@ -1000,20 +1000,26 @@ def certificado(request,pk):
     return render(request,'gestao/certificado.html',{'loja':cert.loja,'cert':cert})
 
 ETAPAS_METODOLOGICAS={
- 'pdca':[('PLAN • Planejar','Definir problema, objetivo, causas, metas e plano.'),('DO • Executar','Executar o plano e registrar evidências.'),('CHECK • Verificar','Comparar resultado, meta e indicadores.'),('ACT • Agir/Padronizar','Padronizar o que funcionou ou corrigir e reiniciar o ciclo.')],
- '5w2h':[('Definir ação • What/Why','Definir o que será feito e por quê.'),('Planejar • Where/When/Who','Definir local, prazo e responsáveis.'),('Método e custo • How/How much','Detalhar como será executado e o custo previsto.'),('Executar ação','Realizar o planejado e anexar evidências.'),('Verificar e encerrar','Confirmar resultado, registrar conclusão e lições aprendidas.')],
- 'ishikawa':[('Definir efeito/problema','Descrever claramente o efeito a investigar.'),('Levantar causas 6M','Mapear hipóteses em Método, Máquina, Mão de obra, Material, Meio ambiente e Medição.'),('Validar causas','Checar evidências e separar hipótese de causa confirmada.'),('Definir causa prioritária','Registrar causa(s) que exigem tratamento.'),('Planejar ação','Converter causas validadas em ações acompanháveis.')],
- '5porques':[('Definir problema','Descrever o fato observado com evidência.'),('Encadear os porquês','Investigar sucessivamente sem saltar para solução.'),('Validar causa raiz','Confirmar a causa provável com fatos.'),('Definir ação corretiva','Criar ação ligada à causa validada.'),('Verificar eficácia','Confirmar se o problema deixou de ocorrer.')],
- 'pareto':[('Definir período e categorias','Estabelecer base comparável para análise.'),('Coletar e validar dados','Conferir frequência ou impacto das ocorrências.'),('Ordenar e analisar','Priorizar categorias de maior contribuição.'),('Definir prioridades','Selecionar os poucos vitais a tratar.'),('Acompanhar resultado','Repetir a medição após as ações.')],
- 'sipoc':[('Definir escopo','Delimitar início e fim do processo.'),('Mapear Suppliers e Inputs','Registrar fornecedores e entradas.'),('Mapear Process','Descrever de 5 a 7 macroetapas.'),('Mapear Outputs e Customers','Registrar saídas e clientes.'),('Validar com envolvidos','Revisar interfaces, requisitos e responsáveis.')],
- 'masp':[('1 • Identificação','Definir e dimensionar o problema.'),('2 • Observação','Estratificar e observar características.'),('3 • Análise','Investigar e validar causas.'),('4 • Plano de ação','Planejar contramedidas.'),('5 • Ação','Executar o plano.'),('6 • Verificação','Confirmar resultados e eficácia.'),('7 • Padronização','Incorporar o novo padrão.'),('8 • Conclusão','Registrar aprendizado e próximos passos.')],
- '5s':[('Seiri • Utilização','Separar necessário do desnecessário.'),('Seiton • Ordenação','Definir locais e identificação.'),('Seiso • Limpeza/inspeção','Eliminar sujeira e identificar anomalias.'),('Seiketsu • Padronização','Criar padrões visuais e rotinas.'),('Shitsuke • Disciplina','Sustentar, auditar e melhorar o padrão.')]
+ 'pdca':[('PLAN • Planejar','Defina o problema com fatos, meta mensurável, causas priorizadas e ações. Antes de avançar, registre como o resultado será medido.'),('DO • Executar','Execute o plano em escala controlada. Registre o que foi feito, responsáveis, desvios e evidências.'),('CHECK • Verificar','Compare meta x resultado usando indicadores e evidências. Descreva o que funcionou, o que não funcionou e por quê.'),('ACT • Agir e padronizar','Padronize o que funcionou ou defina correções e um novo ciclo. Registre documentos, treinamentos ou padrões alterados.')],
+ '5w2h':[('WHAT + WHY • Ação e motivo','Descreva uma ação verificável e a razão ligada ao problema. Evite termos vagos como “melhorar”.'),('WHERE + WHEN + WHO • Local, prazo e responsável','Defina onde ocorrerá, data prevista e quem responde pela entrega.'),('HOW + HOW MUCH • Método e custo','Explique como executar, recursos necessários e custo estimado ou confirme custo zero.'),('Executar e evidenciar','Registre andamento, impedimentos, evidências e resultado da execução.'),('Verificar eficácia e encerrar','Compare resultado esperado x obtido. Se não foi eficaz, reabra ou gere nova ação.')],
+ 'ishikawa':[('Definir efeito','Escreva um problema específico, observável e delimitado por local/período.'),('Mapear hipóteses nos 6M','Investigue Método, Máquina, Mão de obra, Material, Meio ambiente e Medição. Não preencha categorias sem evidência.'),('Aprofundar causas','Para as hipóteses mais plausíveis, detalhe causas secundárias e o mecanismo que pode produzir o efeito.'),('Validar com fatos','Registre teste, dado, observação ou comparação que confirme ou refute cada hipótese prioritária.'),('Priorizar causa e agir','Selecione causas sustentadas por evidência e converta-as em ação acompanhável.')],
+ '5porques':[('Definir o problema','Descreva o fato observado, onde/quando ocorreu e a evidência disponível.'),('Construir cadeia causal','Pergunte “por quê?” sucessivamente. Cada resposta deve explicar a anterior. Não é obrigatório parar exatamente no quinto porquê.'),('Validar causa provável','Confirme com dado, observação ou teste se a causa encontrada realmente sustenta a cadeia.'),('Definir ação corretiva','Crie ação ligada à causa validada, com responsável e previsão.'),('Verificar eficácia','Após a ação, confirme se o problema deixou de ocorrer e registre evidência.')],
+ 'pareto':[('Definir base de análise','Defina período, unidade e o que será priorizado: frequência, custo, tempo, defeitos ou outro impacto.'),('Coletar e validar categorias','Cadastre categorias comparáveis e seus valores. Evite misturar sintomas, causas e unidades diferentes.'),('Ordenar e interpretar','Analise participação individual e acumulada. A faixa de 80% é referência, não regra obrigatória.'),('Selecionar prioridades','Escolha as categorias de maior contribuição que realmente podem ser investigadas/tratadas.'),('Reavaliar após ações','Repita a medição em período comparável para verificar se o perfil mudou.')],
+ 'sipoc':[('Definir escopo','Delimite início, fim, objetivo e dono do processo.'),('Suppliers + Inputs','Registre fornecedores e entradas críticas, incluindo requisitos relevantes.'),('Process • Macroetapas','Descreva de 5 a 7 macroetapas, sem transformar o SIPOC em fluxograma detalhado.'),('Outputs + Customers','Registre saídas, clientes e requisitos esperados.'),('Validar interfaces','Revise o mapa com envolvidos e registre lacunas, riscos e próximos passos.')],
+ 'masp':[('Identificação','Defina e dimensione o problema com indicador, histórico e impacto.'),('Observação','Estratifique por tempo, local, tipo, turno, produto ou outra dimensão útil.'),('Análise','Investigue e valide causas com fatos.'),('Plano de ação','Defina contramedidas, responsáveis, prazos e resultado esperado.'),('Ação','Execute e registre evidências e desvios.'),('Verificação','Compare antes x depois e confirme eficácia.'),('Padronização','Atualize padrão, treinamento, controle ou documento para sustentar o ganho.'),('Conclusão','Registre aprendizado, pendências e oportunidade de novo ciclo.')],
+ '5s':[('Seiri • Utilização','Avalie itens necessários x desnecessários. Registre excessos, itens sem uso, destino definido, evidência/foto e ação necessária.'),('Seiton • Ordenação','Avalie localização, identificação, quantidade, acesso e devolução dos itens. Registre oportunidades de gestão visual.'),('Seiso • Limpeza e inspeção','Avalie limpeza e fontes de sujeira, vazamentos, desgaste e anomalias. Trate a limpeza como inspeção, não só estética.'),('Seiketsu • Padronização','Defina padrão visual, frequência, critérios e responsáveis para manter os três primeiros sensos.'),('Shitsuke • Disciplina','Avalie aderência, rotina de auditoria, reincidências e treinamento. Defina como sustentar o padrão.'),('Plano e reavaliação','Consolide desvios, responsáveis e prazos. Defina a data da próxima avaliação e compare a evolução dos cinco sensos.')]
 }
-
 def _criar_etapas_metodologicas(projeto):
     if projeto.etapas_cronograma.exists(): return
-    for ordem,(titulo,descricao) in enumerate(ETAPAS_METODOLOGICAS.get(projeto.ferramenta,[]),1):
-        EtapaProjetoQualidade.objects.create(loja=projeto.loja,projeto=projeto,ordem=ordem,titulo=titulo,descricao=descricao)
+    definicoes=ETAPAS_METODOLOGICAS.get(projeto.ferramenta,[])
+    if not definicoes: return
+    inicio=projeto.inicio or timezone.localdate()
+    fim=projeto.fim
+    intervalo=max((fim-inicio).days, len(definicoes)) if fim and fim>=inicio else len(definicoes)*3
+    for ordem,(titulo,descricao) in enumerate(definicoes,1):
+        previsao=inicio + timedelta(days=max(1, round(intervalo*ordem/len(definicoes))))
+        if fim and previsao>fim: previsao=fim
+        EtapaProjetoQualidade.objects.create(loja=projeto.loja,projeto=projeto,ordem=ordem,titulo=titulo,descricao=descricao,inicio=inicio if ordem==1 else None,previsao=previsao)
 
 def _notificar_etapa(etapa, anterior_id=None):
     c=etapa.responsavel
@@ -1047,6 +1053,8 @@ def etapa_qualidade_salvar(request,pk):
     if not _pode_editar_etapa(request,e): messages.error(request,'Esta etapa está disponível para consulta, mas somente o responsável ou a gestão pode editá-la.'); return redirect('gestao_analise_detalhe',pk=e.projeto_id)
     if request.method=='POST':
         anterior=e.responsavel_id; status_anterior=e.status
+        if request.POST.get('acao')=='iniciar':
+            e.status='andamento'; e.inicio=e.inicio or timezone.localdate(); e.save(update_fields=['status','inicio','atualizado_em']); messages.success(request,'Etapa iniciada. Continue o preenchimento e salve sua evolução.'); return redirect('gestao_analise_detalhe',pk=e.projeto_id)
         responsavel=_fk_empresa(Colaborador,loja,request.POST.get('responsavel')); perfil=getattr(request.user,'perfil_colaborador',None)
         if perfil and perfil.papel!='gestor_empresa': responsavel=e.responsavel
         novo_status=request.POST.get('status',e.status)

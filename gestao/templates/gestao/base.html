@@ -89,3 +89,18 @@ document.addEventListener('DOMContentLoaded',()=>{
   });
 });
 </script>
+
+<style id="v30-layout-continuo">
+/* V30 revisão estrutural: o menu acompanha toda a altura REAL da página */
+html,body{min-height:100%;background:#f4f7fb}
+.layout{display:flex!important;align-items:stretch!important;min-height:100vh!important;height:auto!important;background:#f4f7fb}
+.side{position:relative!important;top:auto!important;height:auto!important;min-height:100vh!important;align-self:stretch!important;overflow:visible!important;background:#081426!important}
+.main{min-height:100vh!important;height:auto!important;align-self:stretch!important}
+/* painéis laterais do portal deixam de criar um corredor vazio até o fim */
+.portal-columns{display:block!important}
+.portal-columns>section{min-width:0}
+.portal-columns>aside{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:16px;align-items:start}
+.portal-columns>aside .side-panel{margin:0!important;height:auto!important;min-height:0!important}
+@media(max-width:1050px){.portal-columns>aside{grid-template-columns:1fr 1fr}}
+@media(max-width:700px){.portal-columns>aside{grid-template-columns:1fr}}
+</style>
