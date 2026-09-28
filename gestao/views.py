@@ -383,7 +383,8 @@ def ferramentas(request):
             return redirect('gestao_analise_detalhe',pk=projeto.pk)
     perfil=getattr(request.user,'perfil_colaborador',None); processos=Processo.objects.filter(loja=loja,status='ativo'); setores=Setor.objects.filter(loja=loja,ativo=True)
     if perfil and perfil.papel!='gestor_empresa': processos=processos.filter(Q(setor=perfil.setor)|Q(setor__isnull=True)); setores=setores.filter(pk=perfil.setor_id)
-    return render(request,'gestao/ferramentas.html',{'loja':loja,'projetos':_projetos_visiveis(request,loja).select_related('processo','setor').order_by('-id')[:30],'processos_lista':processos,'setores_lista':setores,'perfil_colaborador':perfil})
+    fmeas_historico=RiscoFMEA.objects.filter(loja=loja).select_related('processo','processo__setor').order_by('-id')[:30]
+    return render(request,'gestao/ferramentas.html',{'loja':loja,'projetos':_projetos_visiveis(request,loja).select_related('processo','setor').order_by('-id')[:30],'fmeas_historico':fmeas_historico,'processos_lista':processos,'setores_lista':setores,'perfil_colaborador':perfil})
 
 @plano_ativo
 def analise_detalhe(request,pk):
