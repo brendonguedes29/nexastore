@@ -134,17 +134,20 @@ def _crud(request, model, formcls, titulo, template='gestao/lista_form.html'):
     return render(request,template,{'loja':loja,'itens':qs,'registros_detalhes':registros,'form':form,'titulo':titulo})
 
 @plano_ativo
-def processos(request): return _crud(request,Processo,ProcessoForm,'Mapeamento de Processos')
+def processos(request): return _crud(request,Processo,ProcessoForm,'Mapeamento de Processos','gestao/processos.html')
 @plano_ativo
-def indicadores(request): return _crud(request,Indicador,IndicadorForm,'Indicadores e Metas')
+def indicadores(request): return _crud(request,Indicador,IndicadorForm,'Indicadores e Metas','gestao/indicadores.html')
 @plano_ativo
-def planos(request): return _crud(request,PlanoAcao,PlanoAcaoForm,'Planos de Ação • 5W2H')
+def planos(request): return _crud(request,PlanoAcao,PlanoAcaoForm,'Planos de Ação • 5W2H','gestao/5w2h.html')
 @plano_ativo
-def nao_conformidades(request): return _crud(request,NaoConformidade,NCForm,'Não Conformidades e CAPA')
+def nao_conformidades(request): return _crud(request,NaoConformidade,NCForm,'Não Conformidades e CAPA','gestao/nao_conformidades.html')
 @plano_ativo
-def documentos(request): return _crud(request,DocumentoGestao,DocumentoForm,'Gestão Documental')
+def documentos(request): return _crud(request,DocumentoGestao,DocumentoForm,'Gestão Documental','gestao/documentos.html')
 @plano_ativo
-def auditorias(request): return _crud(request,Auditoria,AuditoriaForm,'Auditorias')
+def auditorias(request):
+    if request.method=='POST' and not request.POST.get('data'):
+        request.POST=request.POST.copy(); request.POST['data']=request.POST.get('inicio') or timezone.localdate().isoformat()
+    return _crud(request,Auditoria,AuditoriaForm,'Auditorias','gestao/auditorias.html')
 @plano_ativo
 def iso(request):
     loja=_empresa(request)
@@ -165,7 +168,7 @@ def fmea(request): return _crud(request,RiscoFMEA,FMEAForm,'FMEA de Processo •
 @plano_ativo
 def producao(request): return _crud(request,RegistroProducao,ProducaoForm,'Produção e OEE','gestao/oee.html')
 @plano_ativo
-def setores(request): return _crud(request,Setor,SetorForm,'Setores e Áreas')
+def setores(request): return _crud(request,Setor,SetorForm,'Setores e Áreas','gestao/setores.html')
 @plano_ativo
 def tarefas(request): return _crud(request,Tarefa,TarefaForm,'Tarefas e Projetos','gestao/tarefas.html')
 @plano_ativo
@@ -466,11 +469,11 @@ def academia(request):
 def jogo_phishing(request):
     loja=_empresa(request); perfil=getattr(request.user,'perfil_colaborador',None)
     questoes=[
-      {'id':'q1','texto':'E-mail do “Financeiro” pede sua senha para evitar bloqueio em 30 minutos.','correta':'phishing','dica':'Senha + urgência artificial são sinais fortes de fraude.'},
-      {'id':'q2','texto':'Aviso interno conhecido, sem link, orienta abrir o sistema pelo favorito corporativo.','correta':'legitimo','dica':'A mensagem não pede credenciais nem induz clique inesperado.'},
-      {'id':'q3','texto':'Mensagem de fornecedor informa nova conta bancária e exige pagamento imediato por um link encurtado.','correta':'phishing','dica':'Mudança financeira deve ser validada por segundo canal.'},
-      {'id':'q4','texto':'RH pede atualização cadastral no portal corporativo acessado pelo endereço habitual da empresa.','correta':'legitimo','dica':'O canal conhecido reduz o risco; ainda assim confira domínio e HTTPS.'},
-      {'id':'q5','texto':'“Microsoft Suporte” envia anexo inesperado para “revalidar sua caixa postal”.','correta':'phishing','dica':'Anexo inesperado e pedido de revalidação são sinais de alerta.'},
+      {'id':'q1','nome':'Financeiro Nexa','email':'financeiro-nexa@outlook-seguranca.com','assunto':'URGENTE: conta bloqueada em 30 minutos','texto':'Confirme sua senha corporativa agora para evitar o bloqueio do acesso.','link':'https://nexa-validacao.exemplo/login','anexo':'','correta':'phishing','dica':'O nome parece interno, mas o domínio é externo e a mensagem pede senha com urgência artificial.'},
+      {'id':'q2','nome':'Comunicados Internos','email':'comunicados@empresa.com.br','assunto':'Manutenção programada do ERP','texto':'Hoje às 22h haverá manutenção. Acesse o sistema pelo favorito corporativo habitual; esta mensagem não contém link.','link':'','anexo':'','correta':'legitimo','dica':'Domínio conhecido, contexto plausível e nenhuma solicitação de credencial ou clique inesperado.'},
+      {'id':'q3','nome':'Fornecedor Alfa','email':'cobranca@fornecedor-alfa-pagamentos.net','assunto':'Nova conta bancária — pagamento hoje','texto':'Nossa conta mudou. O pagamento de hoje deve ser feito imediatamente pelo endereço abaixo.','link':'https://bit.ly/pagamento-alfa','anexo':'','correta':'phishing','dica':'Mudança financeira + urgência + domínio diferente e link encurtado exigem validação por segundo canal.'},
+      {'id':'q4','nome':'Recursos Humanos','email':'rh@empresa.com.br','assunto':'Atualização cadastral anual','texto':'A atualização anual está aberta. Entre no Portal RH pelo endereço que você já utiliza normalmente.','link':'','anexo':'','correta':'legitimo','dica':'A mensagem orienta usar o canal corporativo conhecido e não entrega um link alternativo nem pede senha por e-mail.'},
+      {'id':'q5','nome':'Microsoft Suporte','email':'support@microsoft-mailbox-check.com','assunto':'Sua caixa postal excedeu o limite','texto':'Abra o documento anexo e habilite o conteúdo para revalidar sua caixa postal.','link':'','anexo':'Revalidar_Caixa_Postal.zip','correta':'phishing','dica':'O domínio imita uma marca e o anexo inesperado pede uma ação perigosa. Não abra; reporte.'},
     ]
     resultado=None
     if request.method=='POST':
@@ -675,12 +678,16 @@ def comentar_tarefa(request,pk):
 
 @plano_ativo
 def auditoria_sistema(request):
-    loja=_empresa(request)
-    return render(request,'gestao/auditoria_sistema.html',{'loja':loja,'itens':RegistroAuditoriaSistema.objects.filter(loja=loja).select_related('usuario')[:100]})
+    loja=_empresa(request); itens=RegistroAuditoriaSistema.objects.filter(loja=loja).select_related('usuario').order_by('-criado_em')
+    q=request.GET.get('q','').strip(); acao=request.GET.get('acao','').strip()
+    if q: itens=itens.filter(Q(objeto__icontains=q)|Q(descricao__icontains=q)|Q(usuario__username__icontains=q)|Q(usuario__first_name__icontains=q))
+    if acao: itens=itens.filter(acao=acao)
+    acoes=RegistroAuditoriaSistema.objects.filter(loja=loja).values_list('acao',flat=True).distinct().order_by('acao')
+    return render(request,'gestao/auditoria_sistema.html',{'loja':loja,'itens':itens[:200],'acoes':acoes,'q':q,'acao_filtro':acao})
 
 @plano_ativo
 def metas_equipe(request):
-    return _crud(request,MetaEquipe,MetaEquipeForm,'Metas & Desafios de Equipe')
+    return _crud(request,MetaEquipe,MetaEquipeForm,'Metas & Desafios de Equipe','gestao/metas.html')
 
 def _premiar_jogo(loja,perfil,jogo,titulo,pontos,total,detalhes):
     return _premiar_simulacao(loja,perfil,jogo,titulo,pontos,total,detalhes)

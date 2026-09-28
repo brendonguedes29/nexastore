@@ -51,16 +51,17 @@ class NaoConformidade(BaseEmpresa):
     def __str__(self): return self.titulo
 
 class DocumentoGestao(BaseEmpresa):
+    STATUS=[('rascunho','Rascunho'),('aprovacao','Em aprovação'),('vigente','Vigente'),('obsoleto','Obsoleto')]
     TIPO=[('politica','Política'),('procedimento','Procedimento'),('instrucao','Instrução de trabalho'),('registro','Registro'),('manual','Manual')]
     codigo=models.CharField(max_length=40,blank=True); titulo=models.CharField(max_length=180); tipo=models.CharField(max_length=20,choices=TIPO,default='procedimento')
     versao=models.CharField(max_length=20,default='1.0'); responsavel=models.CharField(max_length=120,blank=True); arquivo=models.FileField(upload_to='gestao/documentos/',blank=True,null=True,storage=RawMediaCloudinaryStorage())
-    conteudo=models.TextField(blank=True); aprovado=models.BooleanField(default=False); proxima_revisao=models.DateField(null=True,blank=True)
+    conteudo=models.TextField(blank=True); aprovado=models.BooleanField(default=False); status=models.CharField(max_length=20,choices=STATUS,default='rascunho'); data_emissao=models.DateField(null=True,blank=True); proxima_revisao=models.DateField(null=True,blank=True)
     def __str__(self): return self.titulo
 
 class Auditoria(BaseEmpresa):
     STATUS=[('planejada','Planejada'),('andamento','Em andamento'),('concluida','Concluída')]
     titulo=models.CharField(max_length=180); escopo=models.TextField(blank=True); auditor=models.CharField(max_length=120,blank=True)
-    data=models.DateField(); status=models.CharField(max_length=20,choices=STATUS,default='planejada'); resultado=models.TextField(blank=True)
+    data=models.DateField(); inicio=models.DateField(null=True,blank=True); previsao_conclusao=models.DateField(null=True,blank=True); conclusao=models.DateField(null=True,blank=True); status=models.CharField(max_length=20,choices=STATUS,default='planejada'); resultado=models.TextField(blank=True)
     def __str__(self): return self.titulo
 
 class RequisitoISO(BaseEmpresa):
@@ -85,7 +86,7 @@ class RiscoFMEA(BaseEmpresa):
         return self.severidade_pos*self.ocorrencia_pos*self.deteccao_pos
 
 class RegistroProducao(BaseEmpresa):
-    data=models.DateField(); linha=models.CharField(max_length=120); tempo_planejado=models.DecimalField(max_digits=10,decimal_places=2,default=0)
+    data=models.DateField(); linha=models.CharField(max_length=120); equipamento=models.CharField(max_length=120,blank=True); produto=models.CharField(max_length=120,blank=True); turno=models.CharField(max_length=80,blank=True); tempo_planejado=models.DecimalField(max_digits=10,decimal_places=2,default=0)
     tempo_operando=models.DecimalField(max_digits=10,decimal_places=2,default=0); quantidade_total=models.PositiveIntegerField(default=0); quantidade_boa=models.PositiveIntegerField(default=0)
     ciclo_ideal=models.DecimalField(max_digits=10,decimal_places=4,default=0)
     @property
