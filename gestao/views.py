@@ -702,7 +702,11 @@ def lgpd_incidentes(request): return _crud(request,IncidentePrivacidade,Incident
 @login_required
 def meu_perfil(request):
     perfil=getattr(request.user,'perfil_colaborador',None)
-    if not perfil: return redirect('gestao_dashboard')
+    if not perfil:
+        loja=_empresa(request)
+        if request.method=='POST':
+            request.user.first_name=request.POST.get('first_name','').strip(); request.user.last_name=request.POST.get('last_name','').strip(); request.user.email=request.POST.get('email','').strip(); request.user.save(update_fields=['first_name','last_name','email']); messages.success(request,'Seu perfil de gestor foi atualizado.'); return redirect('gestao_meu_perfil')
+        return render(request,'gestao/perfil.html',{'loja':loja,'perfil_gestor':True})
     form=PerfilColaboradorForm(request.POST or None,request.FILES or None,instance=perfil)
     if request.method=='POST' and form.is_valid(): form.save(); messages.success(request,'Perfil atualizado.'); return redirect('gestao_meu_perfil')
     historico=PontuacaoAtividade.objects.filter(loja=perfil.loja,colaborador=perfil).order_by('-criado_em')[:20]
@@ -799,10 +803,22 @@ def _premiar_jogo(loja,perfil,jogo,titulo,pontos,total,detalhes):
 @plano_ativo
 def jogo_lean(request):
     loja=_empresa(request); perfil=getattr(request.user,'perfil_colaborador',None)
-    questoes=[('q1','Produzir antes da demanda real','superproducao'),('q2','Operador aguardando liberação da máquina','espera'),('q3','Levar material várias vezes entre prédios','transporte'),('q4','Refazer uma peça fora de especificação','defeitos'),('q5','Funcionário treinado sem autonomia para sugerir melhorias','talento')]
-    opcoes=[('superproducao','Superprodução'),('espera','Espera'),('transporte','Transporte'),('defeitos','Defeitos'),('talento','Talento não aproveitado')]; resultado=None
+    banco=[
+        ('q1','EXPEDIÇÃO','Paletes foram montados antes da programação e agora bloqueiam o corredor.','superproducao','📦'),
+        ('q2','ENVASE','A operadora está parada há 12 minutos aguardando liberação da máquina.','espera','⏱'),
+        ('q3','ARMAZÉM','O mesmo material cruza o galpão três vezes entre recebimento e uso.','transporte','🚚'),
+        ('q4','QUALIDADE','Uma peça fora de especificação voltou para correção e nova inspeção.','defeitos','⚠'),
+        ('q5','LINHA 2','A equipe conhece a causa de uma perda recorrente, mas não participa da melhoria.','talento','👥'),
+        ('q6','ESTOQUE','Há três semanas de componentes parados sem consumo previsto.','estoque','▦'),
+        ('q7','MONTAGEM','O operador caminha repetidamente até uma bancada distante para buscar ferramenta.','movimentacao','↔'),
+        ('q8','PROCESSO','O relatório é digitado em dois sistemas com os mesmos dados.','processamento','⌨'),
+    ]
+    import random
+    escolhidas=random.sample(banco,5)
+    questoes=[(f'q{i+1}',area,texto,correta,icone) for i,(_,area,texto,correta,icone) in enumerate(escolhidas)]
+    opcoes=[('superproducao','Superprodução'),('espera','Espera'),('transporte','Transporte'),('defeitos','Defeitos'),('talento','Talento não aproveitado'),('estoque','Estoque excessivo'),('movimentacao','Movimentação'),('processamento','Processamento excessivo')]; resultado=None
     if request.method=='POST':
-        acertos=sum(request.POST.get(q)==c for q,_,c in questoes); pontos=acertos*20; resultado={'acertos':acertos,'total':len(questoes),'pontos':pontos}; resultado['ganhos']=_premiar_jogo(loja,perfil,'lean','Caça ao desperdício',pontos,100,resultado); resultado['ciclo']=_ciclo_jogo(perfil,'lean') if perfil else None
+        acertos=sum(request.POST.get(q)==request.POST.get(q+'_correta') for q,_,_,_,_ in questoes); pontos=acertos*20; resultado={'acertos':acertos,'total':len(questoes),'pontos':pontos}; resultado['ganhos']=_premiar_jogo(loja,perfil,'lean','Caça ao desperdício',pontos,100,resultado); resultado['ciclo']=_ciclo_jogo(perfil,'lean') if perfil else None
         if perfil and acertos==len(questoes): ConquistaColaborador.objects.get_or_create(loja=loja,colaborador=perfil,codigo='lean_perfeito',defaults={'titulo':'Olhar Lean','descricao':'Identificou todos os desperdícios do desafio.'})
     return render(request,'gestao/jogo_lean.html',{'loja':loja,'questoes':questoes,'opcoes':opcoes,'resultado':resultado})
 

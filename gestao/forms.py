@@ -46,8 +46,8 @@ class FMEAForm(StyledModelForm):
 class ProducaoForm(StyledModelForm):
     class Meta:
         model=RegistroProducao; exclude=['loja']
-        labels={'data':'Data da medição','linha':'Linha / célula de produção','equipamento':'Equipamento principal (opcional)','produto':'Produto / família produzida','turno':'Turno / período','tempo_planejado':'Tempo planejado para produzir (min)','tempo_operando':'Tempo realmente operando (min)','quantidade_total':'Quantidade total produzida','quantidade_boa':'Quantidade aprovada sem retrabalho','ciclo_ideal':'Ciclo ideal por unidade (min/unidade)'}
-        help_texts={'tempo_planejado':'Desconte paradas planejadas que não fazem parte do tempo de produção.','tempo_operando':'Tempo planejado menos as paradas não planejadas.','ciclo_ideal':'Menor tempo sustentável para produzir uma unidade em condição normal.'}
+        labels={'data':'Data da medição','linha':'Linha / célula de produção','equipamento':'Equipamento principal (opcional)','produto':'Produto / família produzida','turno':'Turno / período','tempo_planejado':'Tempo planejado para produzir (min)','tempo_operando':'Tempo realmente operando (min)','quantidade_total':'Peças produzidas no período (total)','quantidade_boa':'Peças boas na primeira aprovação','ciclo_ideal':'Tempo ideal para produzir 1 peça (min/peça)'}
+        help_texts={'tempo_planejado':'Ex.: turno de 480 min menos almoço e parada programada.','tempo_operando':'Tempo planejado menos quebra, setup não previsto e outras paradas não planejadas.','quantidade_total':'Inclua boas, refugadas e retrabalhadas produzidas no período.','quantidade_boa':'Somente peças aprovadas sem retrabalho. Deve ser menor ou igual ao total.','ciclo_ideal':'Ex.: se a melhor condição sustentável é 30 s/peça, informe 0,5 min/peça.'}
 class SetorForm(StyledModelForm):
     class Meta:
         model=Setor; exclude=['loja']
