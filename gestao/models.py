@@ -218,6 +218,18 @@ class Reconhecimento(BaseEmpresa):
     concedido_por=models.ForeignKey(settings.AUTH_USER_MODEL,on_delete=models.SET_NULL,null=True,blank=True)
     titulo=models.CharField(max_length=120); mensagem=models.CharField(max_length=500,blank=True); pontos=models.PositiveIntegerField(default=25); criado_em=models.DateTimeField(auto_now_add=True)
 
+
+class SolicitacaoSuporte(BaseEmpresa):
+    CATEGORIAS=[('acesso','Acesso à plataforma'),('tarefa','Tarefa ou projeto'),('treinamento','Treinamento'),('indicador','Indicador'),('documento','Documento'),('sistema','Problema no sistema'),('outro','Outro')]
+    STATUS=[('aberto','Aberto'),('atendimento','Em atendimento'),('resolvido','Resolvido')]
+    colaborador=models.ForeignKey('Colaborador',on_delete=models.CASCADE,related_name='solicitacoes_suporte')
+    categoria=models.CharField(max_length=24,choices=CATEGORIAS,default='outro')
+    assunto=models.CharField(max_length=160)
+    mensagem=models.TextField()
+    resposta=models.TextField(blank=True)
+    status=models.CharField(max_length=20,choices=STATUS,default='aberto')
+    class Meta: ordering=['-criado_em']
+
 class Notificacao(BaseEmpresa):
     usuario=models.ForeignKey(settings.AUTH_USER_MODEL,on_delete=models.CASCADE,related_name='notificacoes_gestao')
     titulo=models.CharField(max_length=160); mensagem=models.CharField(max_length=500,blank=True); link=models.CharField(max_length=255,blank=True)

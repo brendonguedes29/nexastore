@@ -601,6 +601,37 @@ def portal_colaborador(request):
     return render(request,'gestao/portal_colaborador.html',{'loja':loja,'perfil':perfil,'nivel_info':progresso_nivel(perfil.pontos),'posicao_ranking':posicao,'tarefas':Tarefa.objects.filter(loja=loja,responsavel=perfil).exclude(status='concluida'),'trilhas':TrilhaColaborador.objects.filter(loja=loja,colaborador=perfil).select_related('treinamento'),'conquistas':ConquistaColaborador.objects.filter(loja=loja,colaborador=perfil).order_by('-concedida_em'),'notificacoes_novas':Notificacao.objects.filter(loja=loja,usuario=request.user,lida=False).count(),'certificados':CertificadoTreinamento.objects.filter(loja=loja,colaborador=perfil).select_related('treinamento').order_by('-emitido_em'),'historico_pontos':PontuacaoAtividade.objects.filter(loja=loja,colaborador=perfil).order_by('-criado_em')[:12],'meus_indicadores':Indicador.objects.filter(loja=loja,ativo=True,responsavel_colaborador=perfil).prefetch_related('medicoes')[:8],'comunidade_posts':PublicacaoComunidade.objects.filter(loja=loja,ativo=True,autor__perfil_visivel=True).select_related('autor__usuario').order_by('-criado_em')[:3]})
 
 
+@login_required
+def minhas_tarefas(request):
+    perfil=getattr(request.user,'perfil_colaborador',None)
+    if not perfil: return redirect('gestao_dashboard')
+    tarefas=Tarefa.objects.filter(loja=perfil.loja,responsavel=perfil).order_by('status','fim','-criado_em')
+    return render(request,'gestao/minhas_tarefas.html',{'loja':perfil.loja,'perfil':perfil,'tarefas':tarefas,'today':timezone.localdate()})
+
+@login_required
+def central_ajuda(request):
+    perfil=getattr(request.user,'perfil_colaborador',None)
+    if perfil:
+        loja=perfil.loja
+        if request.method=='POST':
+            assunto=request.POST.get('assunto','').strip(); mensagem=request.POST.get('mensagem','').strip(); categoria=request.POST.get('categoria','outro')
+            if assunto and mensagem:
+                sol=SolicitacaoSuporte.objects.create(loja=loja,colaborador=perfil,categoria=categoria if categoria in dict(SolicitacaoSuporte.CATEGORIAS) else 'outro',assunto=assunto,mensagem=mensagem)
+                gestores=User.objects.filter(loja=loja,is_active=True)
+                for u in gestores: Notificacao.objects.create(loja=loja,usuario=u,titulo='Nova solicitação interna',mensagem=f'{perfil.usuario.get_full_name() or perfil.usuario.username}: {assunto}',link=reverse('gestao_central_ajuda'))
+                messages.success(request,'Solicitação enviada à gestão.')
+                return redirect('gestao_central_ajuda')
+        itens=SolicitacaoSuporte.objects.filter(loja=loja,colaborador=perfil)
+        return render(request,'gestao/central_ajuda.html',{'loja':loja,'perfil':perfil,'itens':itens,'categorias':SolicitacaoSuporte.CATEGORIAS})
+    loja=_empresa(request)
+    if request.method=='POST' and request.POST.get('solicitacao_id'):
+        sol=get_object_or_404(SolicitacaoSuporte,loja=loja,pk=request.POST['solicitacao_id'])
+        sol.status=request.POST.get('status',sol.status) if request.POST.get('status') in dict(SolicitacaoSuporte.STATUS) else sol.status
+        sol.resposta=request.POST.get('resposta','').strip(); sol.save(update_fields=['status','resposta','atualizado_em'])
+        Notificacao.objects.create(loja=loja,usuario=sol.colaborador.usuario,titulo='Atualização na Central de Ajuda',mensagem=f'{sol.assunto}: {sol.get_status_display()}',link=reverse('gestao_central_ajuda'))
+        messages.success(request,'Solicitação atualizada.'); return redirect('gestao_central_ajuda')
+    return render(request,'gestao/central_ajuda.html',{'loja':loja,'itens':SolicitacaoSuporte.objects.filter(loja=loja).select_related('colaborador__usuario','colaborador__setor'),'status_opcoes':SolicitacaoSuporte.STATUS})
+
 def meus_indicadores(request):
     perfil = getattr(request.user, 'perfil_colaborador', None)
     if not perfil:

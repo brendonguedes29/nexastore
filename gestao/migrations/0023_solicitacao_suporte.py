@@ -1,0 +1,6 @@
+from django.db import migrations, models
+import django.db.models.deletion
+
+class Migration(migrations.Migration):
+    dependencies=[('gestao','0022_comunidade_e_pulso')]
+    operations=[migrations.CreateModel(name='SolicitacaoSuporte',fields=[('id',models.BigAutoField(auto_created=True,primary_key=True,serialize=False,verbose_name='ID')),('criado_em',models.DateTimeField(auto_now_add=True)),('atualizado_em',models.DateTimeField(auto_now=True)),('categoria',models.CharField(choices=[('acesso','Acesso à plataforma'),('tarefa','Tarefa ou projeto'),('treinamento','Treinamento'),('indicador','Indicador'),('documento','Documento'),('sistema','Problema no sistema'),('outro','Outro')],default='outro',max_length=24)),('assunto',models.CharField(max_length=160)),('mensagem',models.TextField()),('resposta',models.TextField(blank=True)),('status',models.CharField(choices=[('aberto','Aberto'),('atendimento','Em atendimento'),('resolvido','Resolvido')],default='aberto',max_length=20)),('colaborador',models.ForeignKey(on_delete=django.db.models.deletion.CASCADE,related_name='solicitacoes_suporte',to='gestao.colaborador')),('loja',models.ForeignKey(on_delete=django.db.models.deletion.CASCADE,to='lojas.loja'))],options={'ordering':['-criado_em']})]
