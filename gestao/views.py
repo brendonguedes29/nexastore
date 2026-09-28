@@ -43,7 +43,7 @@ def _projetos_visiveis(request, loja):
     if not perfil or perfil.papel=='gestor_empresa':
         return qs
     # Colaborador enxerga somente o que pertence ao seu setor ou foi atribuído diretamente a ele.
-    return qs.filter(Q(setor=perfil.setor)|Q(etapas_cronograma__responsavel=perfil)).distinct()
+    return qs.filter(Q(setor=perfil.setor)|Q(criado_por=request.user)|Q(etapas_cronograma__responsavel=perfil)).distinct()
 
 def _pode_editar_projeto(request, projeto):
     perfil=getattr(request.user,'perfil_colaborador',None)
@@ -434,6 +434,45 @@ def colaboradores(request):
         return redirect('gestao_colaboradores')
     return render(request,'gestao/colaboradores.html',{'loja':loja,'colaboradores':Colaborador.objects.filter(loja=loja).select_related('usuario','setor','supervisor__usuario'),'setores':Setor.objects.filter(loja=loja),'supervisores':Colaborador.objects.filter(loja=loja,ativo=True,status_cadastro='aprovado').select_related('usuario'),'papeis':Colaborador._meta.get_field('papel').choices})
 
+@plano_ativo
+def colaborador_editar(request,pk):
+    loja=_empresa(request); c=get_object_or_404(Colaborador,loja=loja,pk=pk)
+    if request.method=='POST':
+        antes=f'{c.cargo} / {c.setor} / {c.get_papel_display()} / ativo={c.ativo}'
+        c.cargo=request.POST.get('cargo','').strip(); c.setor=_fk_empresa(Setor,loja,request.POST.get('setor'))
+        papel=request.POST.get('papel',c.papel); c.papel=papel if papel in dict(Colaborador._meta.get_field('papel').choices) else c.papel
+        c.save(update_fields=['cargo','setor','papel'])
+        RegistroAuditoriaSistema.objects.create(loja=loja,usuario=request.user,acao='colaborador_atualizado',objeto=f'Colaborador #{c.id}',descricao=f'{antes} → {c.cargo} / {c.setor} / {c.get_papel_display()}')
+        messages.success(request,'Colaborador atualizado sem perder o histórico.')
+    return redirect('gestao_colaboradores')
+
+@plano_ativo
+def colaborador_status(request,pk):
+    loja=_empresa(request); c=get_object_or_404(Colaborador,loja=loja,pk=pk)
+    if request.method=='POST':
+        c.ativo=not c.ativo; c.save(update_fields=['ativo'])
+        RegistroAuditoriaSistema.objects.create(loja=loja,usuario=request.user,acao='colaborador_status',objeto=f'Colaborador #{c.id}',descricao='Reativado' if c.ativo else 'Desativado com histórico preservado')
+        messages.success(request,'Colaborador reativado.' if c.ativo else 'Acesso desativado. O histórico foi preservado.')
+    return redirect('gestao_colaboradores')
+
+@login_required
+def comunidade(request):
+    perfil=getattr(request.user,'perfil_colaborador',None)
+    if not perfil: return redirect('gestao_dashboard')
+    loja=perfil.loja
+    if request.method=='POST':
+        acao=request.POST.get('acao')
+        if acao=='publicar':
+            texto=request.POST.get('texto','').strip()[:500]
+            if texto: PublicacaoComunidade.objects.create(loja=loja,autor=perfil,texto=texto)
+        elif acao=='pulso':
+            humor=request.POST.get('humor')
+            if humor in dict(PulsoColaborador.HUMORES): PulsoColaborador.objects.update_or_create(loja=loja,colaborador=perfil,data=timezone.localdate(),defaults={'humor':humor,'comentario':request.POST.get('comentario','')[:240]})
+        return redirect('gestao_comunidade')
+    pessoas=Colaborador.objects.filter(loja=loja,ativo=True,perfil_visivel=True).select_related('usuario','setor')
+    posts=PublicacaoComunidade.objects.filter(loja=loja,ativo=True,autor__perfil_visivel=True).select_related('autor__usuario','autor__setor').order_by('-criado_em')[:40]
+    return render(request,'gestao/comunidade.html',{'loja':loja,'perfil':perfil,'pessoas':pessoas,'posts':posts,'humores':PulsoColaborador.HUMORES})
+
 def ativar_colaborador(request,uidb64,token):
     try: u=User.objects.get(pk=urlsafe_base64_decode(uidb64).decode())
     except Exception: u=None
@@ -502,7 +541,7 @@ def portal_colaborador(request):
     loja=perfil.loja; sincronizar_nivel(perfil)
     ranking_ids=list(Colaborador.objects.filter(loja=loja,ativo=True,ranking_visivel=True).order_by('-pontos','criado_em').values_list('id',flat=True))
     posicao=(ranking_ids.index(perfil.id)+1) if perfil.id in ranking_ids else None
-    return render(request,'gestao/portal_colaborador.html',{'loja':loja,'perfil':perfil,'nivel_info':progresso_nivel(perfil.pontos),'posicao_ranking':posicao,'tarefas':Tarefa.objects.filter(loja=loja,responsavel=perfil).exclude(status='concluida'),'trilhas':TrilhaColaborador.objects.filter(loja=loja,colaborador=perfil).select_related('treinamento'),'conquistas':ConquistaColaborador.objects.filter(loja=loja,colaborador=perfil).order_by('-concedida_em'),'notificacoes_novas':Notificacao.objects.filter(loja=loja,usuario=request.user,lida=False).count(),'certificados':CertificadoTreinamento.objects.filter(loja=loja,colaborador=perfil).select_related('treinamento').order_by('-emitido_em'),'historico_pontos':PontuacaoAtividade.objects.filter(loja=loja,colaborador=perfil).order_by('-criado_em')[:12],'meus_indicadores':Indicador.objects.filter(loja=loja,ativo=True,responsavel_colaborador=perfil).prefetch_related('medicoes')[:8]})
+    return render(request,'gestao/portal_colaborador.html',{'loja':loja,'perfil':perfil,'nivel_info':progresso_nivel(perfil.pontos),'posicao_ranking':posicao,'tarefas':Tarefa.objects.filter(loja=loja,responsavel=perfil).exclude(status='concluida'),'trilhas':TrilhaColaborador.objects.filter(loja=loja,colaborador=perfil).select_related('treinamento'),'conquistas':ConquistaColaborador.objects.filter(loja=loja,colaborador=perfil).order_by('-concedida_em'),'notificacoes_novas':Notificacao.objects.filter(loja=loja,usuario=request.user,lida=False).count(),'certificados':CertificadoTreinamento.objects.filter(loja=loja,colaborador=perfil).select_related('treinamento').order_by('-emitido_em'),'historico_pontos':PontuacaoAtividade.objects.filter(loja=loja,colaborador=perfil).order_by('-criado_em')[:12],'meus_indicadores':Indicador.objects.filter(loja=loja,ativo=True,responsavel_colaborador=perfil).prefetch_related('medicoes')[:8],'comunidade_posts':PublicacaoComunidade.objects.filter(loja=loja,ativo=True,autor__perfil_visivel=True).select_related('autor__usuario').order_by('-criado_em')[:3]})
 
 
 def meus_indicadores(request):

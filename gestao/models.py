@@ -1,3 +1,4 @@
+from django.utils import timezone
 from django.db import models
 from cloudinary_storage.storage import RawMediaCloudinaryStorage
 from django.conf import settings
@@ -118,6 +119,21 @@ class Colaborador(models.Model):
     foto=models.ImageField(upload_to='gestao/perfis/',blank=True,null=True); bio=models.CharField(max_length=500,blank=True); titulo_perfil=models.CharField(max_length=120,blank=True)
     perfil_visivel=models.BooleanField(default=True); ranking_visivel=models.BooleanField(default=True); mostrar_conquistas=models.BooleanField(default=True)
     def __str__(self): return self.usuario.get_full_name() or self.usuario.username
+
+
+class PublicacaoComunidade(BaseEmpresa):
+    autor=models.ForeignKey('Colaborador',on_delete=models.CASCADE,related_name='publicacoes_comunidade')
+    texto=models.CharField(max_length=500)
+    criado_em=models.DateTimeField(auto_now_add=True)
+    ativo=models.BooleanField(default=True)
+
+class PulsoColaborador(BaseEmpresa):
+    HUMORES=[('bem','Bem'),('normal','Normal'),('cansado','Cansado'),('motivado','Motivado')]
+    colaborador=models.ForeignKey('Colaborador',on_delete=models.CASCADE,related_name='pulsos')
+    humor=models.CharField(max_length=20,choices=HUMORES)
+    comentario=models.CharField(max_length=240,blank=True)
+    data=models.DateField(default=timezone.localdate)
+    class Meta: unique_together=[('colaborador','data')]
 
 class Tarefa(BaseEmpresa):
     STATUS=[('backlog','Backlog'),('fazer','A fazer'),('andamento','Em andamento'),('revisao','Em revisão'),('concluida','Concluída')]
