@@ -344,13 +344,22 @@ def trilha_executar(request,pk):
 def workspace(request):
     loja=_empresa(request); instancia=None; editar=request.GET.get('editar','')
     if editar.isdigit(): instancia=NotaWorkspace.objects.filter(loja=loja,pk=int(editar)).first()
+    if request.method=='POST' and request.POST.get('nota_id'):
+        nota=get_object_or_404(NotaWorkspace,loja=loja,pk=request.POST.get('nota_id'))
+        acao=request.POST.get('acao')
+        if acao=='fixar': nota.fixada=not nota.fixada; nota.save(update_fields=['fixada','atualizado_em'])
+        elif acao=='status' and request.POST.get('status') in dict(NotaWorkspace.STATUS):
+            nota.status=request.POST['status']; nota.concluido_em=timezone.now() if nota.status=='concluida' else None; nota.save(update_fields=['status','concluido_em','atualizado_em'])
+        elif acao=='excluir': nota.delete()
+        return redirect('gestao_workspace')
     form=NotaForm(request.POST or None,instance=instancia)
     if request.method=='POST' and form.is_valid():
         n=form.save(commit=False); n.loja=loja; n.autor=n.autor or request.user
         if n.status=='concluida' and not n.concluido_em: n.concluido_em=timezone.now()
         elif n.status!='concluida': n.concluido_em=None
-        n.save(); return redirect('gestao_workspace')
-    return render(request,'gestao/workspace.html',{'loja':loja,'form':form,'notas':NotaWorkspace.objects.filter(loja=loja).order_by('-fixada','-id'),'today':timezone.localdate()})
+        n.save(); messages.success(request,'Nota salva no workspace.'); return redirect('gestao_workspace')
+    notas=NotaWorkspace.objects.filter(loja=loja).select_related('setor','autor').order_by('-fixada','-atualizado_em')
+    return render(request,'gestao/workspace.html',{'loja':loja,'form':form,'notas':notas,'today':timezone.localdate()})
 
 @plano_ativo
 def ferramentas(request):
@@ -630,13 +639,21 @@ def minhas_notas(request):
     instancia=None
     editar=request.GET.get('editar','')
     if editar.isdigit(): instancia=NotaWorkspace.objects.filter(loja=perfil.loja,autor=request.user,pk=int(editar)).first()
+    if request.method=='POST' and request.POST.get('nota_id'):
+        nota=get_object_or_404(NotaWorkspace,loja=perfil.loja,autor=request.user,pk=request.POST.get('nota_id'))
+        acao=request.POST.get('acao')
+        if acao=='fixar': nota.fixada=not nota.fixada; nota.save(update_fields=['fixada','atualizado_em'])
+        elif acao=='status' and request.POST.get('status') in dict(NotaWorkspace.STATUS):
+            nota.status=request.POST['status']; nota.concluido_em=timezone.now() if nota.status=='concluida' else None; nota.save(update_fields=['status','concluido_em','atualizado_em'])
+        elif acao=='excluir': nota.delete()
+        return redirect('gestao_minhas_notas')
     form=NotaForm(request.POST or None,instance=instancia)
     if request.method == 'POST' and form.is_valid():
         n=form.save(commit=False); n.loja=perfil.loja; n.autor=request.user
         if n.status=='concluida' and not n.concluido_em: n.concluido_em=timezone.now()
         elif n.status!='concluida': n.concluido_em=None
         n.save(); messages.success(request, 'Nota salva.'); return redirect('gestao_minhas_notas')
-    notas=NotaWorkspace.objects.filter(loja=perfil.loja,autor=request.user).order_by('-fixada','-atualizado_em')
+    notas=NotaWorkspace.objects.filter(loja=perfil.loja,autor=request.user).select_related('setor').order_by('-fixada','-atualizado_em')
     return render(request,'gestao/minhas_notas.html',{'loja':perfil.loja,'perfil':perfil,'form':form,'notas':notas,'today':timezone.localdate()})
 
 def portal_empresa_publica(request,slug):
