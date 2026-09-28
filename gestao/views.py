@@ -417,6 +417,48 @@ def processo_rapido(request):
     RegistroAuditoriaSistema.objects.create(loja=loja,usuario=request.user,acao='processo_criado',objeto=f'Processo #{processo.id}',descricao=processo.nome)
     return JsonResponse({'ok':True,'id':processo.id,'nome':processo.nome})
 
+def _enviar_convite_colaborador(loja, colaborador, assunto=None):
+    """Gera um link novo de ativação e só confirma envio quando o provedor não lança erro."""
+    u=colaborador.usuario
+    email=(u.email or u.username or '').strip().lower()
+    if not email or '@' not in email:
+        return False, 'O colaborador não possui um e-mail válido cadastrado.'
+    uid=urlsafe_base64_encode(force_bytes(u.pk))
+    token=default_token_generator.make_token(u)
+    base=getattr(settings,'PLATFORM_BASE_URL','').rstrip('/')
+    link=base+reverse('gestao_ativar_colaborador',args=[uid,token])
+    try:
+        enviar_email(email,assunto or f'Ative seu acesso à {loja.nome} na Nexa Gestão',f'<h2>{loja.nome}</h2><p>Seu acesso à Nexa Gestão está pronto para ativação.</p><p>Use o botão abaixo para criar sua própria senha.</p><p><a href="{link}">Ativar meu acesso</a></p><p>Se você não esperava este convite, ignore esta mensagem.</p>')
+        return True, email
+    except Exception as exc:
+        print('CONVITE COLABORADOR:',exc)
+        return False, str(exc)
+
+@plano_ativo
+def colaborador_reenviar_convite(request,pk):
+    loja=_empresa(request); c=get_object_or_404(Colaborador,loja=loja,pk=pk)
+    if request.method=='POST':
+        ok,info=_enviar_convite_colaborador(loja,c)
+        if ok:
+            messages.success(request,f'Convite de ativação reenviado para {info}.')
+        else:
+            messages.error(request,f'Não foi possível enviar o convite. Verifique o e-mail e a configuração do serviço de e-mail. Detalhe: {info}')
+    return redirect('gestao_colaboradores')
+
+@plano_ativo
+def colaborador_excluir(request,pk):
+    loja=_empresa(request); c=get_object_or_404(Colaborador,loja=loja,pk=pk)
+    if request.method=='POST' and request.POST.get('confirmar')=='EXCLUIR':
+        u=c.usuario
+        identificacao=u.get_full_name() or u.email or u.username
+        RegistroAuditoriaSistema.objects.create(loja=loja,usuario=request.user,acao='colaborador_excluido',objeto=f'Colaborador #{c.id}',descricao=identificacao)
+        # Excluir o usuário remove também o perfil OneToOne e seus vínculos dependentes por CASCADE.
+        u.delete()
+        messages.success(request,f'Colaborador {identificacao} excluído.')
+    elif request.method=='POST':
+        messages.error(request,'Confirmação de exclusão inválida.')
+    return redirect('gestao_colaboradores')
+
 @plano_ativo
 def colaboradores(request):
     loja=_empresa(request)
@@ -425,11 +467,10 @@ def colaboradores(request):
         if papel not in dict(Colaborador._meta.get_field('papel').choices): papel='colaborador'
         if nome and email and not User.objects.filter(username=email).exists():
             u=User.objects.create(username=email,email=email,first_name=nome,is_active=False); u.set_unusable_password(); u.save()
-            Colaborador.objects.create(loja=loja,usuario=u,setor=setor,cargo=request.POST.get('cargo',''),papel=papel)
-            uid=urlsafe_base64_encode(force_bytes(u.pk)); token=default_token_generator.make_token(u); base=getattr(settings,'PLATFORM_BASE_URL','').rstrip('/'); link=base+reverse('gestao_ativar_colaborador',args=[uid,token])
-            try: enviar_email(email,f'Convite para {loja.nome} na Nexa Gestão',f'<h2>{loja.nome} convidou você</h2><p>Ative seu acesso e crie sua própria senha.</p><p><a href="{link}">Ativar meu acesso</a></p>')
-            except Exception as exc: print('CONVITE COLABORADOR:',exc)
-            messages.success(request,'Convite criado. O colaborador define a própria senha pelo link enviado ao e-mail.')
+            c=Colaborador.objects.create(loja=loja,usuario=u,setor=setor,cargo=request.POST.get('cargo',''),papel=papel)
+            ok,info=_enviar_convite_colaborador(loja,c)
+            if ok: messages.success(request,f'Convite criado e enviado para {info}.')
+            else: messages.warning(request,f'Colaborador criado, mas o e-mail de ativação não foi enviado. Use “Reenviar ativação”. Detalhe: {info}')
         else: messages.error(request,'Preencha nome/e-mail ou use outro e-mail.')
         return redirect('gestao_colaboradores')
     return render(request,'gestao/colaboradores.html',{'loja':loja,'colaboradores':Colaborador.objects.filter(loja=loja).select_related('usuario','setor','supervisor__usuario'),'setores':Setor.objects.filter(loja=loja),'supervisores':Colaborador.objects.filter(loja=loja,ativo=True,status_cadastro='aprovado').select_related('usuario'),'papeis':Colaborador._meta.get_field('papel').choices})
@@ -787,10 +828,9 @@ def aprovar_colaborador(request,pk):
     if request.method=='POST':
         setor=_fk_empresa(Setor,loja,request.POST.get('setor')); supervisor=_fk_empresa(Colaborador,loja,request.POST.get('supervisor'))
         c.status_cadastro='aprovado'; c.ativo=True; c.setor=setor or c.setor; c.cargo=request.POST.get('cargo',c.cargo); c.supervisor=supervisor or c.supervisor; c.save()
-        u=c.usuario; uid=urlsafe_base64_encode(force_bytes(u.pk)); token=default_token_generator.make_token(u); base=getattr(settings,'PLATFORM_BASE_URL','').rstrip('/'); link=base+reverse('gestao_ativar_colaborador',args=[uid,token])
-        try: enviar_email(u.email,f'Acesso aprovado em {loja.nome}',f'<h2>Seu cadastro foi aprovado</h2><p>Crie sua própria senha para acessar o portal.</p><p><a href="{link}">Ativar meu acesso</a></p>')
-        except Exception as exc: print('APROVACAO COLABORADOR:',exc)
-        messages.success(request,'Colaborador aprovado. O link para criação da senha foi enviado por e-mail.')
+        ok,info=_enviar_convite_colaborador(loja,c,assunto=f'Acesso aprovado em {loja.nome}')
+        if ok: messages.success(request,f'Colaborador aprovado. O link de ativação foi enviado para {info}.')
+        else: messages.warning(request,f'Colaborador aprovado, mas o e-mail não foi enviado. Use “Reenviar ativação”. Detalhe: {info}')
     return redirect('gestao_colaboradores')
 
 @plano_ativo
