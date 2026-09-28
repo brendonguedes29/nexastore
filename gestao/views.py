@@ -438,7 +438,10 @@ def colaboradores(request):
 def colaborador_editar(request,pk):
     loja=_empresa(request); c=get_object_or_404(Colaborador,loja=loja,pk=pk)
     if request.method=='POST':
-        antes=f'{c.cargo} / {c.setor} / {c.get_papel_display()} / ativo={c.ativo}'
+        antes=f'{c.usuario.get_full_name()} / {c.cargo} / {c.setor} / {c.get_papel_display()} / ativo={c.ativo}'
+        nome=request.POST.get('nome','').strip()
+        if nome:
+            partes=nome.split(None,1); c.usuario.first_name=partes[0]; c.usuario.last_name=partes[1] if len(partes)>1 else ''; c.usuario.save(update_fields=['first_name','last_name'])
         c.cargo=request.POST.get('cargo','').strip(); c.setor=_fk_empresa(Setor,loja,request.POST.get('setor'))
         papel=request.POST.get('papel',c.papel); c.papel=papel if papel in dict(Colaborador._meta.get_field('papel').choices) else c.papel
         c.save(update_fields=['cargo','setor','papel'])
@@ -467,11 +470,15 @@ def comunidade(request):
             if texto: PublicacaoComunidade.objects.create(loja=loja,autor=perfil,texto=texto)
         elif acao=='pulso':
             humor=request.POST.get('humor')
-            if humor in dict(PulsoColaborador.HUMORES): PulsoColaborador.objects.update_or_create(loja=loja,colaborador=perfil,data=timezone.localdate(),defaults={'humor':humor,'comentario':request.POST.get('comentario','')[:240]})
+            if humor in dict(PulsoColaborador.HUMORES):
+                PulsoColaborador.objects.update_or_create(loja=loja,colaborador=perfil,data=timezone.localdate(),defaults={'humor':humor,'comentario':request.POST.get('comentario','')[:240]})
+                messages.success(request,'Pulso do dia registrado. Você pode alterá-lo quando quiser hoje.')
         return redirect('gestao_comunidade')
     pessoas=Colaborador.objects.filter(loja=loja,ativo=True,perfil_visivel=True).select_related('usuario','setor')
+    pessoas_setor=pessoas.filter(setor=perfil.setor) if perfil.setor_id else pessoas.none()
+    pulso_hoje=PulsoColaborador.objects.filter(loja=loja,colaborador=perfil,data=timezone.localdate()).first()
     posts=PublicacaoComunidade.objects.filter(loja=loja,ativo=True,autor__perfil_visivel=True).select_related('autor__usuario','autor__setor').order_by('-criado_em')[:40]
-    return render(request,'gestao/comunidade.html',{'loja':loja,'perfil':perfil,'pessoas':pessoas,'posts':posts,'humores':PulsoColaborador.HUMORES})
+    return render(request,'gestao/comunidade.html',{'loja':loja,'perfil':perfil,'pessoas':pessoas,'pessoas_setor':pessoas_setor,'posts':posts,'humores':PulsoColaborador.HUMORES,'pulso_hoje':pulso_hoje})
 
 def ativar_colaborador(request,uidb64,token):
     try: u=User.objects.get(pk=urlsafe_base64_decode(uidb64).decode())
